@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/HomePC/Downloads/stitch/**)",
+      "Bash(dir \"C:/Users/HomePC/Downloads/stitch\")",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"require\\(''ws''\\); console.log\\(''ws OK''\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/waitlist -H \"Content-Type: application/json\" -d '{\"\"\"\"name\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"email\"\"\"\":\"\"\"\"test@test.com\"\"\"\"}')",
+      "Bash(curl:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /F /PID 23476)",
+      "Bash(taskkill:*)",
+      "Bash(node -e \":*)"
+    ]
+  }
+}
