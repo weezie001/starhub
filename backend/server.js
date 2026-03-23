@@ -139,7 +139,7 @@ async function initDB() {
   console.log('PostgreSQL ready.');
 }
 
-initDB().catch(err => { console.error('DB init failed:', err); process.exit(1); });
+initDB().catch(err => { console.error('DB init failed:', err.message); });
 
 // ─────────────────────────────────────────────
 // WEBSOCKET — in-memory state
