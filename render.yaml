@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: starhub-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: starhub-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+
+databases:
+  - name: starhub-db
+    databaseName: starhub
+    user: starhub
+    region: oregon
+    plan: free
