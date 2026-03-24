@@ -61,13 +61,13 @@ function resizeToBase64(file) {
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 600;
+        const MAX = 800;
         const scale = Math.min(1, MAX / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
       };
       img.onerror = reject;
       img.src = ev.target.result;
@@ -88,9 +88,10 @@ function GiftCardForm({ value, onChange }) {
     setUploading(true);
     try {
       const b64 = await resizeToBase64(file);
-      onChange({ ...value, photo: b64 });
+      const { url } = await api.uploadPhoto(b64);
+      onChange({ ...value, photo: url });
     } catch {
-      setUploadErr("Could not process image. Try again.");
+      setUploadErr("Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }

@@ -126,7 +126,78 @@ async function sendBookingStatusUpdate({ name, email, celeb, type, status }) {
   return send({ to: email, subject: `${icon} Booking ${approved ? 'Approved' : 'Declined'} — ${celeb}`, html: base(headline, body) });
 }
 
-// ── 4. New booking alert to admin ────────────────────────────────────────────
+// ── 4. Invoice email on booking approval ─────────────────────────────────────
+async function sendInvoice({ name, email, invoiceId, celeb, type, amount, paymentMethod, date, form }) {
+  const typeLabel = { event: 'Event Booking', fan_card: 'VIP Fan Card', meet: 'Meet & Greet', donate: 'Charity Donation', video: 'Video Message', brand: 'Brand Campaign' }[type] || type;
+  const payLabel  = { crypto: '₿ Crypto (BTC/ETH/USDT)', giftcard: '🎁 Gift Card', other: 'Other / Contact' }[paymentMethod] || paymentMethod;
+  const txDate    = new Date(date).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+
+  const body = `
+    <div style="text-align:center;margin-bottom:28px">
+      <img src="https://starbooknow.com/images/fan-card.png" alt="StarBookNow Fan Card" style="max-width:180px;border-radius:12px;margin-bottom:16px" />
+      <div style="font-size:11px;letter-spacing:3px;color:${gold};text-transform:uppercase;font-weight:700">Official Receipt</div>
+    </div>
+
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.2);border-radius:12px;padding:20px 24px;margin-bottom:20px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        <tr>
+          <td style="vertical-align:top">
+            <div style="font-size:10px;color:${muted};text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Invoice No.</div>
+            <div style="font-size:16px;font-weight:800;color:${gold};letter-spacing:1px">${invoiceId}</div>
+          </td>
+          <td style="vertical-align:top;text-align:right">
+            <div style="font-size:10px;color:${muted};text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Date</div>
+            <div style="font-size:13px;color:#e5e2e1">${txDate}</div>
+          </td>
+        </tr>
+      </table>
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:16px">
+        <div style="font-size:10px;color:${muted};text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Billed To</div>
+        <div style="font-size:15px;font-weight:700;color:#fff">${name}</div>
+        <div style="font-size:12px;color:${muted};margin-top:2px">${email}</div>
+      </div>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+        <td style="padding:8px 0;font-size:10px;color:${muted};text-transform:uppercase;letter-spacing:1px">Description</td>
+        <td style="padding:8px 0;font-size:10px;color:${muted};text-transform:uppercase;letter-spacing:1px;text-align:right">Amount</td>
+      </tr>
+      <tr>
+        <td style="padding:16px 0">
+          <div style="font-size:15px;font-weight:700;color:#fff">${typeLabel}</div>
+          <div style="font-size:13px;color:${muted};margin-top:3px">Celebrity: <strong style="color:#e5e2e1">${celeb}</strong></div>
+          <div style="font-size:12px;color:${muted};margin-top:2px">Payment: ${payLabel}</div>
+          ${form?.date ? `<div style="font-size:12px;color:${muted};margin-top:2px">Event date: ${form.date}</div>` : ''}
+          ${form?.guests ? `<div style="font-size:12px;color:${muted};margin-top:2px">Guests: ${form.guests}</div>` : ''}
+        </td>
+        <td style="padding:16px 0;text-align:right;vertical-align:top">
+          <div style="font-size:20px;font-weight:900;color:${gold};font-family:Georgia,serif">$${Number(amount).toLocaleString()}</div>
+        </td>
+      </tr>
+      <tr style="border-top:2px solid rgba(240,191,90,0.2)">
+        <td style="padding:14px 0;font-size:15px;font-weight:700;color:#fff">Total Paid</td>
+        <td style="padding:14px 0;text-align:right;font-size:22px;font-weight:900;color:${gold};font-family:Georgia,serif">$${Number(amount).toLocaleString()}</td>
+      </tr>
+    </table>
+
+    <div style="background:#0a2a18;border:1px solid rgba(109,191,123,0.3);border-radius:12px;padding:18px 22px;margin-top:22px;text-align:center">
+      <div style="font-size:16px;font-weight:800;color:#6DBF7B">✅ Booking Confirmed</div>
+      <div style="font-size:13px;color:${muted};margin-top:6px;line-height:1.6">
+        Your booking has been approved. Our concierge team will be in touch within 24 hours with next steps.
+      </div>
+    </div>
+
+    <p style="text-align:center;color:${muted};font-size:11px;margin-top:22px;line-height:1.7">
+      Please keep this email as your official receipt.<br>
+      Invoice ID: <strong style="color:#e5e2e1">${invoiceId}</strong><br>
+      Questions? <a href="mailto:support@starbooknow.com" style="color:${gold};text-decoration:none">support@starbooknow.com</a>
+    </p>`;
+
+  return send({ to: email, subject: `✅ Invoice ${invoiceId} — Booking Confirmed`, html: base('Your Booking is Confirmed!', body) });
+}
+
+// ── 5. New booking alert to admin ────────────────────────────────────────────
 async function sendAdminBookingAlert({ customerName, customerEmail, celeb, type, amount, paymentMethod }) {
   const typeLabel = { event: 'Event Booking', fan_card: 'Video Message', meet: 'Meet & Greet', donate: 'Donation', brand: 'Brand Campaign' }[type] || type;
 
@@ -164,4 +235,4 @@ async function send({ to, subject, html }) {
   }
 }
 
-module.exports = { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert };
+module.exports = { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice };

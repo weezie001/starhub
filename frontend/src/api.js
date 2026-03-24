@@ -65,6 +65,9 @@ export const api = {
   getAdminWaitlist: () => req('/admin/waitlist'),
   updateWaitlistStatus: (id, status) =>
     req(`/admin/waitlist/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  // Upload
+  uploadPhoto: (data) => req('/upload', { method: 'POST', body: JSON.stringify({ data }) }),
+
   // Admin celebrities
   addCelebrity: (data) => req('/admin/celebrities', { method: 'POST', body: JSON.stringify(data) }),
   deleteCelebrity: (id) => req(`/admin/celebrities/${id}`, { method: 'DELETE' }),

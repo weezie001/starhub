@@ -6,7 +6,15 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice } = require('./email');
+const cloudinary = require('cloudinary').v2;
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -27,7 +35,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 app.use(require('morgan')('dev'));
 
 // ─────────────────────────────────────────────
@@ -581,7 +589,17 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
     const booking = await qOne('SELECT b.*,u.name as "userName",u.email as "userEmail" FROM bookings b JOIN users u ON b."userId"=u.id WHERE b.id=$1', [req.params.id]);
     if (booking && (status === 'approved' || status === 'declined')) {
       const celeb = JSON.parse(booking.celebData || '{}');
+      const form  = JSON.parse(booking.formData  || '{}');
       sendBookingStatusUpdate({ name: booking.userName, email: booking.userEmail, celeb: celeb.name, type: booking.bookingType, status });
+      if (status === 'approved') {
+        const invoiceId = `SBN-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        sendInvoice({
+          name: booking.userName, email: booking.userEmail,
+          invoiceId, celeb: celeb.name, type: booking.bookingType,
+          amount: booking.amount, paymentMethod: booking.paymentMethod,
+          date: new Date().toISOString(), form,
+        });
+      }
     }
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
@@ -661,6 +679,24 @@ app.delete('/api/admin/chat/sessions/:id', authenticate, adminOnly, async (req, 
     broadcastToAgents({ type: 'session_deleted', sessionId: sid });
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────
+// UPLOAD ROUTE — Cloudinary (gift card photos)
+// ─────────────────────────────────────────────
+app.post('/api/upload', authenticate, async (req, res) => {
+  const { data } = req.body; // base64 data URI
+  if (!data) return res.status(400).json({ error: 'No image data' });
+  if (!process.env.CLOUDINARY_CLOUD_NAME) return res.status(503).json({ error: 'Storage not configured' });
+  try {
+    const result = await cloudinary.uploader.upload(data, {
+      folder: 'starbooknow/gift-cards',
+      resource_type: 'image',
+    });
+    res.json({ url: result.secure_url });
+  } catch (e) {
+    res.status(500).json({ error: 'Upload failed: ' + e.message });
+  }
 });
 
 app.post('/api/payments/crypto', authenticate, (req, res) => {
