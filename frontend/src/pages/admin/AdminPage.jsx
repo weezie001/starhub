@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { avatar } from "../../lib/tokens.js";
 import { Stars } from "../../components/ui.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -27,6 +27,28 @@ export default function AdminPage({ user }) {
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [celebError, setCelebError] = useState("");
   const [confirmModal, setConfirmModal] = useState(null);
+  const photoInputRef = useRef(null);
+
+  function handlePhotoFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 480;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        const b64 = canvas.toDataURL("image/jpeg", 0.82);
+        setCelebForm(f => ({ ...f, photo: b64 }));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     api.getAdminBookings()
@@ -228,7 +250,33 @@ export default function AdminPage({ user }) {
                 <Input label="Price ($) *" value={celebForm.price} onChange={e => setCelebForm(f => ({ ...f, price: e.target.value }))} placeholder="5000" type="number" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <Input label="Photo URL" value={celebForm.photo} onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." />
+                <div>
+                  <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Photo</label>
+                  <div className="flex gap-2 items-center">
+                    {celebForm.photo ? (
+                      <img src={celebForm.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shrink-0">📷</div>
+                    )}
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="w-full rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold py-1.5 cursor-pointer hover:bg-primary/10 transition-colors font-sans"
+                      >
+                        Upload Photo
+                      </button>
+                      <input
+                        type="text"
+                        value={celebForm.photo.startsWith("data:") ? "" : celebForm.photo}
+                        onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))}
+                        placeholder="or paste URL"
+                        className="w-full rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/60 font-sans"
+                      />
+                    </div>
+                  </div>
+                  <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoFile} className="hidden" />
+                </div>
                 <Input label="Country" value={celebForm.country} onChange={e => setCelebForm(f => ({ ...f, country: e.target.value }))} placeholder="USA" />
                 <Input label="Flag Emoji" value={celebForm.flag} onChange={e => setCelebForm(f => ({ ...f, flag: e.target.value }))} placeholder="🇺🇸" />
               </div>
