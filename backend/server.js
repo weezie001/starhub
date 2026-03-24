@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert } = require('./email');
 
 const app = express();
 const server = http.createServer(app);
@@ -426,6 +427,7 @@ app.post('/api/auth/register', async (req, res) => {
     await q('INSERT INTO users (id,name,email,password,role) VALUES ($1,$2,$3,$4,$5)', [id, name, email, hash, role]);
     const token = jwt.sign({ id, email, name, role }, SECRET, { expiresIn: '7d' });
     res.json({ user: { id, name, email, role, token } });
+    sendWelcome({ name, email });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already exists' });
     res.status(500).json({ error: 'Server error' });
@@ -508,6 +510,8 @@ app.post('/api/bookings', authenticate, async (req, res) => {
       [Date.now().toString(), req.user.id, JSON.stringify(celeb), type, JSON.stringify(form), payment, amount]
     );
     res.json({ success: true });
+    sendBookingConfirmation({ name: form.name || req.user.name, email: form.email || req.user.email, celeb: celeb.name, type, amount, paymentMethod: payment });
+    sendAdminBookingAlert({ customerName: form.name || req.user.name, customerEmail: form.email || req.user.email, celeb: celeb.name, type, amount, paymentMethod: payment });
   } catch { res.status(500).json({ error: 'Failed to save booking' }); }
 });
 
@@ -574,6 +578,11 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
   try {
     await q('UPDATE bookings SET status=$1 WHERE id=$2', [status, req.params.id]);
     res.json({ success: true });
+    const booking = await qOne('SELECT b.*,u.name as "userName",u.email as "userEmail" FROM bookings b JOIN users u ON b."userId"=u.id WHERE b.id=$1', [req.params.id]);
+    if (booking && (status === 'approved' || status === 'declined')) {
+      const celeb = JSON.parse(booking.celebData || '{}');
+      sendBookingStatusUpdate({ name: booking.userName, email: booking.userEmail, celeb: celeb.name, type: booking.bookingType, status });
+    }
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
