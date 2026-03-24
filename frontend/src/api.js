@@ -24,7 +24,7 @@ async function req(path, opts = {}) {
 }
 
 function mapBooking(b) {
-  return { ...b, celeb: b.celebData, type: b.bookingType, form: b.formData };
+  return { ...b, celeb: b.celebData, type: b.bookingType, form: b.formData, payment: b.paymentMethod };
 }
 
 export const api = {
@@ -70,7 +70,16 @@ export const api = {
 
   // Admin celebrities
   addCelebrity: (data) => req('/admin/celebrities', { method: 'POST', body: JSON.stringify(data) }),
+  updateCelebrity: (id, data) => req(`/admin/celebrities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteCelebrity: (id) => req(`/admin/celebrities/${id}`, { method: 'DELETE' }),
   createUser: (data) => req('/admin/users', { method: 'POST', body: JSON.stringify(data) }),
   deleteUser: (id) => req(`/admin/users/${id}`, { method: 'DELETE' }),
+
+  // Admin blogs
+  addBlog: (data) => req('/admin/blogs', { method: 'POST', body: JSON.stringify(data) }),
+  updateBlog: (id, data) => req(`/admin/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteBlog: (id) => req(`/admin/blogs/${id}`, { method: 'DELETE' }),
+
+  // Admin transactions
+  getAdminTransactions: () => req('/admin/transactions').then(rows => rows.map(mapBooking)),
 };

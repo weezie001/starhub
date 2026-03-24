@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { G } from "../lib/tokens.js";
 import { api } from "../api.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog.jsx";
@@ -9,11 +9,11 @@ import { Textarea } from "./ui/textarea.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { cn } from "../lib/utils.js";
 
-// ── Crypto wallet addresses (update these with real addresses) ──────────────
+// ── Crypto wallet addresses ───────────────────────────────────────────────────
 const WALLETS = {
-  BTC:  "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",  // TODO: replace with real BTC address
-  ETH:  "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", // TODO: replace with real ETH address
-  USDT: "TKFHt3aMqvhEkH7kS9dGj2KA4GmLUkK29A",         // TODO: replace with real USDT (TRC20) address
+  BTC:  { address: "1PcYsTowoq1JfrRQPdbRqyeh2Y5L8GdweS",          network: "Bitcoin" },
+  ETH:  { address: "0xf0838664b03d61494125e93d13b1454d64535ceb",   network: "BNB Smart Chain (BEP20)" },
+  USDT: { address: "0xf0838664b03d61494125e93d13b1454d64535ceb",   network: "BNB Smart Chain (BEP20)" },
 };
 
 function CopyBtn({ text }) {
@@ -40,13 +40,18 @@ function CryptoWallets() {
       <p className="text-muted-foreground text-[11px] mb-2 leading-relaxed">
         Send your payment to any of the addresses below, then confirm your booking. Your request will be <strong className="text-foreground">pending</strong> until payment is verified.
       </p>
-      {Object.entries(WALLETS).map(([coin, addr]) => (
-        <div key={coin} className="flex items-center gap-2">
-          <span className="text-primary text-[11px] font-bold w-10 shrink-0">{coin}</span>
-          <span className="text-foreground text-[10px] font-mono flex-1 truncate bg-background rounded px-2 py-1 border border-border">
-            {addr}
-          </span>
-          <CopyBtn text={addr} />
+      {Object.entries(WALLETS).map(([coin, { address, network }]) => (
+        <div key={coin} className="rounded-lg border border-border bg-background p-2.5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-primary text-[11px] font-bold">{coin}</span>
+            <span className="text-muted-foreground text-[9px] tracking-wide">{network}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-foreground text-[10px] font-mono flex-1 break-all">
+              {address}
+            </span>
+            <CopyBtn text={address} />
+          </div>
         </div>
       ))}
     </div>
@@ -78,30 +83,42 @@ function resizeToBase64(file) {
 }
 
 function GiftCardForm({ value, onChange }) {
+  const [inputMode, setInputMode] = useState("code"); // "code" | "photo"
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
+  const galleryRef = useRef(null);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
     setUploadErr("");
     setUploading(true);
     try {
       const b64 = await resizeToBase64(file);
-      const { url } = await api.uploadPhoto(b64);
-      onChange({ ...value, photo: url });
+      // Store base64 for preview — actual cloud upload happens on confirm
+      onChange(prev => ({ ...prev, photo: b64, code: "" }));
     } catch {
-      setUploadErr("Upload failed. Please try again.");
+      setUploadErr("Could not read image. Please try again.");
     } finally {
       setUploading(false);
     }
   }
 
+  function switchMode(mode) {
+    setInputMode(mode);
+    // clear the other field when switching
+    if (mode === "code") onChange(prev => ({ ...prev, photo: "" }));
+    else onChange(prev => ({ ...prev, code: "" }));
+  }
+
   return (
     <div className="mt-3 space-y-3 border border-border rounded-xl p-3 bg-secondary">
       <p className="text-muted-foreground text-[11px] leading-relaxed">
-        Select card type, upload a photo of the card, and enter the redemption code. Your booking will be <strong className="text-foreground">pending</strong> until verified.
+        Select card type, then provide either the redemption code or a photo. Your booking will be <strong className="text-foreground">pending</strong> until verified.
       </p>
+
+      {/* Card type */}
       <div>
         <Label className="mb-1.5 block text-[12px]">Card Type</Label>
         <div className="flex gap-1.5 flex-wrap">
@@ -109,7 +126,7 @@ function GiftCardForm({ value, onChange }) {
             <button
               key={t}
               type="button"
-              onClick={() => onChange({ ...value, type: t })}
+              onClick={() => onChange(prev => ({ ...prev, type: t }))}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer",
                 value.type === t
@@ -122,38 +139,75 @@ function GiftCardForm({ value, onChange }) {
           ))}
         </div>
       </div>
+
+      {/* Mode toggle */}
       <div>
-        <Label className="mb-1.5 block text-[12px]">Card Photo</Label>
-        <label className={cn(
-          "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-4 cursor-pointer transition-colors",
-          value.photo ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/30"
-        )}>
-          {value.photo ? (
-            <img src={value.photo} alt="Gift card" className="max-h-28 rounded-lg object-contain" />
-          ) : (
-            <>
-              <span className="text-2xl">{uploading ? "⏳" : "📷"}</span>
-              <span className="text-muted-foreground text-[11px] text-center">
-                {uploading ? "Uploading..." : "Tap to take photo or upload card image"}
-              </span>
-            </>
-          )}
-          <input type="file" accept="image/*" capture="environment" onChange={handleFile} disabled={uploading} className="hidden" />
-        </label>
-        {uploadErr && <p className="text-destructive text-[11px] mt-1">{uploadErr}</p>}
-        {value.photo && (
-          <button type="button" onClick={() => onChange({ ...value, photo: "" })} className="text-muted-foreground text-[10px] mt-1 underline cursor-pointer bg-transparent border-none">
-            Remove photo
+        <Label className="mb-1.5 block text-[12px]">How would you like to provide the card?</Label>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => switchMode("code")}
+            className={cn(
+              "py-2.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer",
+              inputMode === "code"
+                ? "bg-primary/10 border-primary/50 text-primary"
+                : "bg-background border-border text-muted-foreground"
+            )}
+          >
+            🔑 Enter Code
           </button>
+          <button
+            type="button"
+            onClick={() => switchMode("photo")}
+            className={cn(
+              "py-2.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer",
+              inputMode === "photo"
+                ? "bg-primary/10 border-primary/50 text-primary"
+                : "bg-background border-border text-muted-foreground"
+            )}
+          >
+            📷 Upload Photo
+          </button>
+        </div>
+
+        {/* Code input */}
+        {inputMode === "code" && (
+          <Input
+            placeholder="Enter the full redemption code"
+            value={value.code}
+            onChange={e => { const v = e.target.value; onChange(prev => ({ ...prev, code: v, photo: "" })); }}
+          />
         )}
-      </div>
-      <div>
-        <Label className="mb-1.5 block text-[12px]">Gift Card Code</Label>
-        <Input
-          placeholder="Enter the full redemption code"
-          value={value.code}
-          onChange={e => onChange({ ...value, code: e.target.value })}
-        />
+
+        {/* Photo input */}
+        {inputMode === "photo" && (
+          <>
+            <input ref={galleryRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            {value.photo ? (
+              <div className="border-2 border-primary/40 bg-primary/5 rounded-xl p-3 flex flex-col items-center gap-2">
+                <img src={value.photo} alt="Gift card" className="max-h-32 rounded-lg object-contain" />
+                <button type="button" onClick={() => onChange({ ...value, photo: "" })} className="text-muted-foreground text-[10px] underline cursor-pointer bg-transparent border-none">
+                  Remove photo
+                </button>
+              </div>
+            ) : uploading ? (
+              <div className="border-2 border-dashed border-border rounded-xl p-5 flex flex-col items-center gap-2">
+                <span className="text-2xl">⏳</span>
+                <span className="text-muted-foreground text-[11px]">Uploading...</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => galleryRef.current?.click()}
+                className="w-full flex flex-col items-center gap-2 border-2 border-dashed border-border rounded-xl p-5 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors bg-transparent"
+              >
+                <span className="text-2xl">📷</span>
+                <span className="text-muted-foreground text-[11px] font-medium">Tap to upload gift card photo</span>
+              </button>
+            )}
+            {uploadErr && <p className="text-destructive text-[11px] mt-1">{uploadErr}</p>}
+          </>
+        )}
       </div>
     </div>
   );
@@ -222,28 +276,58 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
   const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", video: "Video Message", meet: "Meet & Greet" };
   const donateOptions = [200, 500, 1000, 1500, 2000];
 
-  const giftCardReady = payment === "giftcard" && giftCard.type && giftCard.code && giftCard.photo;
+  // Photo alone is enough (admin sees card type from image); code path requires a type selection too
+  const giftCardReady = payment === "giftcard" && (giftCard.photo || (giftCard.type && giftCard.code));
   const canSubmit = !loading && form.name && form.email && payment && (payment !== "giftcard" || giftCardReady);
 
   async function submit() {
     setLoading(true);
     try {
+      let giftCardPhoto = giftCard.photo;
+      // Upload photo to cloud at confirm time (was stored as base64 for preview)
+      if (payment === "giftcard" && giftCardPhoto?.startsWith("data:")) {
+        try {
+          const { url } = await api.uploadPhoto(giftCardPhoto);
+          giftCardPhoto = url;
+        } catch {
+          // keep base64 as fallback
+        }
+      }
       const extraForm = payment === "giftcard"
-        ? { ...form, giftCardType: giftCard.type, giftCardCode: giftCard.code, giftCardPhoto: giftCard.photo }
+        ? { ...form, giftCardType: giftCard.type, giftCardCode: giftCard.code, giftCardPhoto: giftCardPhoto }
         : form;
-      await api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null);
+      await Promise.all([
+        api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null),
+        new Promise(resolve => setTimeout(resolve, 5000)),
+      ]);
       onConfirm();
-      setDone(true);
-    } catch {
-      setDone(true);
-    }
+    } catch {}
     setLoading(false);
+    setDone(true);
   }
 
   return (
     <Dialog open={open} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        {done ? (
+        {loading ? (
+          <div className="py-14 flex flex-col items-center justify-center gap-5">
+            <div className="relative w-24 h-24">
+              <div className="absolute inset-0 rounded-full border-4 border-primary/15" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-r-primary/40 border-b-transparent border-l-transparent animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
+              <div className="absolute inset-0 flex items-center justify-center text-3xl">⭐</div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-foreground font-serif text-xl mb-1.5">Processing your request</h3>
+              <p className="text-muted-foreground text-sm">Securing your booking with <strong className="text-primary">{c.name}</strong>...</p>
+            </div>
+            <div className="flex gap-2 mt-1">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-2 h-2 rounded-full bg-primary/70 animate-bounce" style={{ animationDelay: `${i * 0.18}s` }} />
+              ))}
+            </div>
+          </div>
+        ) : done ? (
           <div className="text-center py-4">
             <div className="text-5xl mb-5">✅</div>
             <h3 className="text-primary font-serif text-2xl mb-2.5">
@@ -358,7 +442,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
                   ? `Donate $${donateAmt.toLocaleString()} →`
                   : type === "fan_card"
                     ? "Purchase Fan Card $299 →"
-                    : `Confirm ${labels[type]} →`}
+                    : `Confirm ${labels[type] || "Booking"} →`}
             </Button>
             {!payment && (
               <p className="text-muted-foreground text-xs text-center mt-2">
