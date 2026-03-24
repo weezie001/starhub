@@ -30,7 +30,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
       <nav
         className={cn(
           "fixed top-0 left-0 right-0 h-[68px] z-[800] flex items-center justify-between transition-all duration-300",
-          scrolled ? "bg-background/94 border-b border-border backdrop-blur-xl" : "bg-background/60 border-b border-transparent backdrop-blur-xl"
+          scrolled ? "bg-background/95 border-b border-white/8 backdrop-blur-2xl shadow-[0_4px_24px_rgba(0,0,0,0.4)]" : "bg-background/40 border-b border-transparent backdrop-blur-xl"
         )}
         style={{ padding: isMobile ? "0 20px" : "0 48px" }}
       >

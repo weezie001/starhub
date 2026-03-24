@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { G, WS_URL, fmtDate } from "../lib/tokens.js";
-import { Btn, Input } from "../components/ui.jsx";
+import { WS_URL, fmtDate } from "../lib/tokens.js";
 import { api } from "../api.js";
 import { useIsMobile } from "../lib/useIsMobile.js";
+import { cn } from "../lib/utils.js";
+import { Button } from "../components/ui/button.jsx";
+import { Input } from "../components/ui/input.jsx";
+import { Label } from "../components/ui/label.jsx";
+import { Card } from "../components/ui/card.jsx";
 
 const TOPICS = ["Celebrity Booking", "Corporate Event", "Private Gala", "Brand Campaign", "Meet & Greet", "Keynote Speaker", "Custom Experience"];
 const BUDGETS = ["$1,000 – $5,000", "$5,000 – $15,000", "$15,000 – $50,000", "$50,000+", "Flexible"];
@@ -77,147 +81,217 @@ export default function WaitlistPage({ user }) {
   }
 
   const statusConfig = {
-    waiting:   { label: "In Queue", color: G.amber, icon: "⏳" },
-    attending: { label: "Now Attending", color: G.green, icon: "✅" },
-    done:      { label: "Completed", color: G.gold, icon: "🏆" },
-    cancelled: { label: "Cancelled", color: G.red, icon: "✕" },
+    waiting:   { label: "In Queue",       colorClass: "text-[#D4A84B]", bgClass: "bg-[#D4A84B]/10", borderClass: "border-[#D4A84B]/40", icon: "⏳" },
+    attending: { label: "Now Attending",  colorClass: "text-[#6DBF7B]", bgClass: "bg-[#6DBF7B]/10", borderClass: "border-[#6DBF7B]/40", icon: "✅" },
+    done:      { label: "Completed",      colorClass: "text-primary",   bgClass: "bg-primary/10",    borderClass: "border-primary/40",   icon: "🏆" },
+    cancelled: { label: "Cancelled",      colorClass: "text-destructive",bgClass: "bg-destructive/10",borderClass: "border-destructive/40",icon: "✕" },
   };
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", background: G.bg }}>
+    <div className="min-h-screen bg-background pt-[68px]">
       {/* Hero */}
-      <div style={{ position: "relative", padding: isMobile ? "48px 20px 40px" : "80px 60px 60px", overflow: "hidden" }}>
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: "url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&q=80')",
-          backgroundSize: "cover", backgroundPosition: "center",
-          filter: "brightness(0.12) grayscale(20%)",
-        }} />
-        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom,${G.bg}60,${G.bg}ff)` }} />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 680 }}>
-          <span style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 16 }}>Exclusive Access</span>
-          <h1 style={{ fontFamily: G.serif, fontSize: "clamp(36px,5vw,68px)", fontWeight: 800, color: G.cream, margin: "0 0 20px", lineHeight: 1.05 }}>
-            Join the<br /><span style={{ color: G.gold, fontStyle: "italic" }}>Concierge Waitlist.</span>
+      <div className={cn("relative overflow-hidden", isMobile ? "px-5 pt-12 pb-10" : "px-[60px] pt-20 pb-[60px]")}>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&q=80')",
+            filter: "brightness(0.12) grayscale(20%)",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 to-background" />
+        <div className="relative z-10 max-w-[680px]">
+          <span className="block mb-4 text-[11px] font-bold tracking-[3px] uppercase text-primary">
+            Exclusive Access
+          </span>
+          <h1 className="font-serif text-[clamp(36px,5vw,68px)] font-extrabold text-foreground leading-[1.05] mb-5 mt-0">
+            Join the<br /><span className="text-primary italic">Concierge Waitlist.</span>
           </h1>
-          <p style={{ color: G.muted, fontSize: 16, lineHeight: 1.8, maxWidth: 520, margin: 0 }}>
+          <p className="text-muted-foreground text-base leading-[1.8] max-w-[520px] m-0">
             Secure your place in the queue to be personally attended by one of our elite concierge agents for bespoke celebrity booking assistance.
           </p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "0 16px 60px" : "0 60px 80px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 380px", gap: isMobile ? 24 : 48, alignItems: "start" }}>
+      <div className={cn(
+        "max-w-[1100px] mx-auto grid items-start",
+        isMobile
+          ? "grid-cols-1 gap-6 px-4 pb-[60px]"
+          : "grid-cols-[1fr_380px] gap-12 px-[60px] pb-20"
+      )}>
 
         {/* Left: form or status */}
         <div>
           {stage === "form" && (
-            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: isMobile ? 20 : 40 }}>
-              <h2 style={{ fontFamily: G.serif, fontSize: isMobile ? 22 : 26, fontWeight: 700, color: G.text, margin: "0 0 28px" }}>Reserve Your Spot</h2>
+            <div className={cn(
+              "rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)]",
+              isMobile ? "p-5" : "p-10"
+            )}>
+              <h2 className={cn(
+                "font-serif font-bold text-foreground mt-0 mb-7",
+                isMobile ? "text-[22px]" : "text-[26px]"
+              )}>
+                Reserve Your Spot
+              </h2>
 
               {error && (
-                <div style={{ background: G.red + "1E", color: G.red, border: `1px solid ${G.red}30`, borderRadius: 8, padding: "10px 16px", marginBottom: 20, fontSize: 13 }}>
+                <div className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-[13px] text-destructive">
                   ⚠️ {error}
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-                <Input label="Full Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your full name" />
-                <Input label="Email Address *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} type="email" placeholder="your@email.com" />
+              <div className={cn("grid gap-4 mb-4", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">Full Name *</Label>
+                  <Input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Your full name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">Email Address *</Label>
+                  <Input
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    type="email"
+                    placeholder="your@email.com"
+                  />
+                </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Event Type</label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div className="mb-3.5">
+                <Label className="block mb-1.5 text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">
+                  Event Type
+                </Label>
+                <div className="flex flex-wrap gap-2">
                   {TOPICS.map(t => (
-                    <button key={t} onClick={() => setForm(f => ({ ...f, eventType: t }))} style={{
-                      background: form.eventType === t ? `${G.gold}20` : G.s2,
-                      border: `1.5px solid ${form.eventType === t ? G.gold : G.border}`,
-                      borderRadius: 50, padding: "7px 16px", color: form.eventType === t ? G.gold : G.muted,
-                      fontSize: 12, cursor: "pointer", fontFamily: G.sans, fontWeight: 600, transition: "all 0.2s",
-                    }}>{t}</button>
+                    <button
+                      key={t}
+                      onClick={() => setForm(f => ({ ...f, eventType: t }))}
+                      className={cn(
+                        "rounded-full border px-4 py-[7px] text-xs font-semibold transition-all duration-200 cursor-pointer",
+                        form.eventType === t
+                          ? "bg-primary/15 border-primary text-primary"
+                          : "bg-white/5 border-border text-muted-foreground hover:border-primary/40"
+                      )}
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-                <Input label="Preferred Date" value={form.preferredDate} onChange={e => setForm(f => ({ ...f, preferredDate: e.target.value }))} type="date" />
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Budget Range</label>
-                  <select value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} style={{
-                    width: "100%", background: G.s2, border: `1px solid ${G.border}`, borderRadius: 8,
-                    padding: "11px 14px", color: G.text, fontSize: 14, outline: "none", fontFamily: G.sans,
-                  }}>
+              <div className={cn("grid gap-4 mb-4", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">Preferred Date</Label>
+                  <Input
+                    value={form.preferredDate}
+                    onChange={e => setForm(f => ({ ...f, preferredDate: e.target.value }))}
+                    type="date"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">Budget Range</Label>
+                  <select
+                    value={form.budget}
+                    onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                    className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans"
+                  >
                     <option value="">Select range</option>
                     {BUDGETS.map(b => <option key={b}>{b}</option>)}
                   </select>
                 </div>
               </div>
 
-              <Input label="Additional Notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Tell us about your event, requirements, or specific celebrities you have in mind..." rows={3} />
+              <div className="space-y-1.5 mb-4">
+                <Label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">Additional Notes</Label>
+                <textarea
+                  value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Tell us about your event, requirements, or specific celebrities you have in mind..."
+                  rows={3}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans resize-none placeholder:text-muted-foreground/50"
+                />
+              </div>
 
-              <Btn onClick={submit} full style={{ padding: "15px 0", fontSize: 14, marginTop: 8 }} disabled={loading}>
+              <Button
+                onClick={submit}
+                disabled={loading}
+                className="w-full py-[15px] text-sm mt-2"
+              >
                 {loading ? "Joining waitlist..." : "Secure My Spot →"}
-              </Btn>
+              </Button>
             </div>
           )}
 
           {stage === "submitted" && (
-            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: isMobile ? 32 : 60, textAlign: "center" }}>
-              <div style={{ fontSize: 52, marginBottom: 20 }}>🎉</div>
-              <h2 style={{ fontFamily: G.serif, fontSize: 28, fontWeight: 700, color: G.gold, margin: "0 0 12px" }}>You're In!</h2>
-              <p style={{ color: G.muted, fontSize: 14, lineHeight: 1.8 }}>Loading your queue status...</p>
+            <div className={cn(
+              "rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-center",
+              isMobile ? "p-8" : "p-[60px]"
+            )}>
+              <div className="text-[52px] mb-5">🎉</div>
+              <h2 className="font-serif text-[28px] font-bold text-primary mt-0 mb-3">You're In!</h2>
+              <p className="text-muted-foreground text-sm leading-[1.8]">Loading your queue status...</p>
             </div>
           )}
 
           {stage === "live" && entry && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div className="flex flex-col gap-5">
               {/* Position card */}
-              <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 36, textAlign: "center" }}>
-                <div style={{ color: G.muted, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700, marginBottom: 16 }}>Your Queue Position</div>
-                <div style={{ fontFamily: G.serif, fontSize: isMobile ? 72 : 96, fontWeight: 800, color: G.gold, lineHeight: 1, marginBottom: 8 }}>
+              <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-9 text-center">
+                <div className="text-[11px] font-bold tracking-[2px] uppercase text-muted-foreground mb-4">
+                  Your Queue Position
+                </div>
+                <div className={cn(
+                  "font-serif font-black text-primary leading-none mb-2",
+                  isMobile ? "text-[72px]" : "text-[96px]"
+                )}>
                   #{entry.position || "—"}
                 </div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  background: (statusConfig[entry.status]?.color || G.gold) + "18",
-                  border: `1px solid ${(statusConfig[entry.status]?.color || G.gold)}40`,
-                  borderRadius: 50, padding: "8px 20px", marginTop: 8,
-                }}>
+                <div className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-5 py-2 mt-2",
+                  statusConfig[entry.status]?.bgClass || "bg-primary/10",
+                  statusConfig[entry.status]?.borderClass || "border-primary/40"
+                )}>
                   <span>{statusConfig[entry.status]?.icon}</span>
-                  <span style={{ color: statusConfig[entry.status]?.color || G.gold, fontWeight: 700, fontSize: 13 }}>
+                  <span className={cn("font-bold text-[13px]", statusConfig[entry.status]?.colorClass || "text-primary")}>
                     {statusConfig[entry.status]?.label}
                   </span>
                 </div>
                 {wsConnected && (
-                  <div style={{ marginTop: 16, color: G.dim, fontSize: 11, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: G.green }} />
+                  <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/60">
+                    <div className="w-[7px] h-[7px] rounded-full bg-[#6DBF7B]" />
                     Live updates active
                   </div>
                 )}
               </div>
 
               {/* Details card */}
-              <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 28 }}>
-                <h3 style={{ fontFamily: G.serif, fontSize: 18, fontWeight: 700, color: G.text, margin: "0 0 20px" }}>Your Request Details</h3>
+              <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-7">
+                <h3 className="font-serif text-[18px] font-bold text-foreground mt-0 mb-5">Your Request Details</h3>
                 {[["Name", entry.name], ["Email", entry.email], ["Event Type", entry.eventType || "—"], ["Preferred Date", entry.preferredDate || "—"], ["Budget", entry.budget || "—"], ["Submitted", fmtDate(entry.createdAt)]].map(([k, v]) => (
-                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${G.border}` }}>
-                    <span style={{ color: G.muted, fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{k}</span>
-                    <span style={{ color: G.text, fontSize: 13, fontWeight: 500, maxWidth: "60%", textAlign: "right" }}>{v}</span>
+                  <div key={k} className="flex justify-between py-2.5 border-b border-border">
+                    <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.5px]">{k}</span>
+                    <span className="text-foreground text-[13px] font-medium max-w-[60%] text-right">{v}</span>
                   </div>
                 ))}
               </div>
 
               {entry.status === "attending" && (
-                <div style={{ background: `${G.green}14`, border: `1px solid ${G.green}30`, borderRadius: 16, padding: 24, textAlign: "center" }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>🎯</div>
-                  <div style={{ color: G.green, fontWeight: 700, fontSize: 16, marginBottom: 6 }}>An agent is ready for you!</div>
-                  <div style={{ color: G.muted, fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>Your personal concierge is waiting. Open the live chat now.</div>
-                  <Btn onClick={() => {
-                    if (entry.chatSessionId) {
-                      window.dispatchEvent(new CustomEvent("strabook:join-chat", { detail: { sessionId: entry.chatSessionId } }));
-                    }
-                  }} style={{ padding: "12px 32px", fontSize: 13 }}>
+                <div className="rounded-2xl border border-[#6DBF7B]/30 bg-[#6DBF7B]/[0.08] p-6 text-center">
+                  <div className="text-[32px] mb-2.5">🎯</div>
+                  <div className="text-[#6DBF7B] font-bold text-base mb-1.5">An agent is ready for you!</div>
+                  <div className="text-muted-foreground text-[13px] leading-[1.7] mb-4">Your personal concierge is waiting. Open the live chat now.</div>
+                  <Button
+                    onClick={() => {
+                      if (entry.chatSessionId) {
+                        window.dispatchEvent(new CustomEvent("strabook:join-chat", { detail: { sessionId: entry.chatSessionId } }));
+                      }
+                    }}
+                    className="px-8 py-3 text-[13px]"
+                  >
                     💬 Open Live Chat →
-                  </Btn>
+                  </Button>
                 </div>
               )}
             </div>
@@ -225,27 +299,31 @@ export default function WaitlistPage({ user }) {
         </div>
 
         {/* Right: info panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, position: isMobile ? "static" : "sticky", top: 100 }}>
-          <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 28 }}>
-            <h3 style={{ fontFamily: G.serif, fontSize: 18, fontWeight: 700, color: G.text, margin: "0 0 20px" }}>What to Expect</h3>
-            {[["🎯", "Personalised Matching", "A dedicated agent will curate a shortlist of celebrities tailored to your event."],
+        <div className={cn(
+          "flex flex-col gap-5",
+          !isMobile && "sticky top-[100px]"
+        )}>
+          <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-7">
+            <h3 className="font-serif text-[18px] font-bold text-foreground mt-0 mb-5">What to Expect</h3>
+            {[
+              ["🎯", "Personalised Matching", "A dedicated agent will curate a shortlist of celebrities tailored to your event."],
               ["⚡", "Priority Access", "Waitlist members get first access to newly available talent and special packages."],
               ["🤝", "White-Glove Service", "From contract to day-of logistics, we handle everything seamlessly."],
               ["🔒", "Confidential & Secure", "All inquiries are handled with complete discretion and privacy."],
             ].map(([icon, title, desc]) => (
-              <div key={title} style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-                <div style={{ fontSize: 22, flexShrink: 0 }}>{icon}</div>
+              <div key={title} className="flex gap-3.5 mb-5 last:mb-0">
+                <div className="text-[22px] shrink-0">{icon}</div>
                 <div>
-                  <div style={{ color: G.text, fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{title}</div>
-                  <div style={{ color: G.dim, fontSize: 12, lineHeight: 1.6 }}>{desc}</div>
+                  <div className="text-foreground font-bold text-[13px] mb-1">{title}</div>
+                  <div className="text-muted-foreground/60 text-xs leading-[1.6]">{desc}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ background: `${G.gold}10`, border: `1px solid ${G.gold}30`, borderRadius: 16, padding: 24, textAlign: "center" }}>
-            <div style={{ fontFamily: G.serif, fontSize: 36, fontWeight: 800, color: G.gold }}>~2h</div>
-            <div style={{ color: G.muted, fontSize: 12, marginTop: 4 }}>Average response time</div>
+          <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-6 text-center">
+            <div className="font-serif text-[36px] font-extrabold text-primary">~2h</div>
+            <div className="text-muted-foreground text-xs mt-1">Average response time</div>
           </div>
         </div>
       </div>

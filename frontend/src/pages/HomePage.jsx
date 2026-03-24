@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { G, avatar } from "../lib/tokens.js";
+import { avatar } from "../lib/tokens.js";
 import { CELEBS, CATS, SERVICES, TESTIMONIALS, SPONSORS } from "../lib/data.js";
-import { Stars, Badge, Btn } from "../components/ui.jsx";
+import { Stars } from "../components/ui.jsx";
+import { Button } from "../components/ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
+import { cn } from "../lib/utils.js";
 
 function SponsorLogo({ name }) {
   return (
-    <div style={{ padding: "0 30px", display: "flex", alignItems: "center", gap: 10 }}>
-      {name === "Rolex" && <span style={{ fontSize: 18 }}>👑</span>}
-      <span style={{ color: G.dim, fontSize: 14, fontWeight: 700, letterSpacing: 3, fontFamily: G.sans, opacity: 0.35, cursor: "default", textTransform: "uppercase" }}>
+    <div className="flex items-center gap-2.5 px-[30px]">
+      {name === "Rolex" && <span className="text-[18px]">👑</span>}
+      <span className="text-muted-foreground/60 text-sm font-bold tracking-[3px] uppercase opacity-35 cursor-default select-none">
         {name}
       </span>
     </div>
@@ -48,72 +50,144 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
   return (
     <div>
       {/* ── HERO ── */}
-      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", padding: isMobile ? "100px 20px 80px" : "120px 60px 100px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920&q=80')", backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3)" }} />
-        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, ${G.bg}cc 0%, ${G.bg}40 40%, ${G.bg}ee 100%)` }} />
-        <div style={{ maxWidth: 860, position: "relative", zIndex: 1, width: "100%" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 28, background: `${G.gold}12`, border: `1px solid ${G.gold}30`, borderRadius: 50, padding: "7px 20px" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: G.green, display: "inline-block" }} />
-            <span style={{ color: G.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>500+ A-List Celebrities Available Now</span>
+      <section className={cn(
+        "relative overflow-hidden flex items-center",
+        isMobile ? "min-h-screen px-5 pt-[100px] pb-20" : "min-h-screen px-[60px] pt-[120px] pb-[100px]"
+      )}>
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center brightness-[0.3]"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920&q=80')" }}
+        />
+        {/* Gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to bottom, rgba(10,10,8,0.8) 0%, rgba(10,10,8,0.25) 40%, rgba(10,10,8,0.93) 100%)" }}
+        />
+
+        <div className="relative z-10 w-full max-w-[860px]">
+          {/* Availability pill */}
+          <div className="inline-flex items-center gap-2.5 mb-7 bg-primary/[0.07] border border-primary/30 rounded-full px-5 py-[7px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6DBF7B] inline-block" />
+            <span className="text-primary text-[11px] font-bold tracking-[2px] uppercase">500+ A-List Celebrities Available Now</span>
           </div>
-          <h1 style={{ fontSize: "clamp(42px,8vw,96px)", fontFamily: G.serif, color: G.cream, lineHeight: 1.0, margin: "0 0 28px", fontWeight: 800, letterSpacing: -2 }}>
-            The Stage is<br /><span style={{ color: G.gold, fontStyle: "italic" }}>Yours.</span>
+
+          {/* Headline */}
+          <h1
+            className="font-serif text-foreground leading-none mb-7 font-extrabold tracking-[-2px]"
+            style={{ fontSize: "clamp(42px,8vw,96px)" }}
+          >
+            The Stage is<br />
+            <span className="text-primary italic">Yours.</span>
           </h1>
-          <p style={{ color: G.muted, fontSize: "clamp(14px,1.8vw,19px)", lineHeight: 1.8, maxWidth: 560, margin: "0 0 44px", fontWeight: 400 }}>
+
+          {/* Subheading */}
+          <p
+            className="text-muted-foreground leading-[1.8] max-w-[560px] mb-11 font-normal"
+            style={{ fontSize: "clamp(14px,1.8vw,19px)" }}
+          >
             Secure exclusive bookings with the world's most influential talent. An elite gateway to iconic performances and private appearances.
           </p>
+
           {/* Search bar pill */}
-          <div style={{ background: "rgba(42,42,42,0.7)", backdropFilter: "blur(16px)", border: `1px solid ${G.border}`, borderRadius: 50, padding: "6px 6px 6px 24px", display: "flex", alignItems: "center", gap: 12, maxWidth: 580, marginBottom: 28 }}>
-            <span style={{ color: G.gold, fontSize: 16 }}>⌕</span>
-            <input placeholder="Search celebrity, genre, or event type..." style={{ flex: 1, background: "transparent", border: "none", color: G.text, fontSize: 14, outline: "none", fontFamily: G.sans, padding: "10px 0", minWidth: 0 }} onFocus={() => setPage("celebrities")} />
-            <Btn onClick={() => setPage("celebrities")} style={{ padding: "11px 26px", fontSize: 12, flexShrink: 0 }}>Search</Btn>
+          <div className="flex items-center gap-3 max-w-[580px] mb-7 bg-[rgba(42,42,42,0.7)] backdrop-blur-md border border-border rounded-full pl-6 pr-1.5 py-1.5">
+            <span className="text-primary text-base">⌕</span>
+            <input
+              placeholder="Search celebrity, genre, or event type..."
+              className="flex-1 bg-transparent border-none text-foreground text-sm outline-none py-2.5 min-w-0 placeholder:text-muted-foreground"
+              onFocus={() => setPage("celebrities")}
+            />
+            <Button onClick={() => setPage("celebrities")} size="sm" className="shrink-0 px-6 py-[11px] text-xs">
+              Search
+            </Button>
           </div>
+
           {/* Category pills */}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 }}>Explore:</span>
+          <div className="flex gap-2.5 flex-wrap items-center">
+            <span className="text-muted-foreground/60 text-[11px] tracking-[2px] uppercase font-bold">Explore:</span>
             {CATS.map(cat => (
-              <button key={cat.id} onClick={() => setPage("celebrities")} style={{ background: "rgba(53,53,52,0.5)", border: `1px solid ${G.border}`, borderRadius: 50, padding: "7px 18px", color: G.muted, fontSize: 12, cursor: "pointer", fontFamily: G.sans, fontWeight: 500, transition: "all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = G.gold + "80"; e.currentTarget.style.color = G.gold; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.color = G.muted; }}>
+              <button
+                key={cat.id}
+                onClick={() => setPage("celebrities")}
+                className="bg-[rgba(53,53,52,0.5)] border border-border rounded-full px-[18px] py-[7px] text-muted-foreground text-xs font-medium transition-all duration-200 cursor-pointer hover:border-primary/50 hover:text-primary"
+              >
                 {cat.icon} {cat.name}
               </button>
             ))}
           </div>
         </div>
+
         {/* Scroll indicator */}
         {!isMobile && (
-          <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, opacity: 0.4 }}>
-            <span style={{ color: G.muted, fontSize: 10, letterSpacing: 3, textTransform: "uppercase" }}>Scroll</span>
-            <div style={{ width: 1, height: 40, background: `linear-gradient(to bottom, ${G.gold}, transparent)` }} />
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+            <span className="text-muted-foreground text-[10px] tracking-[3px] uppercase">Scroll</span>
+            <div
+              className="w-px h-10"
+              style={{ background: "linear-gradient(to bottom, var(--primary), transparent)" }}
+            />
           </div>
         )}
       </section>
 
       {/* ── TRUST BAR ── */}
-      <div style={{ background: `linear-gradient(180deg, ${G.s1} 0%, ${G.bg} 100%)`, borderTop: `1px solid ${G.gold}25`, borderBottom: `1px solid ${G.border}`, padding: isMobile ? "40px 20px" : "56px 40px" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 32 : 24, textAlign: "center" }}>
+      <div
+        className={cn(
+          "border-t border-primary/[0.15] border-b border-border",
+          isMobile ? "px-5 py-10" : "px-10 py-14"
+        )}
+        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%)" }}
+      >
+        <div className={cn(
+          "max-w-[1000px] mx-auto grid text-center",
+          isMobile ? "grid-cols-2 gap-8" : "grid-cols-4 gap-6"
+        )}>
           {[["500+", "Celebrity Roster"], ["100K+", "Happy Clients"], ["10+", "Years Experience"], ["24/7", "Concierge Support"]].map(([n, l], i) => (
-            <div key={l} style={{ position: "relative" }}>
-              <div style={{ fontSize: "clamp(28px,5vw,52px)", fontWeight: 800, color: G.gold, fontFamily: G.serif, lineHeight: 1, letterSpacing: -1 }}>{n}</div>
-              <div style={{ color: G.muted, fontSize: 11, marginTop: 10, letterSpacing: 2, textTransform: "uppercase", fontWeight: 600 }}>{l}</div>
-              {!isMobile && i < 3 && <div style={{ position: "absolute", right: 0, top: "10%", height: "80%", width: 1, background: `linear-gradient(to bottom, transparent, ${G.border}, transparent)` }} />}
+            <div key={l} className="relative">
+              <div
+                className="font-serif font-extrabold text-primary leading-none tracking-[-1px]"
+                style={{ fontSize: "clamp(28px,5vw,52px)" }}
+              >
+                {n}
+              </div>
+              <div className="text-muted-foreground text-[11px] mt-2.5 tracking-[2px] uppercase font-semibold">{l}</div>
+              {!isMobile && i < 3 && (
+                <div
+                  className="absolute right-0 top-[10%] h-[80%] w-px"
+                  style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent)" }}
+                />
+              )}
             </div>
           ))}
         </div>
       </div>
 
       {/* ── FEATURED CELEBRITIES ── */}
-      <section ref={featRef} className="reveal" style={{ padding: isMobile ? "60px 20px" : "100px 40px", maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 56 }}>
+      <section
+        ref={featRef}
+        className={cn("reveal mx-auto max-w-[1280px]", isMobile ? "px-5 py-[60px]" : "px-10 py-[100px]")}
+      >
+        <div className="flex justify-between items-end mb-14">
           <div>
-            <span style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 12 }}>Curated Selection</span>
-            <h2 style={{ fontSize: "clamp(26px,5vw,52px)", fontFamily: G.serif, color: G.cream, margin: "0 0 12px", fontWeight: 700 }}>Featured Talent</h2>
-            <div style={{ height: 3, width: 64, background: `linear-gradient(90deg, ${G.gold}, ${G.goldD})`, borderRadius: 2 }} />
+            <span className="text-primary text-[11px] tracking-[3px] font-bold uppercase block mb-3">Curated Selection</span>
+            <h2
+              className="font-serif text-foreground font-bold m-0 mb-3"
+              style={{ fontSize: "clamp(26px,5vw,52px)" }}
+            >
+              Featured Talent
+            </h2>
+            <div
+              className="h-[3px] w-16 rounded-sm"
+              style={{ background: "linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 80%, transparent))" }}
+            />
           </div>
-          <button onClick={() => setPage("celebrities")} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, fontFamily: G.sans, letterSpacing: 0.5, flexShrink: 0 }}>
+          <button
+            onClick={() => setPage("celebrities")}
+            className="bg-transparent border-none text-primary cursor-pointer text-[13px] font-bold flex items-center gap-1.5 tracking-[0.5px] shrink-0 hover:opacity-80 transition-opacity"
+          >
             {isMobile ? "All →" : "View Full Roster →"}
           </button>
         </div>
+
         {/* Bento grid layout */}
         {(() => {
           const feat = CELEBS.filter(c => c.feat);
@@ -121,21 +195,58 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
           const sideCards = rest.slice(0, 4);
           if (isMobile) {
             return (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+              <div className="grid grid-cols-1 gap-4">
                 {[main, ...sideCards].filter(Boolean).slice(0, 3).map((c, idx) => (
-                  <div key={c.id} className="celeb-card" onClick={() => onView(c)} style={{ position: "relative", borderRadius: 20, overflow: "hidden", cursor: "pointer", background: G.card, boxShadow: `0 4px 20px #00000040`, height: idx === 0 ? 320 : 220 }}>
-                    <img className="celeb-img" src={c.img || avatar(c.name)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.src = avatar(c.name)} />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0d0d0d 0%, transparent 60%)" }} />
-                    {idx === 0 && <div style={{ position: "absolute", top: 20, left: 20 }}>
-                      <span style={{ background: `${G.gold}22`, color: G.gold, border: `1px solid ${G.gold}40`, backdropFilter: "blur(8px)", borderRadius: 50, padding: "5px 16px", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "inline-block" }}>⭐ Top Pick</span>
-                    </div>}
-                    <div style={{ position: "absolute", bottom: 0, padding: idx === 0 ? "24px 24px" : "18px 22px" }}>
-                      <h3 style={{ fontFamily: G.serif, fontSize: idx === 0 ? 28 : 21, fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.05 }}>{c.name}</h3>
-                      {idx === 0 && <div style={{ display: "flex", gap: 10 }}>
-                        <Btn onClick={e => { e.stopPropagation(); onBook(c, "booking"); }} style={{ padding: "9px 18px", fontSize: 11 }} disabled={!c.avail}>Book Now</Btn>
-                        <Btn variant="outline" onClick={e => { e.stopPropagation(); onView(c); }} style={{ padding: "9px 18px", fontSize: 11 }}>View</Btn>
-                      </div>}
-                      {idx > 0 && <p style={{ color: G.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>{c.flag} {c.cat}</p>}
+                  <div
+                    key={c.id}
+                    className="celeb-card relative rounded-[20px] overflow-hidden cursor-pointer bg-card shadow-[0_4px_20px_rgba(0,0,0,0.25)]"
+                    style={{ height: idx === 0 ? 320 : 220 }}
+                    onClick={() => onView(c)}
+                  >
+                    <img
+                      className="celeb-img w-full h-full object-cover"
+                      src={c.img || avatar(c.name)}
+                      alt={c.name}
+                      onError={e => e.target.src = avatar(c.name)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
+                    {idx === 0 && (
+                      <div className="absolute top-5 left-5">
+                        <span className="bg-primary/[0.13] text-primary border border-primary/40 backdrop-blur-md rounded-full px-4 py-[5px] text-[10px] font-bold tracking-[1.5px] uppercase inline-block">
+                          ⭐ Top Pick
+                        </span>
+                      </div>
+                    )}
+                    <div className={cn("absolute bottom-0", idx === 0 ? "p-6" : "px-[22px] py-[18px]")}>
+                      <h3
+                        className="font-serif font-extrabold text-white leading-[1.05] mb-2"
+                        style={{ fontSize: idx === 0 ? 28 : 21 }}
+                      >
+                        {c.name}
+                      </h3>
+                      {idx === 0 && (
+                        <div className="flex gap-2.5">
+                          <Button
+                            size="sm"
+                            className="px-[18px] py-[9px] text-[11px]"
+                            disabled={!c.avail}
+                            onClick={e => { e.stopPropagation(); onBook(c, "booking"); }}
+                          >
+                            Book Now
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="px-[18px] py-[9px] text-[11px]"
+                            onClick={e => { e.stopPropagation(); onView(c); }}
+                          >
+                            View
+                          </Button>
+                        </div>
+                      )}
+                      {idx > 0 && (
+                        <p className="text-primary text-[10px] font-bold tracking-[2px] uppercase m-0">{c.flag} {c.cat}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -143,35 +254,80 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             );
           }
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gridTemplateRows: `360px ${sideCards.length > 2 ? "300px" : "0"}`, gap: 16 }}>
+            <div
+              className="grid gap-4"
+              style={{
+                gridTemplateColumns: "2fr 1fr 1fr",
+                gridTemplateRows: sideCards.length > 2 ? "360px 300px" : "360px",
+              }}
+            >
               {main && (
-                <div className="celeb-card" onClick={() => onView(main)} style={{ gridRow: sideCards.length > 2 ? "1 / 3" : "1", position: "relative", borderRadius: 20, overflow: "hidden", cursor: "pointer", background: G.card, boxShadow: `0 8px 32px #00000060` }}>
-                  <img className="celeb-img" src={main.img || avatar(main.name)} alt={main.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.src = avatar(main.name)} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0d0d0d 0%, rgba(13,13,13,0.1) 50%, transparent 100%)" }} />
-                  <div style={{ position: "absolute", top: 20, left: 20 }}>
-                    <span style={{ background: `${G.gold}22`, color: G.gold, border: `1px solid ${G.gold}40`, backdropFilter: "blur(8px)", borderRadius: 50, padding: "5px 16px", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "inline-block" }}>⭐ Top Pick</span>
+                <div
+                  className="celeb-card relative rounded-[20px] overflow-hidden cursor-pointer bg-card shadow-[0_8px_32px_rgba(0,0,0,0.38)]"
+                  style={{ gridRow: sideCards.length > 2 ? "1 / 3" : "1" }}
+                  onClick={() => onView(main)}
+                >
+                  <img
+                    className="celeb-img w-full h-full object-cover"
+                    src={main.img || avatar(main.name)}
+                    alt={main.name}
+                    onError={e => e.target.src = avatar(main.name)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-[rgba(13,13,13,0.1)] to-transparent" />
+                  <div className="absolute top-5 left-5">
+                    <span className="bg-primary/[0.13] text-primary border border-primary/40 backdrop-blur-md rounded-full px-4 py-[5px] text-[10px] font-bold tracking-[1.5px] uppercase inline-block">
+                      ⭐ Top Pick
+                    </span>
                   </div>
-                  <div style={{ position: "absolute", bottom: 0, padding: "32px 36px" }}>
-                    <h3 style={{ fontFamily: G.serif, fontSize: 38, fontWeight: 800, color: "#fff", margin: "0 0 8px", lineHeight: 1.05 }}>{main.name}</h3>
-                    <p style={{ color: "rgba(255,255,255,0.60)", fontSize: 13, margin: "0 0 20px", lineHeight: 1.6 }}>{main.bio.slice(0, 90)}...</p>
-                    <div style={{ display: "flex", gap: 10 }}>
-                      <Btn onClick={e => { e.stopPropagation(); onBook(main, "booking"); }} style={{ padding: "10px 22px", fontSize: 11 }} disabled={!main.avail}>Book Now</Btn>
-                      <Btn variant="outline" onClick={e => { e.stopPropagation(); onView(main); }} style={{ padding: "10px 22px", fontSize: 11 }}>View Profile</Btn>
+                  <div className="absolute bottom-0 p-9">
+                    <h3 className="font-serif text-[38px] font-extrabold text-white leading-[1.05] mb-2">
+                      {main.name}
+                    </h3>
+                    <p className="text-white/60 text-[13px] mb-5 leading-[1.6]">
+                      {main.bio.slice(0, 90)}...
+                    </p>
+                    <div className="flex gap-2.5">
+                      <Button
+                        size="sm"
+                        className="px-[22px] py-2.5 text-[11px]"
+                        disabled={!main.avail}
+                        onClick={e => { e.stopPropagation(); onBook(main, "booking"); }}
+                      >
+                        Book Now
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="px-[22px] py-2.5 text-[11px]"
+                        onClick={e => { e.stopPropagation(); onView(main); }}
+                      >
+                        View Profile
+                      </Button>
                     </div>
                   </div>
                 </div>
               )}
               {sideCards.map(c => (
-                <div key={c.id} className="celeb-card" onClick={() => onView(c)} style={{ position: "relative", borderRadius: 20, overflow: "hidden", cursor: "pointer", background: G.card, boxShadow: `0 4px 20px #00000040` }}>
-                  <img className="celeb-img" src={c.img || avatar(c.name)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.src = avatar(c.name)} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #0d0d0d 0%, transparent 60%)" }} />
-                  <div style={{ position: "absolute", bottom: 0, padding: "18px 22px" }}>
-                    <h3 style={{ fontFamily: G.serif, fontSize: 21, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{c.name}</h3>
-                    <p style={{ color: G.gold, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>{c.flag} {c.cat}</p>
+                <div
+                  key={c.id}
+                  className="celeb-card relative rounded-[20px] overflow-hidden cursor-pointer bg-card shadow-[0_4px_20px_rgba(0,0,0,0.25)]"
+                  onClick={() => onView(c)}
+                >
+                  <img
+                    className="celeb-img w-full h-full object-cover"
+                    src={c.img || avatar(c.name)}
+                    alt={c.name}
+                    onError={e => e.target.src = avatar(c.name)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
+                  <div className="absolute bottom-0 px-[22px] py-[18px]">
+                    <h3 className="font-serif text-[21px] font-bold text-white mb-1">{c.name}</h3>
+                    <p className="text-primary text-[10px] font-bold tracking-[2px] uppercase m-0">{c.flag} {c.cat}</p>
                   </div>
-                  <button onClick={e => { e.stopPropagation(); onFav(c.id); }} style={{ position: "absolute", top: 14, right: 14, background: "rgba(13,13,13,0.5)", backdropFilter: "blur(8px)", border: `1px solid ${G.border}40`, borderRadius: "50%", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, transition: "all 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(13,13,13,0.8)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "rgba(13,13,13,0.5)"}>
+                  <button
+                    onClick={e => { e.stopPropagation(); onFav(c.id); }}
+                    className="absolute top-3.5 right-3.5 w-[34px] h-[34px] rounded-full bg-[rgba(13,13,13,0.5)] backdrop-blur-md border border-border/40 flex items-center justify-center cursor-pointer text-[13px] transition-all duration-200 hover:bg-[rgba(13,13,13,0.8)]"
+                  >
                     {favorites.includes(c.id) ? "❤️" : "🤍"}
                   </button>
                 </div>
@@ -179,27 +335,53 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             </div>
           );
         })()}
-        <div style={{ textAlign: "center", marginTop: 40 }}>
-          <Btn onClick={() => setPage("celebrities")} variant="outline" style={{ padding: "14px 40px", fontSize: 12 }}>View All {CELEBS.length}+ Celebrities →</Btn>
+
+        <div className="text-center mt-10">
+          <Button
+            variant="outline"
+            className="px-10 py-3.5 text-xs"
+            onClick={() => setPage("celebrities")}
+          >
+            View All {CELEBS.length}+ Celebrities →
+          </Button>
         </div>
       </section>
 
       {/* ── CATEGORIES ── */}
-      <section ref={catsRef} className="reveal" style={{ background: G.bg, padding: isMobile ? "60px 20px" : "100px 60px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 56 }}>
-            <h2 style={{ fontFamily: G.serif, fontSize: "clamp(24px,4vw,48px)", fontWeight: 700, color: G.cream, margin: 0, whiteSpace: "nowrap" }}>Trending Now</h2>
-            <div style={{ height: 1, background: G.border, flex: 1 }} />
+      <section
+        ref={catsRef}
+        className={cn("reveal bg-background", isMobile ? "px-5 py-[60px]" : "px-[60px] py-[100px]")}
+      >
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center gap-6 mb-14">
+            <h2
+              className="font-serif font-bold text-foreground m-0 whitespace-nowrap"
+              style={{ fontSize: "clamp(24px,4vw,48px)" }}
+            >
+              Trending Now
+            </h2>
+            <div className="h-px bg-border flex-1" />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(220px,1fr))", gap: 16 }}>
+          <div className={cn(
+            "grid gap-4",
+            isMobile ? "grid-cols-2" : "grid-cols-[repeat(auto-fill,minmax(220px,1fr))]"
+          )}>
             {CATS.map(cat => (
-              <div key={cat.id} onClick={() => setPage("celebrities")} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 24px", cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = G.gold + "50"; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 16px 40px #00000040`; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
-                <div style={{ fontSize: 28, marginBottom: 14 }}>{cat.icon}</div>
-                <div style={{ color: G.cream, fontWeight: 700, fontSize: 14, marginBottom: 4, fontFamily: G.serif }}>{cat.name}</div>
-                <div style={{ color: G.gold, fontSize: 13, fontWeight: 700, marginBottom: isMobile ? 0 : 10 }}>{cat.n}</div>
-                {!isMobile && <div style={{ color: G.dim, fontSize: 12, lineHeight: 1.65 }}>{cat.desc}</div>}
+              <div
+                key={cat.id}
+                onClick={() => setPage("celebrities")}
+                className={cn(
+                  "bg-card border border-border rounded-xl cursor-pointer transition-all duration-300",
+                  "hover:border-primary/50 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.25)]",
+                  isMobile ? "px-4 py-5" : "px-6 py-7"
+                )}
+              >
+                <div className="text-[28px] mb-3.5">{cat.icon}</div>
+                <div className="text-foreground font-bold text-sm mb-1 font-serif">{cat.name}</div>
+                <div className="text-primary text-[13px] font-bold mb-0">{cat.n}</div>
+                {!isMobile && (
+                  <div className="text-muted-foreground/60 text-xs leading-[1.65] mt-2.5">{cat.desc}</div>
+                )}
               </div>
             ))}
           </div>
@@ -207,22 +389,40 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
       </section>
 
       {/* ── SERVICES ── */}
-      <section style={{ padding: isMobile ? "60px 20px" : "100px 60px", background: G.s1, borderTop: `1px solid ${G.border}` }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, marginBottom: 14, textTransform: "uppercase" }}>Services</div>
-            <h2 style={{ fontSize: "clamp(24px,5vw,52px)", fontFamily: G.serif, color: G.text, margin: "0 0 14px", fontWeight: 700 }}>Everything You Need</h2>
-            <p style={{ color: G.muted, fontSize: 15, maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>From intimate video messages to grand event appearances — we've got it covered.</p>
+      <section
+        className={cn(
+          "bg-background/50 border-t border-border",
+          isMobile ? "px-5 py-[60px]" : "px-[60px] py-[100px]"
+        )}
+      >
+        <div className="max-w-[1140px] mx-auto">
+          <div className="text-center mb-14">
+            <div className="text-primary text-[11px] tracking-[3px] font-bold mb-3.5 uppercase">Services</div>
+            <h2
+              className="font-serif text-foreground font-bold m-0 mb-3.5"
+              style={{ fontSize: "clamp(24px,5vw,52px)" }}
+            >
+              Everything You Need
+            </h2>
+            <p className="text-muted-foreground text-[15px] max-w-[480px] mx-auto leading-[1.7]">
+              From intimate video messages to grand event appearances — we've got it covered.
+            </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(300px,1fr))", gap: 18 }}>
+          <div className={cn(
+            "grid gap-[18px]",
+            isMobile ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
+          )}>
             {SERVICES.map(s => (
-              <div key={s.title} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: 28, transition: "all 0.3s" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = G.gold + "50"; e.currentTarget.style.background = G.cardH; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.background = G.card; e.currentTarget.style.transform = "none"; }}>
-                <div style={{ fontSize: 32, marginBottom: 16 }}>{s.icon}</div>
-                <h3 style={{ color: G.text, margin: "0 0 10px", fontSize: 18, fontFamily: G.serif, fontWeight: 700 }}>{s.title}</h3>
-                <p style={{ color: G.muted, fontSize: 13, lineHeight: 1.8, margin: "0 0 22px" }}>{s.desc}</p>
-                <Btn variant="outline" onClick={openChat} style={{ padding: "9px 20px", fontSize: 11 }}>{s.cta} →</Btn>
+              <div
+                key={s.title}
+                className="rounded-2xl border border-white/[0.08] bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-7 transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:bg-white/[0.05]"
+              >
+                <div className="text-[32px] mb-4">{s.icon}</div>
+                <h3 className="text-foreground m-0 mb-2.5 text-lg font-serif font-bold">{s.title}</h3>
+                <p className="text-muted-foreground text-[13px] leading-[1.8] m-0 mb-[22px]">{s.desc}</p>
+                <Button variant="outline" size="sm" className="px-5 py-[9px] text-[11px]" onClick={openChat}>
+                  {s.cta} →
+                </Button>
               </div>
             ))}
           </div>
@@ -230,23 +430,41 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section ref={whyRef} className="reveal" style={{ background: G.bg, padding: isMobile ? "60px 20px" : "100px 60px" }}>
-        <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 72 }}>
-            <span style={{ color: G.gold, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", fontSize: 11, display: "block", marginBottom: 16 }}>The Process</span>
-            <h2 style={{ fontFamily: G.serif, fontSize: "clamp(28px,5vw,56px)", fontWeight: 700, color: G.text, margin: "0 auto", lineHeight: 1.1, maxWidth: 600 }}>Your vision, orchestrated by experts.</h2>
+      <section
+        ref={whyRef}
+        className={cn("reveal bg-background", isMobile ? "px-5 py-[60px]" : "px-[60px] py-[100px]")}
+      >
+        <div className="max-w-[1140px] mx-auto">
+          <div className="text-center mb-[72px]">
+            <span className="text-primary font-bold tracking-[0.3em] uppercase text-[11px] block mb-4">The Process</span>
+            <h2
+              className="font-serif font-bold text-foreground mx-auto leading-[1.1] max-w-[600px] m-0"
+              style={{ fontSize: "clamp(28px,5vw,56px)" }}
+            >
+              Your vision, orchestrated by experts.
+            </h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 24 }}>
+          <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "grid-cols-3")}>
             {[
               ["01", "Curated Search", "Browse our invite-only catalog of global icons. Filter by expertise, availability, and event resonance to find your perfect match."],
               ["02", "Seamless Booking", "Our dedicated concierges handle all legal, logistical, and technical riders — a frictionless experience from offer to contract."],
               ["03", "Elite Experience", "Execute with confidence. Whether a private gala or keynote address, we manage the day-of details so you can focus on the spotlight."],
             ].map(([num, title, desc]) => (
-              <div key={num} style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 20, padding: isMobile ? "28px 24px" : "40px 32px", position: "relative", overflow: "hidden" }}>
-                <span style={{ fontFamily: G.serif, fontSize: 100, fontWeight: 800, color: `${G.gold}10`, position: "absolute", top: -20, right: 16, lineHeight: 1, userSelect: "none", pointerEvents: "none" }}>{num}</span>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: `${G.gold}18`, border: `1px solid ${G.gold}35`, display: "flex", alignItems: "center", justifyContent: "center", color: G.gold, fontFamily: G.serif, fontWeight: 800, fontSize: 18, marginBottom: 24 }}>{num}</div>
-                <h3 style={{ fontFamily: G.serif, fontSize: 22, fontWeight: 700, color: G.text, margin: "0 0 14px" }}>{title}</h3>
-                <p style={{ color: G.muted, lineHeight: 1.8, fontSize: 14, margin: 0 }}>{desc}</p>
+              <div
+                key={num}
+                className={cn(
+                  "bg-background/50 border border-border rounded-[20px] relative overflow-hidden",
+                  isMobile ? "px-6 py-7" : "px-8 py-10"
+                )}
+              >
+                <span className="font-serif text-[100px] font-extrabold text-primary/[0.06] absolute -top-5 right-4 leading-none select-none pointer-events-none">
+                  {num}
+                </span>
+                <div className="w-11 h-11 rounded-xl bg-primary/[0.094] border border-primary/[0.21] flex items-center justify-center text-primary font-serif font-extrabold text-lg mb-6">
+                  {num}
+                </div>
+                <h3 className="font-serif text-[22px] font-bold text-foreground m-0 mb-3.5">{title}</h3>
+                <p className="text-muted-foreground leading-[1.8] text-sm m-0">{desc}</p>
               </div>
             ))}
           </div>
@@ -254,34 +472,66 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section ref={testRef} className="reveal" style={{ padding: isMobile ? "60px 20px" : "100px 60px", background: G.bg }}>
-        <div style={{ maxWidth: 820, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, marginBottom: 14, textTransform: "uppercase" }}>Client Endorsements</div>
-          <h2 style={{ fontSize: "clamp(24px,5vw,50px)", fontFamily: G.serif, color: G.text, margin: "0 0 52px", fontWeight: 700 }}>What Our Clients Say</h2>
-          <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: isMobile ? "28px 24px" : "44px 52px", position: "relative", textAlign: "left" }}>
-            <div style={{ fontFamily: G.serif, fontSize: 80, color: G.gold, opacity: 0.15, position: "absolute", top: 10, left: 28, lineHeight: 1 }}>"</div>
-            <div style={{ display: "flex", gap: 2, color: G.gold, fontSize: 14, marginBottom: 22 }}>{"★".repeat(TESTIMONIALS[testimonialIdx].stars)}</div>
-            <p style={{ color: G.muted, lineHeight: 1.9, fontSize: isMobile ? 14 : 16, fontStyle: "italic", margin: "0 0 32px" }}>{TESTIMONIALS[testimonialIdx].text}</p>
-            <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 20, display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg, ${G.gold}40, ${G.goldD}30)`, border: `1px solid ${G.gold}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>👤</div>
+      <section
+        ref={testRef}
+        className={cn("reveal bg-background", isMobile ? "px-5 py-[60px]" : "px-[60px] py-[100px]")}
+      >
+        <div className="max-w-[820px] mx-auto text-center">
+          <div className="text-primary text-[11px] tracking-[3px] font-bold mb-3.5 uppercase">Client Endorsements</div>
+          <h2
+            className="font-serif text-foreground font-bold m-0 mb-[52px]"
+            style={{ fontSize: "clamp(24px,5vw,50px)" }}
+          >
+            What Our Clients Say
+          </h2>
+          <div className="rounded-2xl border border-white/[0.08] bg-card relative text-left px-7 py-7 md:px-[52px] md:py-11">
+            <div className="font-serif text-[80px] text-primary opacity-15 absolute top-2.5 left-7 leading-none select-none pointer-events-none">"</div>
+            <div className="flex gap-0.5 text-primary text-sm mb-[22px]">
+              {"★".repeat(TESTIMONIALS[testimonialIdx].stars)}
+            </div>
+            <p className={cn(
+              "text-muted-foreground leading-[1.9] italic m-0 mb-8",
+              isMobile ? "text-sm" : "text-base"
+            )}>
+              {TESTIMONIALS[testimonialIdx].text}
+            </p>
+            <div className="border-t border-border pt-5 flex items-center gap-3.5">
+              <div
+                className="w-11 h-11 rounded-full border border-primary/30 flex items-center justify-center text-base shrink-0"
+                style={{ background: "linear-gradient(135deg, rgba(var(--primary-rgb),0.25), rgba(var(--primary-rgb),0.19))" }}
+              >
+                👤
+              </div>
               <div>
-                <div style={{ color: G.text, fontWeight: 700, fontSize: 14 }}>{TESTIMONIALS[testimonialIdx].name}</div>
-                <div style={{ color: G.dim, fontSize: 12, marginTop: 2 }}>{TESTIMONIALS[testimonialIdx].role}</div>
+                <div className="text-foreground font-bold text-sm">{TESTIMONIALS[testimonialIdx].name}</div>
+                <div className="text-muted-foreground/60 text-xs mt-0.5">{TESTIMONIALS[testimonialIdx].role}</div>
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24 }}>
+          <div className="flex gap-2 justify-center mt-6">
             {TESTIMONIALS.map((_, i) => (
-              <button key={i} onClick={() => setTestimonialIdx(i)} style={{ width: i === testimonialIdx ? 28 : 8, height: 8, borderRadius: 4, background: i === testimonialIdx ? G.gold : G.border, border: "none", cursor: "pointer", transition: "all 0.3s" }} />
+              <button
+                key={i}
+                onClick={() => setTestimonialIdx(i)}
+                className={cn(
+                  "h-2 rounded-full border-none cursor-pointer transition-all duration-300",
+                  i === testimonialIdx ? "w-7 bg-primary" : "w-2 bg-border"
+                )}
+              />
             ))}
           </div>
         </div>
       </section>
 
       {/* ── SPONSORS ── */}
-      <section ref={sponsorsRef} className="reveal" style={{ background: G.s1, borderTop: `1px solid ${G.border}`, padding: "70px 0", overflow: "hidden" }}>
-        <div style={{ color: G.dim, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 40, textAlign: "center" }}>TRUSTED BY INDUSTRY LEADERS</div>
-        <div className="marquee-wrapper" style={{ overflow: "hidden", position: "relative" }}>
+      <section
+        ref={sponsorsRef}
+        className="reveal bg-background/50 border-t border-border py-[70px] overflow-hidden"
+      >
+        <div className="text-muted-foreground/60 text-[11px] tracking-[3px] font-semibold mb-10 text-center">
+          TRUSTED BY INDUSTRY LEADERS
+        </div>
+        <div className="marquee-wrapper overflow-hidden relative">
           <div className="marquee-inner">
             {[...SPONSORS, ...SPONSORS].map((s, i) => <SponsorLogo key={i} name={s.name} />)}
           </div>
@@ -289,64 +539,153 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section style={{ position: "relative", padding: isMobile ? "80px 20px" : "120px 60px", overflow: "hidden", textAlign: "center" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('https://images.unsplash.com/photo-1514525253361-bee8718a74a2?w=1920&q=80')", backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.15) grayscale(30%)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "rgba(10,10,8,0.82)" }} />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 860, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: G.serif, fontSize: "clamp(32px,6vw,80px)", fontWeight: 800, color: G.cream, margin: "0 0 32px", lineHeight: 1.05 }}>
+      <section
+        className={cn(
+          "relative overflow-hidden text-center",
+          isMobile ? "px-5 py-20" : "px-[60px] py-[120px]"
+        )}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1514525253361-bee8718a74a2?w=1920&q=80')",
+            filter: "brightness(0.15) grayscale(30%)",
+          }}
+        />
+        <div className="absolute inset-0 bg-[rgba(10,10,8,0.82)]" />
+        <div className="relative z-10 max-w-[860px] mx-auto">
+          <h2
+            className="font-serif font-extrabold text-foreground m-0 mb-8 leading-[1.05]"
+            style={{ fontSize: "clamp(32px,6vw,80px)" }}
+          >
             Elevate Your Next Event Beyond{" "}
-            <span style={{ color: G.gold, fontStyle: "italic" }}>Expectation.</span>
+            <span className="text-primary italic">Expectation.</span>
           </h2>
-          <p style={{ color: G.muted, fontSize: isMobile ? 15 : 17, maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.8 }}>
+          <p className={cn(
+            "text-muted-foreground max-w-[560px] mx-auto mb-11 leading-[1.8]",
+            isMobile ? "text-[15px]" : "text-[17px]"
+          )}>
             Join thousands of event planners, brands, and creators who trust StraBook for their most important moments.
           </p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <Btn onClick={() => setPage("celebrities")} style={{ padding: isMobile ? "14px 32px" : "18px 48px", fontSize: 14 }}>Start Your Inquiry</Btn>
-            <Btn onClick={() => setPage("waitlist")} variant="outline" style={{ padding: isMobile ? "14px 32px" : "18px 48px", fontSize: 14 }}>Join Concierge Waitlist</Btn>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button
+              className={cn(isMobile ? "px-8 py-3.5 text-sm" : "px-12 py-[18px] text-sm")}
+              onClick={() => setPage("celebrities")}
+            >
+              Start Your Inquiry
+            </Button>
+            <Button
+              variant="outline"
+              className={cn(isMobile ? "px-8 py-3.5 text-sm" : "px-12 py-[18px] text-sm")}
+              onClick={() => setPage("waitlist")}
+            >
+              Join Concierge Waitlist
+            </Button>
           </div>
         </div>
       </section>
 
       {/* ── NEWSLETTER ── */}
-      <section style={{ background: G.s1, borderTop: `1px solid ${G.border}`, padding: isMobile ? "60px 20px" : "80px 60px", textAlign: "center" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, marginBottom: 12, textTransform: "uppercase" }}>Stay in the Loop</div>
-          <h2 style={{ fontSize: "clamp(22px,4vw,40px)", fontFamily: G.serif, color: G.text, margin: "0 0 14px", fontWeight: 700 }}>Join Our Newsletter</h2>
-          <p style={{ color: G.muted, fontSize: 14, marginBottom: 32, lineHeight: 1.8 }}>Get exclusive updates on new celebrity listings, VIP offers, and special events. No spam, just stars.</p>
+      <section
+        className={cn(
+          "bg-background/50 border-t border-border text-center",
+          isMobile ? "px-5 py-[60px]" : "px-[60px] py-20"
+        )}
+      >
+        <div className="max-w-[560px] mx-auto">
+          <div className="text-primary text-[11px] tracking-[3px] font-bold mb-3 uppercase">Stay in the Loop</div>
+          <h2
+            className="font-serif text-foreground font-bold m-0 mb-3.5"
+            style={{ fontSize: "clamp(22px,4vw,40px)" }}
+          >
+            Join Our Newsletter
+          </h2>
+          <p className="text-muted-foreground text-sm mb-8 leading-[1.8]">
+            Get exclusive updates on new celebrity listings, VIP offers, and special events. No spam, just stars.
+          </p>
           {subscribed ? (
-            <div style={{ color: G.green, fontSize: 16, fontWeight: 600 }}>✅ You're subscribed! Welcome to StraBook.</div>
+            <div className="text-[#6DBF7B] text-base font-semibold">✅ You're subscribed! Welcome to StraBook.</div>
           ) : (
-            <div style={{ display: "flex", gap: 0, maxWidth: 460, margin: "0 auto", background: G.card, border: `1px solid ${G.border}`, borderRadius: 50, padding: "6px 6px 6px 22px", alignItems: "center" }}>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ flex: 1, background: "transparent", border: "none", color: G.text, fontSize: 14, outline: "none", fontFamily: G.sans, minWidth: 0 }} />
-              <Btn onClick={() => email && setSubscribed(true)} style={{ padding: "11px 24px", fontSize: 12, flexShrink: 0 }}>Subscribe</Btn>
+            <div className="flex max-w-[460px] mx-auto bg-card border border-border rounded-full pl-[22px] pr-1.5 py-1.5 items-center gap-0">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 bg-transparent border-none text-foreground text-sm outline-none min-w-0 placeholder:text-muted-foreground"
+              />
+              <Button
+                size="sm"
+                className="px-6 py-[11px] text-xs shrink-0"
+                onClick={() => email && setSubscribed(true)}
+              >
+                Subscribe
+              </Button>
             </div>
           )}
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: "#0e0e0e", borderTop: `1px solid ${G.border}`, padding: isMobile ? "48px 20px 28px" : "72px 60px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: "flex-start", gap: 40, marginBottom: 48 }}>
-            <div style={{ maxWidth: 300 }}>
-              <span style={{ color: G.gold, fontFamily: G.serif, fontSize: 22, fontWeight: 800, letterSpacing: 3, display: "block", marginBottom: 18, textTransform: "uppercase" }}>StraBook</span>
-              <p style={{ color: G.dim, fontSize: 13, lineHeight: 1.9, margin: "0 0 20px" }}>The world's premier platform for high-impact celebrity bookings. Redefining how excellence meets enterprise.</p>
-              <div style={{ color: G.dim, fontSize: 12 }}>support@strabook.io</div>
-              <div style={{ color: G.dim, fontSize: 12, marginTop: 4 }}>Available worldwide</div>
+      <footer
+        className={cn(
+          "bg-[#0e0e0e] border-t border-border",
+          isMobile ? "px-5 pt-12 pb-7" : "px-[60px] pt-[72px] pb-8"
+        )}
+      >
+        <div className="max-w-[1200px] mx-auto">
+          <div className={cn(
+            "flex gap-10 mb-12",
+            isMobile ? "flex-col items-start" : "flex-row justify-between items-start"
+          )}>
+            <div className="max-w-[300px]">
+              <span className="text-primary font-serif text-[22px] font-extrabold tracking-[3px] block mb-[18px] uppercase">
+                StraBook
+              </span>
+              <p className="text-muted-foreground/60 text-[13px] leading-[1.9] m-0 mb-5">
+                The world's premier platform for high-impact celebrity bookings. Redefining how excellence meets enterprise.
+              </p>
+              <div className="text-muted-foreground/60 text-xs">support@strabook.io</div>
+              <div className="text-muted-foreground/60 text-xs mt-1">Available worldwide</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: isMobile ? 28 : 52 }}>
-              {[["Company", [["Press Kit", null], ["About Us", "about"], ["Contact", "contact"]]], ["Services", [["Bookings", "celebrities"], ["Video Messages", "celebrities"], ["VIP Fan Card", "waitlist"]]], ["Resources", [["Blog", "blog"], ["Terms of Service", "terms"], ["Privacy Policy", "privacy"]]]].map(([title, links]) => (
+            <div className={cn(
+              "grid gap-7",
+              isMobile ? "grid-cols-2" : "grid-cols-3 gap-[52px]"
+            )}>
+              {[
+                ["Company", [["Press Kit", null], ["About Us", "about"], ["Contact", "contact"]]],
+                ["Services", [["Bookings", "celebrities"], ["Video Messages", "celebrities"], ["VIP Fan Card", "waitlist"]]],
+                ["Resources", [["Blog", "blog"], ["Terms of Service", "terms"], ["Privacy Policy", "privacy"]]],
+              ].map(([title, links]) => (
                 <div key={title}>
-                  <div style={{ color: G.text, fontWeight: 700, fontSize: 11, marginBottom: 18, letterSpacing: 2, textTransform: "uppercase" }}>{title}</div>
-                  {links.map(([label, page]) => <div key={label} onClick={page ? () => setPage(page) : undefined} style={{ color: G.dim, fontSize: 13, marginBottom: 10, cursor: page ? "pointer" : "default", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color = page ? G.gold : G.dim} onMouseLeave={e => e.target.style.color = G.dim}>{label}</div>)}
+                  <div className="text-foreground font-bold text-[11px] mb-[18px] tracking-[2px] uppercase">{title}</div>
+                  {links.map(([label, page]) => (
+                    <div
+                      key={label}
+                      onClick={page ? () => setPage(page) : undefined}
+                      className={cn(
+                        "text-muted-foreground/60 text-[13px] mb-2.5 transition-colors duration-200",
+                        page ? "cursor-pointer hover:text-primary" : "cursor-default"
+                      )}
+                    >
+                      {label}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
           </div>
-          <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 24, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12 }}>
-            <div style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>© 2025 StraBook. All rights reserved.</div>
-            <div style={{ display: "flex", gap: isMobile ? 20 : 32, flexWrap: "wrap" }}>
-              {["New York", "London", "Dubai", "Singapore"].map(c => <span key={c} style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>{c}</span>)}
+          <div className={cn(
+            "border-t border-border pt-6 flex gap-3",
+            isMobile ? "flex-col items-start" : "flex-row justify-between items-center"
+          )}>
+            <div className="text-muted-foreground/60 text-[11px] tracking-[2px] uppercase">
+              © 2025 StraBook. All rights reserved.
+            </div>
+            <div className={cn("flex flex-wrap", isMobile ? "gap-5" : "gap-8")}>
+              {["New York", "London", "Dubai", "Singapore"].map(c => (
+                <span key={c} className="text-muted-foreground/60 text-[11px] tracking-[2px] uppercase">{c}</span>
+              ))}
             </div>
           </div>
         </div>

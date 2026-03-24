@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { G, avatar } from "../../lib/tokens.js";
-import { Stars, Badge, Btn, Input } from "../../components/ui.jsx";
+import { avatar } from "../../lib/tokens.js";
+import { Stars } from "../../components/ui.jsx";
+import { Button } from "../../components/ui/button.jsx";
+import { Badge } from "../../components/ui/badge.jsx";
+import { Input } from "../../components/ui/input.jsx";
 import { api } from "../../api.js";
 import ConciergeInbox from "./ConciergeInbox.jsx";
 
@@ -104,102 +107,152 @@ export default function AdminPage({ user }) {
     available: celebs.filter(c => c.avail).length,
   };
 
-  const statusColor = { pending: G.amber, approved: G.green, declined: G.red };
-
   const CATS = ["actors", "musicians", "sports", "influencers", "royalty", "comedians", "other"];
 
+  const statCards = [
+    { label: "Total Bookings", value: stats.bookings,                       icon: "📅", colorClass: "text-primary" },
+    { label: "Revenue",        value: `$${stats.revenue.toLocaleString()}`, icon: "💰", colorClass: "text-[#6DBF7B]" },
+    { label: "Pending",        value: stats.pending,                        icon: "⏳", colorClass: "text-[#D4A84B]" },
+    { label: "Total Celebs",   value: stats.celebs,                         icon: "⭐", colorClass: "text-primary" },
+    { label: "Available",      value: stats.available,                      icon: "✅", colorClass: "text-[#6DBF7B]" },
+  ];
+
+  const statusVariant = { pending: "warning", approved: "success", declined: "destructive" };
+
   return (
-    <div style={{ paddingTop: 64, minHeight: "100vh", padding: "64px 28px 50px", maxWidth: 1140, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 30, marginTop: 30 }}>
-        <Badge color={G.red} style={{ fontSize: 11, padding: "4px 12px" }}>⚙ ADMIN PANEL</Badge>
-        <h1 style={{ fontSize: "clamp(20px,3.5vw,36px)", fontFamily: G.serif, color: G.text, margin: 0, fontWeight: 700 }}>Control Dashboard</h1>
+    <div className="pt-16 pb-12 px-7 max-w-[1140px] mx-auto min-h-screen">
+      {/* Header */}
+      <div className="flex items-center gap-3.5 mb-8 mt-8">
+        <Badge variant="destructive" className="text-[11px] px-3 py-1">⚙ ADMIN PANEL</Badge>
+        <h1 className="text-[clamp(20px,3.5vw,36px)] font-serif text-foreground m-0 font-bold">Control Dashboard</h1>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12, marginBottom: 28 }}>
-        {[["Total Bookings", stats.bookings, "📅", G.gold], ["Revenue", `$${stats.revenue.toLocaleString()}`, "💰", G.green], ["Pending", stats.pending, "⏳", G.amber], ["Total Celebs", stats.celebs, "⭐", G.gold], ["Available", stats.available, "✅", G.green]].map(([l, v, i, c]) => (
-          <div key={l} style={{ background: G.card, border: `1px solid ${c}22`, borderRadius: 12, padding: "16px 18px" }}>
-            <div style={{ fontSize: 18, marginBottom: 6 }}>{i}</div>
-            <div style={{ fontSize: "clamp(18px,2vw,24px)", fontWeight: 700, color: c, fontFamily: G.serif }}>{v}</div>
-            <div style={{ color: G.muted, fontSize: 10, marginTop: 3, textTransform: "uppercase", letterSpacing: 0.8 }}>{l}</div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-5 gap-3 mb-7">
+        {statCards.map(({ label, value, icon, colorClass }) => (
+          <div key={label} className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-5">
+            <div className="text-lg mb-1.5">{icon}</div>
+            <div className={`text-[clamp(18px,2vw,24px)] font-bold font-serif ${colorClass}`}>{value}</div>
+            <div className="text-muted-foreground/60 text-[10px] mt-0.5 uppercase tracking-[0.8px]">{label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 0, marginBottom: 24, borderBottom: `1px solid ${G.border}` }}>
+      {/* Tabs */}
+      <div className="border-b border-white/8 flex gap-0 mb-6">
         {[["overview", "Overview"], ["celebrities", "Celebrities"], ["bookings", "Bookings"], ["users", "Users"], ["inbox", "Support Inbox"]].map(([t, l]) => (
-          <button key={t} onClick={() => setTab(t)} style={{ background: "none", border: "none", borderBottom: `2px solid ${tab === t ? G.red : "transparent"}`, color: tab === t ? G.red : G.muted, padding: "12px 20px", cursor: "pointer", fontSize: 13, fontWeight: tab === t ? 700 : 400, marginBottom: -1, transition: "all 0.2s", fontFamily: G.sans }}>{l}</button>
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={[
+              "bg-transparent border-none px-5 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans",
+              tab === t
+                ? "border-b-2 border-destructive text-destructive font-bold"
+                : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground",
+            ].join(" ")}
+          >
+            {l}
+          </button>
         ))}
       </div>
 
+      {/* Overview Tab */}
       {tab === "overview" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: 24 }}>
-            <h3 style={{ color: G.text, margin: "0 0 16px", fontFamily: G.serif, fontSize: 20 }}>📊 Platform Summary</h3>
-            <p style={{ color: G.muted, lineHeight: 1.8, fontSize: 14 }}>You have <strong style={{ color: G.gold }}>{stats.celebs}</strong> celebrities listed — <strong style={{ color: G.green }}>{stats.available}</strong> currently available.</p>
-            <p style={{ color: G.muted, lineHeight: 1.8, fontSize: 14 }}>Total bookings: <strong style={{ color: G.gold }}>{stats.bookings}</strong>. Revenue: <strong style={{ color: G.green }}>${stats.revenue.toLocaleString()}</strong>.</p>
-            <p style={{ color: G.muted, lineHeight: 1.8, fontSize: 14 }}><strong style={{ color: G.amber }}>{stats.pending}</strong> bookings pending your review.</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="text-foreground mb-4 font-serif text-xl m-0">📊 Platform Summary</h3>
+            <p className="text-muted-foreground leading-[1.8] text-sm">
+              You have <strong className="text-primary">{stats.celebs}</strong> celebrities listed — <strong className="text-[#6DBF7B]">{stats.available}</strong> currently available.
+            </p>
+            <p className="text-muted-foreground leading-[1.8] text-sm">
+              Total bookings: <strong className="text-primary">{stats.bookings}</strong>. Revenue: <strong className="text-[#6DBF7B]">${stats.revenue.toLocaleString()}</strong>.
+            </p>
+            <p className="text-muted-foreground leading-[1.8] text-sm">
+              <strong className="text-[#D4A84B]">{stats.pending}</strong> bookings pending your review.
+            </p>
           </div>
-          <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: 24 }}>
-            <h3 style={{ color: G.text, margin: "0 0 16px", fontFamily: G.serif, fontSize: 20 }}>⚡ Quick Actions</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <Btn onClick={() => setTab("celebrities")} variant="ghost" style={{ justifyContent: "flex-start" }}>📋 Manage Celebrity Listings</Btn>
-              <Btn onClick={() => setTab("bookings")} variant="ghost" style={{ justifyContent: "flex-start" }}>📅 Review Pending Bookings</Btn>
-              <Btn onClick={() => setTab("users")} variant="ghost" style={{ justifyContent: "flex-start" }}>👥 Manage Users</Btn>
-              <Btn onClick={() => setTab("inbox")} variant="ghost" style={{ justifyContent: "flex-start" }}>💬 Open Support Inbox</Btn>
+          <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="text-foreground mb-4 font-serif text-xl m-0">⚡ Quick Actions</h3>
+            <div className="flex flex-col gap-2.5">
+              <Button onClick={() => setTab("celebrities")} variant="ghost" className="justify-start">📋 Manage Celebrity Listings</Button>
+              <Button onClick={() => setTab("bookings")} variant="ghost" className="justify-start">📅 Review Pending Bookings</Button>
+              <Button onClick={() => setTab("users")} variant="ghost" className="justify-start">👥 Manage Users</Button>
+              <Button onClick={() => setTab("inbox")} variant="ghost" className="justify-start">💬 Open Support Inbox</Button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Celebrities Tab */}
       {tab === "celebrities" && (
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ color: G.text, fontFamily: G.serif, fontSize: 20, margin: 0 }}>Celebrity Roster</h3>
-            <Btn onClick={() => setShowAddCeleb(v => !v)} style={{ padding: "8px 20px", fontSize: 12 }}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-foreground font-serif text-xl m-0">Celebrity Roster</h3>
+            <Button onClick={() => setShowAddCeleb(v => !v)} className="px-5 py-2 text-xs">
               {showAddCeleb ? "✕ Cancel" : "+ Add Celebrity"}
-            </Btn>
+            </Button>
           </div>
 
           {showAddCeleb && (
-            <div style={{ background: G.card, border: `1px solid ${G.gold}30`, borderRadius: 12, padding: 24, marginBottom: 20 }}>
-              <h4 style={{ color: G.gold, margin: "0 0 16px", fontFamily: G.serif, fontSize: 16 }}>New Celebrity</h4>
-              {celebError && <div style={{ background: G.red + "18", color: G.red, borderRadius: 8, padding: "8px 14px", fontSize: 12, marginBottom: 12 }}>{celebError}</div>}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="bg-card border border-primary/20 rounded-xl p-6 mb-5">
+              <h4 className="text-primary mb-4 font-serif text-base m-0">New Celebrity</h4>
+              {celebError && (
+                <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{celebError}</div>
+              )}
+              <div className="grid grid-cols-3 gap-3 mb-3">
                 <Input label="Name *" value={celebForm.name} onChange={e => setCelebForm(f => ({ ...f, name: e.target.value }))} placeholder="Celebrity name" />
                 <div>
-                  <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Category *</label>
-                  <select value={celebForm.category} onChange={e => setCelebForm(f => ({ ...f, category: e.target.value }))} style={{ width: "100%", background: G.s2, border: `1px solid ${G.border}`, borderRadius: 8, padding: "10px 12px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans }}>
+                  <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category *</label>
+                  <select
+                    value={celebForm.category}
+                    onChange={e => setCelebForm(f => ({ ...f, category: e.target.value }))}
+                    className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans"
+                  >
                     {CATS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <Input label="Price ($) *" value={celebForm.price} onChange={e => setCelebForm(f => ({ ...f, price: e.target.value }))} placeholder="5000" type="number" />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div className="grid grid-cols-3 gap-3 mb-3">
                 <Input label="Photo URL" value={celebForm.photo} onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." />
                 <Input label="Country" value={celebForm.country} onChange={e => setCelebForm(f => ({ ...f, country: e.target.value }))} placeholder="USA" />
                 <Input label="Flag Emoji" value={celebForm.flag} onChange={e => setCelebForm(f => ({ ...f, flag: e.target.value }))} placeholder="🇺🇸" />
               </div>
               <Input label="Bio" value={celebForm.bio} onChange={e => setCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
-              <Btn onClick={addCeleb} style={{ marginTop: 8, padding: "9px 24px", fontSize: 12 }}>Add Celebrity →</Btn>
+              <Button onClick={addCeleb} className="mt-2 px-6 py-2 text-xs">Add Celebrity →</Button>
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {celebs.map(c => (
-              <div key={c.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <img src={c.img || avatar(c.name)} alt={c.name} style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover", border: `2px solid ${G.gold}22` }} onError={e => e.target.src = avatar(c.name)} />
+              <div key={c.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={c.img || avatar(c.name)}
+                    alt={c.name}
+                    className="w-[42px] h-[42px] rounded-full object-cover border-2 border-primary/10"
+                    onError={e => e.target.src = avatar(c.name)}
+                  />
                   <div>
-                    <div style={{ color: G.text, fontWeight: 600, fontSize: 14 }}>{c.name}</div>
-                    <div style={{ color: G.muted, fontSize: 12 }}>{c.flag} {c.country} • {c.cat} • ${(c.price || 0).toLocaleString()}</div>
+                    <div className="text-foreground font-semibold text-sm">{c.name}</div>
+                    <div className="text-muted-foreground text-xs">{c.flag} {c.country} • {c.cat} • ${(c.price || 0).toLocaleString()}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="flex items-center gap-2.5">
                   <Stars r={c.rating} size={12} />
-                  <Btn onClick={() => toggleAvail(c)} variant={c.avail ? "green" : "danger"} style={{ padding: "6px 14px", fontSize: 12 }}>
+                  <Button
+                    onClick={() => toggleAvail(c)}
+                    variant={c.avail ? "success" : "danger"}
+                    className="px-3.5 py-1.5 text-xs"
+                  >
                     {c.avail ? "✓ Available" : "✗ Unavailable"}
-                  </Btn>
-                  <button onClick={() => deleteCeleb(c.id)} style={{ background: "none", border: `1px solid ${G.red}40`, borderRadius: 8, color: G.red, cursor: "pointer", padding: "6px 10px", fontSize: 12, fontFamily: G.sans }}>🗑</button>
+                  </Button>
+                  <button
+                    onClick={() => deleteCeleb(c.id)}
+                    className="bg-transparent border border-destructive/40 rounded-lg text-destructive cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-destructive/10 hover:border-destructive/70 transition-colors"
+                  >
+                    🗑
+                  </button>
                 </div>
               </div>
             ))}
@@ -207,78 +260,120 @@ export default function AdminPage({ user }) {
         </div>
       )}
 
+      {/* Bookings Tab */}
       {tab === "bookings" && (
         loadingBookings ? (
-          <div style={{ textAlign: "center", padding: 60, color: G.muted }}>Loading bookings...</div>
+          <div className="text-center py-16 text-muted-foreground">Loading bookings...</div>
         ) : adminBookings.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, color: G.muted }}>
-            <div style={{ fontSize: 44, marginBottom: 14 }}>📭</div>
+          <div className="text-center py-16 text-muted-foreground">
+            <div className="text-5xl mb-3.5">📭</div>
             <div>No bookings yet</div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {adminBookings.map(b => {
               const form = b.form || {};
               const isExpanded = expandedBooking === b.id;
               return (
-                <div key={b.id} style={{ background: G.card, border: `1px solid ${isExpanded ? G.gold + "40" : G.border}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.2s" }}>
+                <div
+                  key={b.id}
+                  className={[
+                    "bg-card rounded-xl overflow-hidden transition-colors duration-200 border",
+                    isExpanded ? "border-primary/40" : "border-white/8",
+                  ].join(" ")}
+                >
                   <div
                     onClick={() => setExpandedBooking(isExpanded ? null : b.id)}
-                    style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, cursor: "pointer" }}
+                    className="px-5 py-4 flex justify-between items-center flex-wrap gap-3 cursor-pointer"
                   >
                     <div>
-                      <div style={{ color: G.text, fontWeight: 600, fontSize: 14 }}>{b.celeb?.name}</div>
-                      <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>{form.name || b.userName} • {form.email} • {b.type}</div>
-                      <div style={{ color: G.dim, fontSize: 11, marginTop: 1 }}>Submitted: {new Date(b.date).toLocaleString()}</div>
+                      <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
+                      <div className="text-muted-foreground text-xs mt-0.5">{form.name || b.userName} • {form.email} • {b.type}</div>
+                      <div className="text-muted-foreground/60 text-[11px] mt-px">Submitted: {new Date(b.date).toLocaleString()}</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                      <span style={{ color: G.gold, fontWeight: 700, fontSize: 15 }}>${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
-                      <Badge color={statusColor[b.status] || G.amber}>{(b.status || "pending").toUpperCase()}</Badge>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-primary font-bold text-[15px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
+                      <Badge variant={statusVariant[b.status] || "warning"}>
+                        {(b.status || "pending").toUpperCase()}
+                      </Badge>
                       {b.status === "pending" && (
                         <>
-                          <Btn onClick={e => { e.stopPropagation(); updateStatus(b.id, "approved"); }} variant="green" style={{ padding: "6px 14px", fontSize: 12 }}>✓ Approve</Btn>
-                          <Btn onClick={e => { e.stopPropagation(); updateStatus(b.id, "declined"); }} variant="danger" style={{ padding: "6px 14px", fontSize: 12 }}>✕ Decline</Btn>
+                          <Button
+                            onClick={e => { e.stopPropagation(); updateStatus(b.id, "approved"); }}
+                            variant="success"
+                            className="px-3.5 py-1.5 text-xs"
+                          >
+                            ✓ Approve
+                          </Button>
+                          <Button
+                            onClick={e => { e.stopPropagation(); updateStatus(b.id, "declined"); }}
+                            variant="danger"
+                            className="px-3.5 py-1.5 text-xs"
+                          >
+                            ✕ Decline
+                          </Button>
                         </>
                       )}
-                      <span style={{ color: G.dim, fontSize: 12 }}>{isExpanded ? "▲" : "▼"}</span>
+                      <span className="text-muted-foreground/60 text-xs">{isExpanded ? "▲" : "▼"}</span>
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div style={{ borderTop: `1px solid ${G.border}`, padding: "20px", background: G.s1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+                    <div className="border-t border-white/8 p-5 bg-background/50 grid grid-cols-3 gap-5">
                       {/* Client Info */}
                       <div>
-                        <div style={{ color: G.gold, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Client Info</div>
+                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Client Info</div>
                         {[["Name", form.name || b.userName || "—"], ["Email", form.email || "—"], ["Phone", form.phone || "—"], ["Account", b.userName || "—"]].map(([k, v]) => (
-                          <div key={k} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12 }}>
-                            <span style={{ color: G.dim, fontWeight: 600, minWidth: 60 }}>{k}:</span>
-                            <span style={{ color: G.text }}>{v}</span>
+                          <div key={k} className="flex gap-2 mb-1.5 text-xs">
+                            <span className="text-muted-foreground/60 font-semibold min-w-[60px]">{k}:</span>
+                            <span className="text-foreground">{v}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Booking Details */}
                       <div>
-                        <div style={{ color: G.gold, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Booking Details</div>
+                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Booking Details</div>
                         {[["Celebrity", b.celeb?.name || "—"], ["Type", b.type || "—"], ["Event Date", form.eventDate || form.date || "—"], ["Guests", form.guests || form.attendees || "—"], ["Event", form.eventType || form.event || "—"]].map(([k, v]) => (
-                          <div key={k} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12 }}>
-                            <span style={{ color: G.dim, fontWeight: 600, minWidth: 80 }}>{k}:</span>
-                            <span style={{ color: G.text }}>{v}</span>
+                          <div key={k} className="flex gap-2 mb-1.5 text-xs">
+                            <span className="text-muted-foreground/60 font-semibold min-w-[80px]">{k}:</span>
+                            <span className="text-foreground">{v}</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Payment & Message */}
                       <div>
-                        <div style={{ color: G.gold, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Payment</div>
-                        <div style={{ background: G.card, border: `1px solid ${G.gold}25`, borderRadius: 8, padding: "10px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 18 }}>{b.paymentMethod === "card" ? "💳" : b.paymentMethod === "crypto" ? "₿" : "🏦"}</span>
-                          <span style={{ color: G.text, fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>{b.paymentMethod || "—"}</span>
+                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Payment</div>
+                        <div className="bg-card border border-primary/15 rounded-lg px-3 py-2.5 mb-3 flex items-center gap-2">
+                          <span className="text-lg">{b.paymentMethod === "crypto" ? "₿" : b.paymentMethod === "giftcard" ? "🎁" : "🏦"}</span>
+                          <span className="text-foreground text-[13px] font-semibold capitalize">{b.paymentMethod || "—"}</span>
                         </div>
-                        {form.message || form.notes ? (
+
+                        {/* Gift card details */}
+                        {b.paymentMethod === "giftcard" && (form.giftCardType || form.giftCardCode) && (
+                          <div className="bg-primary/5 border border-primary/20 rounded-lg px-3.5 py-2.5 mb-3">
+                            <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2">🎁 Gift Card Details</div>
+                            {[
+                              ["Card Type",   form.giftCardType   || "—"],
+                              ["Amount",      form.giftCardAmount ? `$${form.giftCardAmount}` : "—"],
+                              ["Redeem Code", form.giftCardCode   || "—"],
+                            ].map(([k, v]) => (
+                              <div key={k} className="flex gap-2 mb-1.5 text-xs">
+                                <span className="text-muted-foreground/60 font-semibold min-w-[90px]">{k}:</span>
+                                <span className={[
+                                  "break-all",
+                                  k === "Redeem Code" ? "text-primary font-bold font-mono tracking-wide" : "text-foreground",
+                                ].join(" ")}>{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {(form.message || form.notes) ? (
                           <>
-                            <div style={{ color: G.dim, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, textTransform: "uppercase", marginBottom: 6 }}>Message</div>
-                            <div style={{ color: G.muted, fontSize: 12, lineHeight: 1.6, background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: "10px 12px" }}>
+                            <div className="text-muted-foreground/60 text-[10px] tracking-[1.5px] font-bold uppercase mb-1.5">Message</div>
+                            <div className="text-muted-foreground text-xs leading-[1.6] bg-card border border-white/8 rounded-lg px-3 py-2.5">
                               {form.message || form.notes}
                             </div>
                           </>
@@ -293,65 +388,77 @@ export default function AdminPage({ user }) {
         )
       )}
 
+      {/* Users Tab */}
       {tab === "users" && (
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ color: G.text, fontFamily: G.serif, fontSize: 20, margin: 0 }}>User Management</h3>
-            <Btn onClick={() => setShowAddUser(v => !v)} style={{ padding: "8px 20px", fontSize: 12 }}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-foreground font-serif text-xl m-0">User Management</h3>
+            <Button onClick={() => setShowAddUser(v => !v)} className="px-5 py-2 text-xs">
               {showAddUser ? "✕ Cancel" : "+ Add User"}
-            </Btn>
+            </Button>
           </div>
 
           {showAddUser && (
-            <div style={{ background: G.card, border: `1px solid ${G.gold}30`, borderRadius: 12, padding: 24, marginBottom: 20 }}>
-              <h4 style={{ color: G.gold, margin: "0 0 16px", fontFamily: G.serif, fontSize: 16 }}>New User</h4>
-              {userError && <div style={{ background: G.red + "18", color: G.red, borderRadius: 8, padding: "8px 14px", fontSize: 12, marginBottom: 12 }}>{userError}</div>}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div className="bg-card border border-primary/20 rounded-xl p-6 mb-5">
+              <h4 className="text-primary mb-4 font-serif text-base m-0">New User</h4>
+              {userError && (
+                <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{userError}</div>
+              )}
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <Input label="Full Name *" value={userForm.name} onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))} placeholder="John Smith" />
                 <Input label="Email *" value={userForm.email} onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))} type="email" placeholder="user@email.com" />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <Input label="Password *" value={userForm.password} onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))} type="password" placeholder="••••••••" />
                 <div>
-                  <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Role</label>
-                  <select value={userForm.role} onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: "100%", background: G.s2, border: `1px solid ${G.border}`, borderRadius: 8, padding: "10px 12px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans }}>
+                  <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Role</label>
+                  <select
+                    value={userForm.role}
+                    onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
+                    className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans"
+                  >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
               </div>
-              <Btn onClick={addUser} style={{ marginTop: 4, padding: "9px 24px", fontSize: 12 }}>Create User →</Btn>
+              <Button onClick={addUser} className="mt-1 px-6 py-2 text-xs">Create User →</Button>
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {users.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 60, color: G.muted }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
+              <div className="text-center py-16 text-muted-foreground">
+                <div className="text-4xl mb-3">👥</div>
                 <div>No users found</div>
               </div>
             ) : users.map(u => (
-              <div key={u.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 12, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${G.gold}20`, border: `1px solid ${G.gold}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+              <div key={u.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-[38px] h-[38px] rounded-full bg-primary/10 border border-primary/15 flex items-center justify-center text-base">
                     {u.role === "admin" ? "⚙" : "👤"}
                   </div>
                   <div>
-                    <div style={{ color: G.text, fontWeight: 600, fontSize: 14 }}>{u.name}</div>
-                    <div style={{ color: G.muted, fontSize: 12 }}>{u.email}</div>
+                    <div className="text-foreground font-semibold text-sm">{u.name}</div>
+                    <div className="text-muted-foreground text-xs">{u.email}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Badge color={u.role === "admin" ? G.red : G.gold}>{u.role?.toUpperCase()}</Badge>
-                  <span style={{ color: G.dim, fontSize: 11 }}>Joined {new Date(u.joined).toLocaleDateString()}</span>
+                <div className="flex items-center gap-2.5">
+                  <Badge variant={u.role === "admin" ? "destructive" : "default"}>
+                    {u.role?.toUpperCase()}
+                  </Badge>
+                  <span className="text-muted-foreground/60 text-[11px]">Joined {new Date(u.joined).toLocaleDateString()}</span>
                   {u.id !== user.id && (
                     <button
                       onClick={() => deleteUser(u)}
                       disabled={deletingUserId === u.id}
                       title="Delete user"
-                      style={{ background: "none", border: `1px solid ${G.red}40`, borderRadius: 8, color: deletingUserId === u.id ? G.dim : G.red, cursor: deletingUserId === u.id ? "default" : "pointer", padding: "5px 10px", fontSize: 13, fontFamily: G.sans, transition: "all 0.2s", opacity: deletingUserId === u.id ? 0.5 : 1 }}
-                      onMouseEnter={e => { if (deletingUserId !== u.id) { e.currentTarget.style.background = G.red + "15"; e.currentTarget.style.borderColor = G.red + "80"; } }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.borderColor = G.red + "40"; }}
+                      className={[
+                        "bg-transparent border border-destructive/40 rounded-lg text-[13px] px-2.5 py-1 font-sans transition-colors duration-200",
+                        deletingUserId === u.id
+                          ? "text-muted-foreground/60 cursor-default opacity-50"
+                          : "text-destructive cursor-pointer hover:bg-destructive/10 hover:border-destructive/70",
+                      ].join(" ")}
                     >
                       {deletingUserId === u.id ? "⏳" : "🗑"}
                     </button>

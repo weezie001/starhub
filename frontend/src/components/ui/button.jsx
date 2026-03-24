@@ -4,30 +4,30 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 font-sans",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-bold tracking-wider uppercase transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 active:scale-[0.97] font-sans select-none",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-gold to-gold-dark text-[#261900] shadow-[0_2px_20px_rgba(241,201,125,0.3)] hover:brightness-110",
+          "rounded-full bg-gradient-to-br from-[#f5cc6a] via-[#e8a830] to-[#c98a10] text-[#1a0f00] shadow-[0_4px_24px_rgba(240,191,90,0.45)] hover:shadow-[0_6px_32px_rgba(240,191,90,0.6)] hover:brightness-110 hover:-translate-y-0.5",
         outline:
-          "bg-transparent text-gold border border-gold/50 hover:bg-gold/10",
+          "rounded-full bg-transparent text-primary border-2 border-primary/60 hover:bg-primary/10 hover:border-primary hover:shadow-[0_0_16px_rgba(240,191,90,0.2)]",
         ghost:
-          "bg-[#353534]/60 text-foreground border border-border hover:bg-[#353534]",
+          "rounded-xl bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20",
         danger:
-          "bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20",
+          "rounded-full bg-destructive/15 text-destructive border border-destructive/40 hover:bg-destructive/25 hover:shadow-[0_0_16px_rgba(224,64,64,0.25)]",
         success:
-          "bg-[#6DBF7B]/10 text-[#6DBF7B] border border-[#6DBF7B]/30 hover:bg-[#6DBF7B]/20",
+          "rounded-full bg-[#6DBF7B]/15 text-[#6DBF7B] border border-[#6DBF7B]/40 hover:bg-[#6DBF7B]/25",
         dark:
-          "bg-secondary text-foreground border border-border hover:bg-secondary/80",
+          "rounded-xl bg-secondary text-foreground border border-border hover:bg-white/5",
         link:
-          "text-gold underline-offset-4 hover:underline p-0 h-auto uppercase tracking-normal",
+          "text-primary underline-offset-4 hover:underline rounded-none p-0 h-auto uppercase tracking-normal",
       },
       size: {
-        default: "px-7 py-3 text-[13px]",
-        sm: "px-5 py-2 text-xs",
-        lg: "px-10 py-4 text-sm",
-        icon: "h-9 w-9 rounded-full p-0",
+        default: "h-11 px-7 text-[12px]",
+        sm:      "h-8 px-5 text-[11px]",
+        lg:      "h-13 px-10 text-[13px]",
+        icon:    "h-9 w-9 rounded-full p-0",
       },
     },
     defaultVariants: {

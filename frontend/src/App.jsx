@@ -27,10 +27,10 @@ const GLOBAL_CSS = `
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth}
   body{margin:0;padding:0;background:${G.bg};color:${G.text};font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-track{background:${G.bg}}
-  ::-webkit-scrollbar-thumb{background:${G.border};border-radius:3px}
-  ::-webkit-scrollbar-thumb:hover{background:${G.gold}55}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:#0a0a0a}
+  ::-webkit-scrollbar-thumb{background:#2a2518;border-radius:10px}
+  ::-webkit-scrollbar-thumb:hover{background:${G.gold}80}
   input,select,textarea,button{font-family:'Manrope',sans-serif}
   select option{background:${G.s2};color:${G.text}}
   .celeb-img{filter:grayscale(55%);transition:filter 0.6s ease,transform 0.6s ease}

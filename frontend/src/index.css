@@ -4,36 +4,40 @@
 
 @layer base {
   :root {
-    /* Dark luxury theme — maps to G tokens */
-    --background: 0 0% 7%;           /* #131313 */
-    --foreground: 20 9% 89%;         /* #e5e2e1 */
+    /* Dark luxury theme */
+    --background: 0 0% 5%;           /* #0d0d0d — deeper black */
+    --foreground: 30 15% 92%;        /* #eee9e3 — warm white */
 
-    --card: 0 1% 11%;                /* #1c1b1b */
-    --card-foreground: 20 9% 89%;
+    --card: 0 0% 9%;                 /* #171717 — lifted card */
+    --card-foreground: 30 15% 92%;
 
-    --popover: 0 1% 11%;
-    --popover-foreground: 20 9% 89%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 30 15% 92%;
 
-    --primary: 40 82% 72%;           /* #f1c97d gold */
-    --primary-foreground: 33 100% 7%; /* #261900 dark */
+    --primary: 40 90% 65%;           /* #f0bf5a — richer gold */
+    --primary-foreground: 33 100% 8%; /* #291b00 */
 
-    --secondary: 0 1% 12%;           /* #201f1f */
-    --secondary-foreground: 20 9% 89%;
+    --secondary: 0 0% 13%;           /* #212121 */
+    --secondary-foreground: 30 15% 92%;
 
-    --muted: 0 1% 12%;               /* #201f1f */
-    --muted-foreground: 38 24% 75%;  /* #d0c5af */
+    --muted: 0 0% 13%;
+    --muted-foreground: 35 20% 60%;  /* #b0a48a */
 
-    --accent: 42 17% 25%;            /* #4d4635 */
-    --accent-foreground: 20 9% 89%;
+    --accent: 40 30% 20%;            /* #3d3520 */
+    --accent-foreground: 40 90% 65%;
 
-    --destructive: 3 57% 57%;        /* #D4564E */
+    --destructive: 3 70% 55%;        /* #e04040 */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 42 17% 25%;            /* #4d4635 */
-    --input: 42 17% 25%;
-    --ring: 40 82% 72%;              /* gold ring */
+    --border: 40 15% 20%;            /* #3a3525 */
+    --input: 0 0% 13%;
+    --ring: 40 90% 65%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
+
+    /* Custom glow values */
+    --glow-gold: 0 0 20px rgba(240,191,90,0.25);
+    --glow-gold-lg: 0 0 40px rgba(240,191,90,0.35);
   }
 }
 
@@ -44,5 +48,14 @@
   body {
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .glow-gold {
+    box-shadow: var(--glow-gold);
+  }
+  .glow-gold-lg {
+    box-shadow: var(--glow-gold-lg);
   }
 }

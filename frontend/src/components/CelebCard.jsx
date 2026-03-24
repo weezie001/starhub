@@ -12,8 +12,8 @@ export default function CelebCard({ c, onView, onBook, onFav, isFav }) {
       className={cn(
         "celeb-card rounded-xl overflow-hidden border cursor-pointer transition-all duration-500",
         hover
-          ? "border-primary/40 -translate-y-1 shadow-[0_20px_48px_rgba(0,0,0,0.4)]"
-          : "border-border shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
+          ? "border-primary/50 -translate-y-2 shadow-[0_24px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(240,191,90,0.12)]"
+          : "border-white/8 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
       )}
       style={{ background: G.card }}
       onMouseEnter={() => setHover(true)}

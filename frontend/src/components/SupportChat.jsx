@@ -722,59 +722,68 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
   return (
     <>
       <FilePreviewModal file={preview} onClose={() => setPreview(null)} />
-      {/* Floating button */}
-      <button onClick={() => open ? setOpen(false) : openChat()} style={{
-        position: "fixed", bottom: 28, right: 28,
-        width: 58, height: 58, borderRadius: "50%",
-        background: `linear-gradient(135deg,${G.gold},${G.goldD})`,
-        border: "none", cursor: "pointer", zIndex: 900,
-        boxShadow: `0 4px 24px ${G.gold}50`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 22, transition: "transform 0.3s",
-        transform: open ? "rotate(45deg)" : "none",
-      }}>
+
+      {/* ── Floating button ── */}
+      <button
+        onClick={() => open ? setOpen(false) : openChat()}
+        className="fixed bottom-7 right-7 w-[58px] h-[58px] rounded-full border-none cursor-pointer z-[900] flex items-center justify-center text-[22px] transition-all duration-300 active:scale-95"
+        style={{
+          background: "linear-gradient(135deg,#f5cc6a,#c98a10)",
+          boxShadow: "0 4px 28px rgba(240,191,90,0.55)",
+          transform: open ? "rotate(45deg)" : "none",
+        }}
+      >
         {open ? "✕" : "💬"}
         {unread > 0 && !open && (
-          <span style={{ position: "absolute", top: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: G.red, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${G.bg}` }}>{unread}</span>
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center border-2 border-background">
+            {unread}
+          </span>
         )}
       </button>
 
-      {/* Chat panel */}
+      {/* ── Chat panel ── */}
       {open && (
-        <div style={{ position: "fixed", bottom: 100, right: 28, width: 380, height: 580, background: G.card, border: `1px solid ${G.border}`, borderRadius: 18, display: "flex", flexDirection: "column", zIndex: 900, boxShadow: "0 24px 64px #000000cc", overflow: "hidden" }}>
+        <div className="fixed bottom-[100px] right-7 w-[380px] h-[580px] flex flex-col z-[900] rounded-[20px] overflow-hidden border border-white/10"
+          style={{ background: "#111111", boxShadow: "0 28px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,191,90,0.06)" }}>
 
           {/* Header */}
-          <div style={{ padding: "14px 18px", background: G.s1, borderBottom: `1px solid ${G.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ position: "relative" }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${G.gold}20`, border: `1px solid ${G.gold}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+          <div className="px-[18px] py-3.5 flex items-center justify-between shrink-0 border-b border-white/8"
+            style={{ background: "rgba(255,255,255,0.03)" }}>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-lg">
                   {isLiveStage ? "👩‍💼" : "🤖"}
                 </div>
-                <div style={{ position: "absolute", bottom: 1, right: 1, width: 10, height: 10, borderRadius: "50%", background: isLiveStage ? (isConnected ? G.green : G.amber) : G.green, border: `2px solid ${G.s1}` }} />
+                <div className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#111111] ${isLiveStage ? (isConnected ? "bg-[#6DBF7B]" : "bg-[#D4A84B]") : "bg-[#6DBF7B]"}`} />
               </div>
               <div>
-                <div style={{ color: G.text, fontWeight: 700, fontSize: 14 }}>
+                <div className="text-foreground font-bold text-[14px]">
                   {stage === "active" ? (agentName || "StraBook Agent") : isLiveStage ? "StraBook Support" : "StraBot ✨"}
                 </div>
-                <div style={{ color: isLiveStage ? (isConnected ? G.green : G.amber) : G.gold, fontSize: 10, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                <div className={`text-[10px] font-semibold tracking-[0.5px] uppercase ${isLiveStage ? (isConnected ? "text-[#6DBF7B]" : "text-[#D4A84B]") : "text-primary"}`}>
                   {stage === "active" ? `${agentName || "Agent"} · Live Support` : stage === "waiting" ? "In Queue · Waiting" : stage === "connecting" ? "Connecting..." : "AI-Powered · Live Data"}
                 </div>
               </div>
             </div>
             {(stage === "waiting" || stage === "active") && (
-              <button onClick={endSession} style={{ background: G.red + "15", border: `1px solid ${G.red}30`, borderRadius: 50, padding: "5px 14px", color: G.red, cursor: "pointer", fontSize: 11, fontFamily: G.sans, fontWeight: 600 }}>End</button>
+              <button
+                onClick={endSession}
+                className="bg-destructive/10 border border-destructive/30 rounded-full px-3.5 py-1 text-destructive cursor-pointer text-[11px] font-semibold hover:bg-destructive/20 transition-colors"
+              >
+                End
+              </button>
             )}
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div className="flex-1 overflow-hidden flex flex-col">
 
-            {/* ── NAME INPUT ── */}
+            {/* Name input */}
             {stage === "bot_name" && (
-              <div style={{ flex: 1, padding: "28px 22px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
-                <div style={{ fontSize: 32, textAlign: "center" }}>🤖</div>
-                <div style={{ color: G.muted, fontSize: 13, lineHeight: 1.75, textAlign: "center" }}>
-                  Welcome to StraBook! I'm <strong style={{ color: G.gold }}>StraBot</strong>, your AI assistant.<br />What's your name?
+              <div className="flex-1 px-[22px] py-7 flex flex-col justify-center gap-3.5">
+                <div className="text-[32px] text-center">🤖</div>
+                <div className="text-muted-foreground text-[13px] leading-[1.75] text-center">
+                  Welcome to StraBook! I'm <strong className="text-primary">StraBot</strong>, your AI assistant.<br />What's your name?
                 </div>
                 <input
                   value={botName}
@@ -782,57 +791,49 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
                   onKeyDown={e => e.key === "Enter" && submitName()}
                   autoFocus
                   placeholder="Your first name..."
-                  style={{ background: G.s2, border: `1px solid ${G.border}`, borderRadius: 10, padding: "12px 16px", color: G.text, fontSize: 14, outline: "none", fontFamily: G.sans }}
+                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground text-[14px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
                 />
                 <button
                   onClick={submitName}
                   disabled={!botName.trim()}
-                  style={{ background: botName.trim() ? `linear-gradient(45deg,${G.gold},${G.goldD})` : G.s2, color: botName.trim() ? "#261900" : G.dim, border: "none", borderRadius: 10, padding: "13px 0", fontSize: 13, fontWeight: 800, cursor: botName.trim() ? "pointer" : "default", fontFamily: G.sans, transition: "all 0.2s" }}>
+                  className={`rounded-xl py-3 text-[13px] font-extrabold border-none transition-all duration-200 ${botName.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-white/5"}`}
+                  style={botName.trim() ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}
+                >
                   Start Chat →
                 </button>
               </div>
             )}
 
-            {/* ── BOT CHAT ── */}
+            {/* Bot chat */}
             {(stage === "bot" || stage === "email_prompt") && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-3.5 flex flex-col gap-2.5">
                   {botMessages.map((m, i) => (
                     <div key={m.id}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
+                      <div className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                         {m.role === "bot" && (
-                          <div style={{ color: G.gold, fontSize: 10, fontWeight: 700, marginBottom: 3, letterSpacing: 0.5 }}>StraBot 🤖</div>
+                          <div className="text-primary text-[10px] font-bold mb-1 tracking-[0.5px]">StraBot 🤖</div>
                         )}
-                        <div style={{
-                          background: m.role === "user" ? `linear-gradient(135deg,${G.gold},${G.goldD})` : G.s2,
-                          color: m.role === "user" ? "#261900" : G.text,
-                          padding: "10px 14px", maxWidth: "92%",
-                          borderRadius: m.role === "user" ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
-                          fontSize: 13, lineHeight: 1.7,
-                          border: m.role === "bot" ? `1px solid ${G.border}` : "none",
-                          whiteSpace: "pre-line",
-                        }}>
+                        <div className={`px-3.5 py-2.5 max-w-[92%] text-[13px] leading-[1.7] whitespace-pre-line ${
+                          m.role === "user"
+                            ? "text-[#1a1000] rounded-[14px_14px_2px_14px]"
+                            : "text-foreground bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px]"
+                        }`}
+                          style={m.role === "user" ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}>
                           {m.role === "bot" ? renderBotText(m.text) : m.text}
                         </div>
-
-                        {/* Rich payload cards */}
                         {m.role === "bot" && m.payload && (
-                          <div style={{ maxWidth: "92%", width: "100%" }}>
-                            {renderPayload(m.payload)}
-                          </div>
+                          <div className="max-w-[92%] w-full">{renderPayload(m.payload)}</div>
                         )}
                       </div>
-
-                      {/* Quick reply buttons — only on last bot message */}
                       {m.role === "bot" && m.options?.length > 0 && i === botMessages.length - 1 && stage === "bot" && !wlStep && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                           {m.options.map(opt => (
                             <button
                               key={opt.label}
                               onClick={() => selectOption(opt)}
-                              style={{ background: "none", border: `1px solid ${G.gold}50`, borderRadius: 50, padding: "6px 12px", color: G.gold, fontSize: 11, cursor: "pointer", fontFamily: G.sans, fontWeight: 600, transition: "all 0.2s" }}
-                              onMouseEnter={e => { e.currentTarget.style.background = G.gold + "20"; e.currentTarget.style.borderColor = G.gold; }}
-                              onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.borderColor = G.gold + "50"; }}>
+                              className="bg-transparent border border-primary/40 rounded-full px-3 py-1.5 text-primary text-[11px] font-semibold cursor-pointer hover:bg-primary/15 hover:border-primary transition-all duration-200"
+                            >
                               {opt.label}
                             </button>
                           ))}
@@ -841,10 +842,10 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
                     </div>
                   ))}
 
-                  {/* Email entry for going live */}
+                  {/* Email prompt */}
                   {stage === "email_prompt" && (
-                    <div style={{ background: G.s2, border: `1px solid ${G.gold}30`, borderRadius: 12, padding: 16, marginTop: 4 }}>
-                      <div style={{ color: G.muted, fontSize: 12, marginBottom: 10 }}>Your email address:</div>
+                    <div className="bg-white/5 border border-primary/20 rounded-xl p-4 mt-1">
+                      <div className="text-muted-foreground text-[12px] mb-2.5">Your email address:</div>
                       <input
                         value={botEmail}
                         onChange={e => setBotEmail(e.target.value)}
@@ -852,112 +853,139 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
                         type="email"
                         autoFocus
                         placeholder="your@email.com"
-                        style={{ width: "100%", background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: "10px 12px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans, boxSizing: "border-box", marginBottom: 8 }}
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2.5 text-foreground text-[13px] outline-none font-sans mb-2 focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
                       />
                       <button
                         onClick={goLive}
                         disabled={!botEmail.trim()}
-                        style={{ width: "100%", background: botEmail.trim() ? `linear-gradient(45deg,${G.gold},${G.goldD})` : G.s2, color: botEmail.trim() ? "#261900" : G.dim, border: "none", borderRadius: 8, padding: "11px 0", fontSize: 12, fontWeight: 800, cursor: botEmail.trim() ? "pointer" : "default", fontFamily: G.sans }}>
+                        className={`w-full rounded-lg py-2.5 text-[12px] font-extrabold border-none transition-all ${botEmail.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-white/5"}`}
+                        style={botEmail.trim() ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}
+                      >
                         Connect to Live Agent →
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* Bot text input */}
+                {/* Bot input */}
                 {stage === "bot" && (
-                  <div style={{ padding: "10px 12px", borderTop: `1px solid ${G.border}`, background: G.s1, flexShrink: 0 }}>
+                  <div className="px-3 py-2.5 border-t border-white/8 shrink-0" style={{ background: "rgba(255,255,255,0.02)" }}>
                     <input
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={handleBotKeyDown}
                       placeholder={wlStep ? WL_PROMPTS[wlStep].split("?")[0] + "..." : "Ask me anything or select above..."}
-                      style={{ width: "100%", background: G.s2, border: `1px solid ${wlStep ? G.gold + "60" : G.border}`, borderRadius: 50, padding: "10px 16px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans, boxSizing: "border-box", transition: "border-color 0.2s" }}
+                      className={`w-full bg-white/5 rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans transition-colors placeholder:text-muted-foreground/40 border ${wlStep ? "border-primary/50" : "border-white/10"} focus:border-primary/50`}
                     />
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── CONNECTING ── */}
+            {/* Connecting */}
             {stage === "connecting" && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: G.gold, animation: `chatPulse 1.2s ${i*0.2}s infinite ease-in-out` }} />)}
+              <div className="flex-1 flex flex-col items-center justify-center gap-3.5">
+                <div className="flex gap-1.5">
+                  {[0,1,2].map(i => <div key={i} className="w-2.5 h-2.5 rounded-full bg-primary" style={{ animation: `chatPulse 1.2s ${i*0.2}s infinite ease-in-out` }} />)}
                 </div>
-                <div style={{ color: G.muted, fontSize: 13 }}>Connecting to live support...</div>
+                <div className="text-muted-foreground text-[13px]">Connecting to live support...</div>
               </div>
             )}
 
-            {/* ── WAITING ── */}
+            {/* Waiting */}
             {stage === "waiting" && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
-                <div style={{ margin: "16px 16px 8px", background: G.s2, border: `1px solid ${G.border}`, borderRadius: 12, padding: "18px 16px", textAlign: "center" }}>
-                  <div style={{ color: G.muted, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>Queue Position</div>
-                  <div style={{ color: G.gold, fontSize: 52, fontWeight: 800, fontFamily: G.serif, lineHeight: 1 }}>{position != null ? `#${position}` : "—"}</div>
-                  <div style={{ color: G.muted, fontSize: 12, marginTop: 8, lineHeight: 1.6 }}>
+              <div className="flex-1 flex flex-col overflow-y-auto">
+                <div className="mx-4 mt-4 mb-2 bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                  <div className="text-muted-foreground text-[11px] tracking-[2px] uppercase font-bold mb-2.5">Queue Position</div>
+                  <div className="text-primary font-extrabold font-serif leading-none text-[52px]">{position != null ? `#${position}` : "—"}</div>
+                  <div className="text-muted-foreground text-[12px] mt-2 leading-[1.6]">
                     {position === 1 ? "You're next! An agent will join shortly." : position ? `${position - 1} ${position - 1 === 1 ? "person" : "people"} ahead of you.` : "Waiting for a position update..."}
                   </div>
-                  <div style={{ display: "flex", gap: 5, justifyContent: "center", marginTop: 14 }}>
-                    {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: G.gold, animation: `chatPulse 1.4s ${i*0.25}s infinite` }} />)}
+                  <div className="flex gap-1.5 justify-center mt-3.5">
+                    {[0,1,2].map(i => <div key={i} className="w-2 h-2 rounded-full bg-primary" style={{ animation: `chatPulse 1.4s ${i*0.25}s infinite` }} />)}
                   </div>
                 </div>
-                <div ref={scrollRef} style={{ flex: 1, padding: "0 14px 14px", overflowY: "auto" }}>
+                <div ref={scrollRef} className="flex-1 px-3.5 pb-3.5 overflow-y-auto">
                   {liveMessages.filter(m => m.role === "system").map((m, i) => (
-                    <div key={m.id || i} style={{ textAlign: "center", marginBottom: 8 }}>
-                      <span style={{ background: G.s2, border: `1px solid ${G.border}`, borderRadius: 50, padding: "4px 14px", color: G.muted, fontSize: 11, display: "inline-block" }}>{m.text}</span>
+                    <div key={m.id || i} className="text-center mb-2">
+                      <span className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ── ACTIVE LIVE CHAT ── */}
+            {/* Active live chat */}
             {stage === "active" && (
-              <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-3.5 flex flex-col gap-2.5">
                 {liveMessages.map((m, i) => {
                   if (m.role === "system") return (
-                    <div key={m.id || i} style={{ textAlign: "center" }}>
-                      <span style={{ background: G.s2, border: `1px solid ${G.border}`, borderRadius: 50, padding: "4px 14px", color: G.muted, fontSize: 11, display: "inline-block" }}>{m.text}</span>
+                    <div key={m.id || i} className="text-center">
+                      <span className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
                     </div>
                   );
                   const isMe = m.role === "customer";
                   return (
-                    <div key={m.id || i} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
-                      {!isMe && m.name && <div style={{ color: G.gold, fontSize: 10, fontWeight: 700, marginBottom: 3, letterSpacing: 0.5 }}>{m.name}</div>}
-                      <div style={{ background: isMe ? `linear-gradient(135deg,${G.gold},${G.goldD})` : G.s2, color: isMe ? "#261900" : G.text, padding: "10px 14px", maxWidth: "82%", borderRadius: isMe ? "14px 14px 2px 14px" : "14px 14px 14px 2px", fontSize: 13, lineHeight: 1.65, border: isMe ? "none" : `1px solid ${G.border}` }}>
+                    <div key={m.id || i} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                      {!isMe && m.name && <div className="text-primary text-[10px] font-bold mb-1 tracking-[0.5px]">{m.name}</div>}
+                      <div className={`px-3.5 py-2.5 max-w-[82%] text-[13px] leading-[1.65] ${
+                        isMe
+                          ? "text-[#1a1000] rounded-[14px_14px_2px_14px]"
+                          : "text-foreground bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px]"
+                      }`}
+                        style={isMe ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}>
                         {renderContent(m.text, setPreview)}
                       </div>
-                      <div style={{ color: G.dim, fontSize: 10, marginTop: 3 }}>{fmtTime(m.ts)}</div>
+                      <div className="text-muted-foreground/50 text-[10px] mt-1">{fmtTime(m.ts)}</div>
                     </div>
                   );
                 })}
                 {isTyping && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "10px 14px", background: G.s2, border: `1px solid ${G.border}`, borderRadius: "14px 14px 14px 2px", alignSelf: "flex-start" }}>
-                    {[0,1,2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: G.muted, animation: `chatPulse 1.2s ${i*0.15}s infinite` }} />)}
+                  <div className="flex items-center gap-1 px-3.5 py-2.5 bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px] self-start">
+                    {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" style={{ animation: `chatPulse 1.2s ${i*0.15}s infinite` }} />)}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── ENDED ── */}
+            {/* Ended */}
             {stage === "ended" && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 24, textAlign: "center" }}>
-                <div style={{ fontSize: 40 }}>✅</div>
-                <div style={{ color: G.text, fontWeight: 700, fontSize: 15, fontFamily: G.serif }}>Session Ended</div>
-                <div style={{ color: G.muted, fontSize: 13, lineHeight: 1.7 }}>Thank you for contacting StraBook.<br />We hope we could help!</div>
-                <button onClick={resetChat} style={{ background: "none", border: `1px solid ${G.border}`, borderRadius: 50, padding: "10px 28px", color: G.muted, cursor: "pointer", fontSize: 12, fontFamily: G.sans }}>New Conversation</button>
+              <div className="flex-1 flex flex-col items-center justify-center gap-3.5 p-6 text-center">
+                <div className="text-[40px]">✅</div>
+                <div className="text-foreground font-bold text-[15px] font-serif">Session Ended</div>
+                <div className="text-muted-foreground text-[13px] leading-[1.7]">Thank you for contacting StraBook.<br />We hope we could help!</div>
+                <button
+                  onClick={resetChat}
+                  className="bg-transparent border border-white/15 rounded-full px-7 py-2.5 text-muted-foreground cursor-pointer text-[12px] hover:border-primary/40 hover:text-primary transition-colors"
+                >
+                  New Conversation
+                </button>
               </div>
             )}
           </div>
 
-          {/* Live chat input */}
+          {/* Live chat input bar */}
           {stage === "active" && (
-            <div style={{ padding: "10px 12px", borderTop: `1px solid ${G.border}`, background: G.s1, display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-              <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xlsx,.pptx,.txt" style={{ display: "none" }} onChange={handleFileSelect} />
-              <button onClick={() => fileInputRef.current?.click()} title="Attach file" style={{ width: 34, height: 34, borderRadius: "50%", background: G.s2, border: `1px solid ${G.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0, color: G.muted }}>📎</button>
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleLiveKey} placeholder="Type a message..." style={{ flex: 1, background: G.s2, border: `1px solid ${G.border}`, borderRadius: 50, padding: "10px 16px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans }} />
-              <button onClick={sendMessage} disabled={!input.trim()} style={{ width: 38, height: 38, borderRadius: "50%", background: input.trim() ? `linear-gradient(135deg,${G.gold},${G.goldD})` : G.s2, border: "none", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0, transition: "all 0.2s" }}>➤</button>
+            <div className="px-3 py-2.5 border-t border-white/8 flex gap-2 items-center shrink-0" style={{ background: "rgba(255,255,255,0.02)" }}>
+              <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xlsx,.pptx,.txt" className="hidden" onChange={handleFileSelect} />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach file"
+                className="w-[34px] h-[34px] rounded-full bg-white/5 border border-white/10 cursor-pointer flex items-center justify-center text-[15px] shrink-0 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+              >📎</button>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleLiveKey}
+                placeholder="Type a message..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/40"
+              />
+              <button
+                onClick={sendMessage}
+                disabled={!input.trim()}
+                className={`w-[38px] h-[38px] rounded-full border-none flex items-center justify-center text-[15px] shrink-0 transition-all duration-200 ${input.trim() ? "cursor-pointer hover:brightness-110 active:scale-95" : "cursor-default opacity-40"}`}
+                style={input.trim() ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : { background: "rgba(255,255,255,0.05)" }}
+              >➤</button>
             </div>
           )}
         </div>
