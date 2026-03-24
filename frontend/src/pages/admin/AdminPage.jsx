@@ -4,6 +4,7 @@ import { Stars } from "../../components/ui.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Badge } from "../../components/ui/badge.jsx";
 import { Input } from "../../components/ui/input.jsx";
+import ConfirmModal from "../../components/ui/confirm-modal.jsx";
 import { api } from "../../api.js";
 import ConciergeInbox from "./ConciergeInbox.jsx";
 
@@ -25,6 +26,7 @@ export default function AdminPage({ user }) {
   const [userError, setUserError] = useState("");
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [celebError, setCelebError] = useState("");
+  const [confirmModal, setConfirmModal] = useState(null);
 
   useEffect(() => {
     api.getAdminBookings()
@@ -58,10 +60,16 @@ export default function AdminPage({ user }) {
     }
   }
 
-  async function deleteCeleb(id) {
-    if (!confirm("Delete this celebrity?")) return;
-    setCelebs(prev => prev.filter(c => c.id !== id));
-    try { await api.deleteCelebrity(id); } catch {}
+  function deleteCeleb(id) {
+    setConfirmModal({
+      title: "Delete Celebrity",
+      message: "Are you sure you want to remove this celebrity from the roster?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setCelebs(prev => prev.filter(c => c.id !== id));
+        try { await api.deleteCelebrity(id); } catch {}
+      },
+    });
   }
 
   async function addCeleb() {
@@ -86,17 +94,23 @@ export default function AdminPage({ user }) {
     } catch (e) { setUserError(e.message); }
   }
 
-  async function deleteUser(u) {
-    if (!confirm(`Delete user "${u.name}"? This will also remove all their bookings.`)) return;
-    setDeletingUserId(u.id);
-    try {
-      await api.deleteUser(u.id);
-      setUsers(prev => prev.filter(x => x.id !== u.id));
-    } catch (e) {
-      alert(e.message || "Failed to delete user.");
-    } finally {
-      setDeletingUserId(null);
-    }
+  function deleteUser(u) {
+    setConfirmModal({
+      title: "Delete User",
+      message: `Delete "${u.name}"? This will also remove all their bookings and cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setDeletingUserId(u.id);
+        try {
+          await api.deleteUser(u.id);
+          setUsers(prev => prev.filter(x => x.id !== u.id));
+        } catch (e) {
+          setConfirmModal({ title: "Error", message: e.message || "Failed to delete user.", confirmLabel: "OK", variant: "ghost", onConfirm: () => setConfirmModal(null) });
+        } finally {
+          setDeletingUserId(null);
+        }
+      },
+    });
   }
 
   const stats = {
@@ -471,6 +485,16 @@ export default function AdminPage({ user }) {
       )}
 
       {tab === "inbox" && <ConciergeInbox user={user} />}
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title || ""}
+        message={confirmModal?.message || ""}
+        confirmLabel={confirmModal?.confirmLabel || "Delete"}
+        variant={confirmModal?.variant || "danger"}
+        onConfirm={confirmModal?.onConfirm || (() => {})}
+        onCancel={() => setConfirmModal(null)}
+      />
     </div>
   );
 }

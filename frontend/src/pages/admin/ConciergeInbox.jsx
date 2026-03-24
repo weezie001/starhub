@@ -3,6 +3,7 @@ import { G, fmtTime, fmtDate } from "../../lib/tokens.js";
 import { Badge, Btn } from "../../components/ui.jsx";
 import { WS_URL } from "../../lib/tokens.js";
 import { api } from "../../api.js";
+import ConfirmModal from "../../components/ui/confirm-modal.jsx";
 import { useIsMobile } from "../../lib/useIsMobile.js";
 
 // ── File preview lightbox ────────────────────────────────────────────────────
@@ -145,6 +146,7 @@ export default function ConciergeInbox({ user }) {
   const [typingCustomer, setTypingCustomer] = useState(false);
   const [unreadMap, setUnreadMap] = useState({});
   const [preview, setPreview] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeout = useRef(null);
@@ -325,16 +327,22 @@ export default function ConciergeInbox({ user }) {
     ws.current.send(JSON.stringify({ type: "get_sessions" }));
   }
 
-  async function deleteSession(sessionId) {
-    if (!confirm("Delete this chat session and all its messages? This cannot be undone.")) return;
-    try {
-      await api.deleteAdminChatSession(sessionId);
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      if (activeSessionId === sessionId) {
-        setActiveSessionId(null);
-        setMessages([]);
-      }
-    } catch {}
+  function deleteSession(sessionId) {
+    setConfirmModal({
+      title: "Delete Session",
+      message: "Delete this chat session and all its messages? This cannot be undone.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await api.deleteAdminChatSession(sessionId);
+          setSessions(prev => prev.filter(s => s.id !== sessionId));
+          if (activeSessionId === sessionId) {
+            setActiveSessionId(null);
+            setMessages([]);
+          }
+        } catch {}
+      },
+    });
   }
 
   async function attendToEntry(entry) {
@@ -585,6 +593,16 @@ export default function ConciergeInbox({ user }) {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmModal}
+        title={confirmModal?.title || "Confirm"}
+        message={confirmModal?.message || ""}
+        confirmLabel={confirmModal?.confirmLabel || "Delete"}
+        variant="danger"
+        onConfirm={confirmModal?.onConfirm || (() => {})}
+        onCancel={() => setConfirmModal(null)}
+      />
     </>
   );
 }
