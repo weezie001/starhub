@@ -319,8 +319,8 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
       setStage("connecting");
       connect(sessionId, name, email, "");
     }
-    window.addEventListener("strabook:join-chat", handleJoinChat);
-    return () => window.removeEventListener("strabook:join-chat", handleJoinChat);
+    window.addEventListener("starbooknow:join-chat", handleJoinChat);
+    return () => window.removeEventListener("starbooknow:join-chat", handleJoinChat);
   }, [connect, botName, botEmail, user]);
 
   useEffect(() => () => {
@@ -417,12 +417,12 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
         const min = Math.min(...prices).toLocaleString();
         const max = Math.max(...prices).toLocaleString();
         setTimeout(() => pushBotMsg(
-          `💰 **StraBook Pricing — Live from our roster:**\n\nCelebrities on our platform range from **$${min}** to **$${max}** depending on the talent and event type.\n\n💌 Personal Video Message — from $299\n🤝 Meet & Greet — from $1,500\n🎉 Private Appearance — from $3,000\n🏢 Corporate Event — from $5,000\n📣 Brand Campaign — from $8,000\n\nPrices vary by talent and requirements. A concierge can give an exact quote.`,
+          `💰 **StarBookNow Pricing — Live from our roster:**\n\nCelebrities on our platform range from **$${min}** to **$${max}** depending on the talent and event type.\n\n💌 Personal Video Message — from $299\n🤝 Meet & Greet — from $1,500\n🎉 Private Appearance — from $3,000\n🏢 Corporate Event — from $5,000\n📣 Brand Campaign — from $8,000\n\nPrices vary by talent and requirements. A concierge can give an exact quote.`,
           [{ label: "🔍 Search Celebrities", intent: "search_celeb" }, { label: "💬 Get a Quote", intent: "live_agent" }, { label: "🏠 Main Menu", intent: "menu" }]
         ), 400);
       } else {
         setTimeout(() => pushBotMsg(
-          `💰 **StraBook Pricing:**\n\n💌 Personal Video Message — from $299\n🤝 Meet & Greet — from $1,500\n🎉 Private Appearance — from $3,000\n🏢 Corporate Event — from $5,000\n📣 Brand Campaign — from $8,000`,
+          `💰 **StarBookNow Pricing:**\n\n💌 Personal Video Message — from $299\n🤝 Meet & Greet — from $1,500\n🎉 Private Appearance — from $3,000\n🏢 Corporate Event — from $5,000\n📣 Brand Campaign — from $8,000`,
           [{ label: "💬 Get an Exact Quote", intent: "live_agent" }, { label: "🏠 Main Menu", intent: "menu" }]
         ), 400);
       }
@@ -454,7 +454,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
         if (recent.length === 0) {
           pushBotMsg("Our blog is loading. You can head to the Blog section for the latest articles!", [{ label: "📰 Open Blog", intent: "navigate_blog" }, { label: "🏠 Main Menu", intent: "menu" }]);
         } else {
-          pushBotMsg(`📰 Here are our latest **${recent.length}** articles from the StraBook Journal:`, [{ label: "📰 Read All Articles", intent: "navigate_blog" }, { label: "🏠 Main Menu", intent: "menu" }], { _type: "blogs", items: recent });
+          pushBotMsg(`📰 Here are our latest **${recent.length}** articles from the StarBookNow Journal:`, [{ label: "📰 Read All Articles", intent: "navigate_blog" }, { label: "🏠 Main Menu", intent: "menu" }], { _type: "blogs", items: recent });
         }
       }, 400);
       return;
@@ -495,7 +495,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
     }
     if (opt.intent === "navigate_blog") {
       pushUserMsg("📰 Open Blog");
-      setTimeout(() => { pushBotMsg("Opening the StraBook Journal! 📖", []); setPage("blog"); }, 300);
+      setTimeout(() => { pushBotMsg("Opening the StarBookNow Journal! 📖", []); setPage("blog"); }, 300);
       return;
     }
     // Named intents
@@ -758,7 +758,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
               </div>
               <div>
                 <div className="text-foreground font-bold text-[14px]">
-                  {stage === "active" ? (agentName || "StraBook Agent") : isLiveStage ? "StraBook Support" : "StraBot ✨"}
+                  {stage === "active" ? (agentName || "StarBookNow Agent") : isLiveStage ? "StarBookNow Support" : "StraBot ✨"}
                 </div>
                 <div className={`text-[10px] font-semibold tracking-[0.5px] uppercase ${isLiveStage ? (isConnected ? "text-[#6DBF7B]" : "text-[#D4A84B]") : "text-primary"}`}>
                   {stage === "active" ? `${agentName || "Agent"} · Live Support` : stage === "waiting" ? "In Queue · Waiting" : stage === "connecting" ? "Connecting..." : "AI-Powered · Live Data"}
@@ -783,7 +783,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
               <div className="flex-1 px-[22px] py-7 flex flex-col justify-center gap-3.5">
                 <div className="text-[32px] text-center">🤖</div>
                 <div className="text-muted-foreground text-[13px] leading-[1.75] text-center">
-                  Welcome to StraBook! I'm <strong className="text-primary">StraBot</strong>, your AI assistant.<br />What's your name?
+                  Welcome to StarBookNow! I'm <strong className="text-primary">StraBot</strong>, your AI assistant.<br />What's your name?
                 </div>
                 <input
                   value={botName}
@@ -953,7 +953,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
               <div className="flex-1 flex flex-col items-center justify-center gap-3.5 p-6 text-center">
                 <div className="text-[40px]">✅</div>
                 <div className="text-foreground font-bold text-[15px] font-serif">Session Ended</div>
-                <div className="text-muted-foreground text-[13px] leading-[1.7]">Thank you for contacting StraBook.<br />We hope we could help!</div>
+                <div className="text-muted-foreground text-[13px] leading-[1.7]">Thank you for contacting StarBookNow.<br />We hope we could help!</div>
                 <button
                   onClick={resetChat}
                   className="bg-transparent border border-white/15 rounded-full px-7 py-2.5 text-muted-foreground cursor-pointer text-[12px] hover:border-primary/40 hover:text-primary transition-colors"

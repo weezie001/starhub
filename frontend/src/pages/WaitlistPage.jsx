@@ -285,7 +285,7 @@ export default function WaitlistPage({ user }) {
                   <Button
                     onClick={() => {
                       if (entry.chatSessionId) {
-                        window.dispatchEvent(new CustomEvent("strabook:join-chat", { detail: { sessionId: entry.chatSessionId } }));
+                        window.dispatchEvent(new CustomEvent("starbooknow:join-chat", { detail: { sessionId: entry.chatSessionId } }));
                       }
                     }}
                     className="px-8 py-3 text-[13px]"

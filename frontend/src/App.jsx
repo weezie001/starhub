@@ -62,12 +62,12 @@ function AboutPage({ setPage }) {
   return (
     <div className="pt-[72px] min-h-screen">
       <section className="max-w-[900px] mx-auto" style={{ padding: isMobile ? "48px 20px" : "80px 40px" }}>
-        <div className="text-primary text-[11px] tracking-[3px] font-semibold mb-3.5 uppercase">About StraBook</div>
+        <div className="text-primary text-[11px] tracking-[3px] font-semibold mb-3.5 uppercase">About StarBookNow</div>
         <h1 className="font-serif text-foreground font-bold leading-tight mb-7" style={{ fontSize: "clamp(28px,5vw,56px)" }}>
           The World's Premier<br />Celebrity Booking Platform
         </h1>
         <p className="text-muted-foreground leading-loose mb-7" style={{ fontSize: isMobile ? 14 : 16 }}>
-          StraBook connects brands, event organizers, and individuals with the world's most sought-after celebrities. With over a decade of experience and a roster of 500+ verified A-list talent, we've facilitated more than 100,000 successful bookings worldwide.
+          StarBookNow connects brands, event organizers, and individuals with the world's most sought-after celebrities. With over a decade of experience and a roster of 500+ verified A-list talent, we've facilitated more than 100,000 successful bookings worldwide.
         </p>
         <p className="text-muted-foreground leading-loose mb-10" style={{ fontSize: isMobile ? 14 : 16 }}>
           Whether you're planning a corporate gala, launching a product, organizing a charity event, or creating an unforgettable personal experience — our dedicated team ensures every interaction is seamless, professional, and exceeds expectations.
@@ -113,7 +113,7 @@ function ContactPage({ setPage }) {
           {[
             ["💬", "Live Chat", "Click the chat icon in the bottom-right corner to connect with a live support agent immediately.", null],
             ["📋", "Concierge Waitlist", "Join our waitlist for a dedicated booking concierge to personally assist you.", "waitlist"],
-            ["✉️", "Email Support", "Reach our team at support@strabook.io for detailed inquiries.", null],
+            ["✉️", "Email Support", "Reach our team at support@starbooknow.com for detailed inquiries.", null],
             ["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
           ].map(([icon, title, desc, link]) => (
             <Card

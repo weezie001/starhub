@@ -565,7 +565,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             "text-muted-foreground max-w-[560px] mx-auto mb-11 leading-[1.8]",
             isMobile ? "text-[15px]" : "text-[17px]"
           )}>
-            Join thousands of event planners, brands, and creators who trust StraBook for their most important moments.
+            Join thousands of event planners, brands, and creators who trust StarBookNow for their most important moments.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Button
@@ -604,7 +604,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             Get exclusive updates on new celebrity listings, VIP offers, and special events. No spam, just stars.
           </p>
           {subscribed ? (
-            <div className="text-[#6DBF7B] text-base font-semibold">✅ You're subscribed! Welcome to StraBook.</div>
+            <div className="text-[#6DBF7B] text-base font-semibold">✅ You're subscribed! Welcome to StarBookNow.</div>
           ) : (
             <div className="flex max-w-[460px] mx-auto bg-card border border-border rounded-full pl-[22px] pr-1.5 py-1.5 items-center gap-0">
               <input
@@ -640,12 +640,12 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
           )}>
             <div className="max-w-[300px]">
               <span className="text-primary font-serif text-[22px] font-extrabold tracking-[3px] block mb-[18px] uppercase">
-                StraBook
+                StarBookNow
               </span>
               <p className="text-muted-foreground/60 text-[13px] leading-[1.9] m-0 mb-5">
                 The world's premier platform for high-impact celebrity bookings. Redefining how excellence meets enterprise.
               </p>
-              <div className="text-muted-foreground/60 text-xs">support@strabook.io</div>
+              <div className="text-muted-foreground/60 text-xs">support@starbooknow.com</div>
               <div className="text-muted-foreground/60 text-xs mt-1">Available worldwide</div>
             </div>
             <div className={cn(
@@ -680,7 +680,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             isMobile ? "flex-col items-start" : "flex-row justify-between items-center"
           )}>
             <div className="text-muted-foreground/60 text-[11px] tracking-[2px] uppercase">
-              © 2025 StraBook. All rights reserved.
+              © 2025 StarBookNow. All rights reserved.
             </div>
             <div className={cn("flex flex-wrap", isMobile ? "gap-5" : "gap-8")}>
               {["New York", "London", "Dubai", "Singapore"].map(c => (

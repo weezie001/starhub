@@ -35,7 +35,7 @@ export default function AuthModal({ open, mode, onClose, onAuth, switchMode }) {
         <DialogHeader className="text-center items-center pb-2">
           <div className="text-4xl mb-3">{mode === "login" ? "🔐" : "✨"}</div>
           <DialogTitle className="text-2xl">
-            {mode === "login" ? "Welcome Back" : "Join StraBook"}
+            {mode === "login" ? "Welcome Back" : "Join StarBookNow"}
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1.5">
             {mode === "login"
