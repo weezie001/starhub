@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { G } from "../lib/tokens.js";
 import { api } from "../api.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog.jsx";
@@ -150,6 +150,15 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
   const [giftCard, setGiftCard] = useState({ type: "", amount: "", code: "" });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setForm({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
+      setPayment("");
+      setGiftCard({ type: "", amount: "", code: "" });
+      setDone(false);
+    }
+  }, [open]);
 
   if (!c) return null;
 
