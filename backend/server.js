@@ -131,6 +131,7 @@ async function initDB() {
   `);
 
   await pool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "chatSessionId" TEXT`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "invoiceId" TEXT`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS blogs (
@@ -593,6 +594,7 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
       sendBookingStatusUpdate({ name: booking.userName, email: booking.userEmail, celeb: celeb.name, type: booking.bookingType, status });
       if (status === 'approved') {
         const invoiceId = `SBN-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        await q('UPDATE bookings SET "invoiceId"=$1 WHERE id=$2', [invoiceId, req.params.id]);
         sendInvoice({
           name: booking.userName, email: booking.userEmail,
           invoiceId, celeb: celeb.name, type: booking.bookingType,
@@ -720,6 +722,73 @@ app.post('/api/admin/celebrities', authenticate, adminOnly, async (req, res) => 
 app.delete('/api/admin/celebrities/:id', authenticate, adminOnly, async (req, res) => {
   try {
     await q('DELETE FROM celebrities WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: update celebrity
+app.put('/api/admin/celebrities/:id', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { name, category, price, photo, bio, country, flag, avail, feat, rating, tags } = req.body;
+    const row = await qOne('SELECT * FROM celebrities WHERE id=$1', [req.params.id]);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    const d = JSON.parse(row.data || '{}');
+    if (bio      !== undefined) d.bio     = bio;
+    if (country  !== undefined) d.country = country;
+    if (flag     !== undefined) d.flag    = flag;
+    if (feat     !== undefined) d.feat    = !!feat;
+    if (avail    !== undefined) d.avail   = !!avail;
+    if (rating   !== undefined) d.rating  = rating;
+    if (tags     !== undefined) d.tags    = tags;
+    await q('UPDATE celebrities SET name=$1,category=$2,price=$3,photo=$4,data=$5 WHERE id=$6',
+      [name||row.name, category||row.category, price!=null?parseFloat(price):row.price, photo!==undefined?photo:row.photo, JSON.stringify(d), req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: transactions (approved bookings with invoice IDs)
+app.get('/api/admin/transactions', authenticate, adminOnly, async (req, res) => {
+  try {
+    const rows = await qAll(
+      `SELECT b.*,u.name as "userName",u.email as "userEmail"
+       FROM bookings b JOIN users u ON b."userId"=u.id
+       WHERE b.status='approved'
+       ORDER BY b.date DESC`
+    );
+    res.json(rows.map(r => ({ ...r, celebData: JSON.parse(r.celebData), formData: JSON.parse(r.formData) })));
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: blog CRUD
+app.post('/api/admin/blogs', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { title, category, author, authorRole, readTime, feat, img, excerpt, content } = req.body;
+    if (!title) return res.status(400).json({ error: 'title required' });
+    const id = uid();
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + id.slice(-4);
+    const date = new Date().toISOString().slice(0, 10);
+    await q(
+      'INSERT INTO blogs (id,title,slug,category,author,"authorRole",date,"readTime",feat,img,excerpt,content) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+      [id, title, slug, category||'Insights', author||'Admin', authorRole||'', date, readTime||'5 min read', feat?1:0, img||'', excerpt||'', JSON.stringify(content||[])]
+    );
+    res.json({ id, title, slug, category: category||'Insights', author: author||'Admin', authorRole: authorRole||'', date, readTime: readTime||'5 min read', feat: !!feat, img: img||'', excerpt: excerpt||'', content: content||[] });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/blogs/:id', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { title, category, author, authorRole, readTime, feat, img, excerpt, content } = req.body;
+    await q(
+      'UPDATE blogs SET title=$1,category=$2,author=$3,"authorRole"=$4,"readTime"=$5,feat=$6,img=$7,excerpt=$8,content=$9 WHERE id=$10',
+      [title, category, author, authorRole, readTime, feat?1:0, img, excerpt, JSON.stringify(content||[]), req.params.id]
+    );
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/blogs/:id', authenticate, adminOnly, async (req, res) => {
+  try {
+    await q('DELETE FROM blogs WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });

@@ -9,84 +9,189 @@ import ConfirmModal from "../../components/ui/confirm-modal.jsx";
 import { api } from "../../api.js";
 import ConciergeInbox from "./ConciergeInbox.jsx";
 
+const CATS = ["actors", "musicians", "sports", "influencers", "royalty", "comedians", "other"];
+const BLOG_CATS = ["Event Planning", "Trends", "Insights", "How It Works", "Strategy"];
+
+function bodyToContent(body) {
+  return body.split(/\n\n+/).filter(Boolean).map(block => {
+    const t = block.trim();
+    if (t.startsWith("## ")) return { type: "h2", text: t.slice(3).trim() };
+    return { type: "p", text: t };
+  });
+}
+function contentToBody(content = []) {
+  return content.map(b => b.type === "h2" ? `## ${b.text}` : b.text).join("\n\n");
+}
+
+const statusVariant = { pending: "warning", approved: "success", declined: "destructive" };
+
+// ── Reusable search+filter bar ─────────────────────────────────────────────
+function SearchBar({ value, onChange, placeholder = "Search..." }) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">🔍</span>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-4 py-2 text-sm text-foreground outline-none focus:border-primary/60 font-sans placeholder:text-muted-foreground/50"
+      />
+    </div>
+  );
+}
+
+function FilterPills({ options, value, onChange }) {
+  return (
+    <div className="flex gap-1.5 flex-wrap">
+      {options.map(([v, l]) => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={[
+            "px-3 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer font-sans",
+            value === v
+              ? "bg-primary/15 border-primary/50 text-primary"
+              : "bg-transparent border-white/10 text-muted-foreground hover:border-white/25 hover:text-foreground",
+          ].join(" ")}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminPage({ user }) {
   const [tab, setTab] = useState("overview");
+
+  // ── bookings ───────────────────────────────────────────────────────────────
   const [adminBookings, setAdminBookings] = useState([]);
-  const [celebs, setCelebs] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [detailBooking, setDetailBooking] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
 
-  // Celebrity add form
+  // ── celebrities ────────────────────────────────────────────────────────────
+  const [celebs, setCelebs] = useState([]);
   const [showAddCeleb, setShowAddCeleb] = useState(false);
   const [celebForm, setCelebForm] = useState({ name: "", category: "actors", price: "", photo: "", bio: "", country: "", flag: "" });
+  const [celebError, setCelebError] = useState("");
+  const photoInputRef = useRef(null);
+  const [editCeleb, setEditCeleb] = useState(null);
+  const [editCelebForm, setEditCelebForm] = useState({});
+  const editPhotoInputRef = useRef(null);
 
-  // User add form
+  // ── users ──────────────────────────────────────────────────────────────────
+  const [users, setUsers] = useState([]);
   const [showAddUser, setShowAddUser] = useState(false);
   const [userForm, setUserForm] = useState({ name: "", email: "", password: "", role: "user" });
   const [userError, setUserError] = useState("");
   const [deletingUserId, setDeletingUserId] = useState(null);
-  const [celebError, setCelebError] = useState("");
-  const [confirmModal, setConfirmModal] = useState(null);
-  const photoInputRef = useRef(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
 
-  function handlePhotoFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ── blogs ──────────────────────────────────────────────────────────────────
+  const [blogs, setBlogs] = useState([]);
+  const [showAddBlog, setShowAddBlog] = useState(false);
+  const [editBlog, setEditBlog] = useState(null);
+  const emptyBlogForm = { title: "", category: "Insights", author: "Admin", authorRole: "", readTime: "5 min read", feat: false, img: "", excerpt: "", body: "" };
+  const [blogForm, setBlogForm] = useState(emptyBlogForm);
+  const [blogError, setBlogError] = useState("");
+  const [blogImgUploading, setBlogImgUploading] = useState(false);
+  const blogImgInputRef = useRef(null);
+
+  // ── transactions ───────────────────────────────────────────────────────────
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTxns, setLoadingTxns] = useState(false);
+  const [txnSearch, setTxnSearch] = useState("");
+  const [txnPaymentFilter, setTxnPaymentFilter] = useState("all");
+
+  // ── misc ───────────────────────────────────────────────────────────────────
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  // ── photo helpers ──────────────────────────────────────────────────────────
+  function resizePhoto(file, maxPx, cb) {
     const reader = new FileReader();
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 480;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width  = Math.round(img.width  * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-        const b64 = canvas.toDataURL("image/jpeg", 0.82);
-        setCelebForm(f => ({ ...f, photo: b64 }));
+        cb(canvas.toDataURL("image/jpeg", 0.85));
       };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   }
+  function handlePhotoFile(e) {
+    const f = e.target.files?.[0];
+    if (f) resizePhoto(f, 480, b64 => setCelebForm(p => ({ ...p, photo: b64 })));
+  }
+  function handleEditPhotoFile(e) {
+    const f = e.target.files?.[0];
+    if (f) resizePhoto(f, 480, b64 => setEditCelebForm(p => ({ ...p, photo: b64 })));
+  }
+  async function handleBlogImgFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBlogImgUploading(true);
+    setBlogError("");
+    resizePhoto(file, 1200, async b64 => {
+      try {
+        const { url } = await api.uploadPhoto(b64);
+        setBlogForm(f => ({ ...f, img: url }));
+      } catch {
+        // Cloudinary not configured — store b64 directly
+        setBlogForm(f => ({ ...f, img: b64 }));
+      } finally {
+        setBlogImgUploading(false);
+      }
+    });
+  }
 
+  // ── data loading ───────────────────────────────────────────────────────────
   useEffect(() => {
     api.getAdminBookings()
       .then(data => { setAdminBookings(data); setLoadingBookings(false); })
       .catch(() => setLoadingBookings(false));
-    api.getCelebrities()
-      .then(setCelebs)
-      .catch(() => {});
+    api.getCelebrities().then(setCelebs).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (tab === "users" && users.length === 0) {
-      api.getAdminUsers().then(setUsers).catch(() => {});
+    if (tab === "users"        && users.length === 0)       api.getAdminUsers().then(setUsers).catch(() => {});
+    if (tab === "blogs"        && blogs.length === 0)       api.getBlogs().then(setBlogs).catch(() => {});
+    if (tab === "transactions" && transactions.length === 0) {
+      setLoadingTxns(true);
+      api.getAdminTransactions()
+        .then(data => { setTransactions(data); setLoadingTxns(false); })
+        .catch(() => setLoadingTxns(false));
     }
   }, [tab]);
 
+  // ── booking actions ────────────────────────────────────────────────────────
   async function updateStatus(id, status) {
     try {
       await api.updateBookingStatus(id, status);
       setAdminBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+      if (status === "approved") { setTransactions([]); setLoadingTxns(false); }
     } catch {}
   }
 
+  // ── celebrity actions ──────────────────────────────────────────────────────
   async function toggleAvail(celeb) {
-    const newAvail = !celeb.avail;
-    setCelebs(prev => prev.map(c => c.id === celeb.id ? { ...c, avail: newAvail } : c));
-    try {
-      await api.updateCelebAvailability(celeb.id, newAvail);
-    } catch {
-      setCelebs(prev => prev.map(c => c.id === celeb.id ? { ...c, avail: celeb.avail } : c));
-    }
+    const n = !celeb.avail;
+    setCelebs(prev => prev.map(c => c.id === celeb.id ? { ...c, avail: n } : c));
+    try { await api.updateCelebAvailability(celeb.id, n); }
+    catch { setCelebs(prev => prev.map(c => c.id === celeb.id ? { ...c, avail: celeb.avail } : c)); }
   }
-
   function deleteCeleb(id) {
     setConfirmModal({
       title: "Delete Celebrity",
-      message: "Are you sure you want to remove this celebrity from the roster?",
+      message: "Remove this celebrity from the roster?",
       onConfirm: async () => {
         setConfirmModal(null);
         setCelebs(prev => prev.filter(c => c.id !== id));
@@ -94,7 +199,6 @@ export default function AdminPage({ user }) {
       },
     });
   }
-
   async function addCeleb() {
     setCelebError("");
     if (!celebForm.name || !celebForm.category || !celebForm.price) { setCelebError("Name, category and price are required."); return; }
@@ -105,7 +209,19 @@ export default function AdminPage({ user }) {
       setShowAddCeleb(false);
     } catch (e) { setCelebError(e.message); }
   }
+  function startEditCeleb(c) {
+    setEditCeleb(c.id);
+    setEditCelebForm({ name: c.name, category: c.cat, price: String(c.price), photo: c.img || "", bio: c.bio || "", country: c.country || "", flag: c.flag || "" });
+  }
+  async function saveEditCeleb(id) {
+    try {
+      await api.updateCelebrity(id, editCelebForm);
+      setCelebs(prev => prev.map(c => c.id === id ? { ...c, name: editCelebForm.name, cat: editCelebForm.category, price: parseFloat(editCelebForm.price), img: editCelebForm.photo || c.img, bio: editCelebForm.bio, country: editCelebForm.country, flag: editCelebForm.flag } : c));
+      setEditCeleb(null);
+    } catch (e) { alert(e.message); }
+  }
 
+  // ── user actions ───────────────────────────────────────────────────────────
   async function addUser() {
     setUserError("");
     if (!userForm.name || !userForm.email || !userForm.password) { setUserError("Name, email and password are required."); return; }
@@ -116,35 +232,95 @@ export default function AdminPage({ user }) {
       setShowAddUser(false);
     } catch (e) { setUserError(e.message); }
   }
-
   function deleteUser(u) {
     setConfirmModal({
       title: "Delete User",
-      message: `Delete "${u.name}"? This will also remove all their bookings and cannot be undone.`,
+      message: `Delete "${u.name}"? All their bookings will also be removed.`,
       onConfirm: async () => {
         setConfirmModal(null);
         setDeletingUserId(u.id);
-        try {
-          await api.deleteUser(u.id);
-          setUsers(prev => prev.filter(x => x.id !== u.id));
-        } catch (e) {
-          setConfirmModal({ title: "Error", message: e.message || "Failed to delete user.", confirmLabel: "OK", variant: "ghost", onConfirm: () => setConfirmModal(null) });
-        } finally {
-          setDeletingUserId(null);
-        }
+        try { await api.deleteUser(u.id); setUsers(prev => prev.filter(x => x.id !== u.id)); }
+        catch (e) { setConfirmModal({ title: "Error", message: e.message || "Failed.", confirmLabel: "OK", variant: "ghost", onConfirm: () => setConfirmModal(null) }); }
+        finally { setDeletingUserId(null); }
       },
     });
   }
 
+  // ── blog actions ───────────────────────────────────────────────────────────
+  async function submitBlog() {
+    setBlogError("");
+    if (!blogForm.title) { setBlogError("Title is required."); return; }
+    const payload = { ...blogForm, content: bodyToContent(blogForm.body) };
+    try {
+      if (editBlog) {
+        await api.updateBlog(editBlog.id, payload);
+        setBlogs(prev => prev.map(b => b.id === editBlog.id ? { ...b, ...payload } : b));
+        setEditBlog(null);
+      } else {
+        const res = await api.addBlog(payload);
+        setBlogs(prev => [res, ...prev]);
+        setShowAddBlog(false);
+      }
+      setBlogForm(emptyBlogForm);
+    } catch (e) { setBlogError(e.message); }
+  }
+  function startEditBlog(b) {
+    setEditBlog(b);
+    setBlogForm({ title: b.title, category: b.category, author: b.author, authorRole: b.authorRole || "", readTime: b.readTime || "5 min read", feat: !!b.feat, img: b.img || "", excerpt: b.excerpt || "", body: contentToBody(b.content) });
+    setShowAddBlog(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function deleteBlog(id) {
+    setConfirmModal({
+      title: "Delete Blog Post",
+      message: "Delete this post? This cannot be undone.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setBlogs(prev => prev.filter(b => b.id !== id));
+        try { await api.deleteBlog(id); } catch {}
+      },
+    });
+  }
+
+  // ── filtered data ──────────────────────────────────────────────────────────
+  const filteredBookings = adminBookings
+    .filter(b => bookingStatusFilter === "all" || b.status === bookingStatusFilter)
+    .filter(b => {
+      if (!bookingSearch) return true;
+      const q = bookingSearch.toLowerCase();
+      const form = b.form || {};
+      return (b.celeb?.name || "").toLowerCase().includes(q)
+        || (form.name || b.userName || "").toLowerCase().includes(q)
+        || (form.email || "").toLowerCase().includes(q);
+    });
+
+  const filteredTxns = transactions
+    .filter(t => txnPaymentFilter === "all" || t.payment === txnPaymentFilter)
+    .filter(t => {
+      if (!txnSearch) return true;
+      const q = txnSearch.toLowerCase();
+      const form = t.form || {};
+      return (t.celeb?.name || "").toLowerCase().includes(q)
+        || (form.name || t.userName || "").toLowerCase().includes(q)
+        || (t.invoiceId || "").toLowerCase().includes(q);
+    });
+
+  const filteredUsers = users
+    .filter(u => userRoleFilter === "all" || u.role === userRoleFilter)
+    .filter(u => {
+      if (!userSearch) return true;
+      const q = userSearch.toLowerCase();
+      return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    });
+
+  // ── stats ──────────────────────────────────────────────────────────────────
   const stats = {
     bookings: adminBookings.length,
-    revenue: adminBookings.reduce((s, b) => s + (b.amount || 0), 0),
+    revenue: adminBookings.filter(b => b.status === "approved").reduce((s, b) => s + (b.amount || 0), 0),
     pending: adminBookings.filter(b => b.status === "pending").length,
     celebs: celebs.length,
     available: celebs.filter(c => c.avail).length,
   };
-
-  const CATS = ["actors", "musicians", "sports", "influencers", "royalty", "comedians", "other"];
 
   const statCards = [
     { label: "Total Bookings", value: stats.bookings,                       icon: "📅", colorClass: "text-primary" },
@@ -154,11 +330,19 @@ export default function AdminPage({ user }) {
     { label: "Available",      value: stats.available,                      icon: "✅", colorClass: "text-[#6DBF7B]" },
   ];
 
-  const statusVariant = { pending: "warning", approved: "success", declined: "destructive" };
+  const TABS = [
+    ["overview",     "Overview"],
+    ["celebrities",  "Celebrities"],
+    ["bookings",     "Bookings"],
+    ["transactions", "Transactions"],
+    ["blogs",        "Blogs"],
+    ["users",        "Users"],
+    ["inbox",        "Support Inbox"],
+  ];
 
+  // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="pt-16 pb-12 px-4 sm:px-7 max-w-[1140px] mx-auto min-h-screen">
-      {/* Header */}
       <div className="flex items-center gap-3.5 mb-8 mt-8 flex-wrap">
         <Badge variant="destructive" className="text-[11px] px-3 py-1">⚙ ADMIN PANEL</Badge>
         <h1 className="text-[clamp(20px,3.5vw,36px)] font-serif text-foreground m-0 font-bold">Control Dashboard</h1>
@@ -167,7 +351,7 @@ export default function AdminPage({ user }) {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-7">
         {statCards.map(({ label, value, icon, colorClass }) => (
-          <div key={label} className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-5">
+          <div key={label} className="rounded-2xl border border-border bg-card shadow-[0_4px_20px_rgba(0,0,0,0.15)] p-5">
             <div className="text-lg mb-1.5">{icon}</div>
             <div className={`text-[clamp(18px,2vw,24px)] font-bold font-serif ${colorClass}`}>{value}</div>
             <div className="text-muted-foreground/60 text-[10px] mt-0.5 uppercase tracking-[0.8px]">{label}</div>
@@ -176,56 +360,43 @@ export default function AdminPage({ user }) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/8 flex gap-0 mb-6 overflow-x-auto scrollbar-none">
-        {[["overview", "Overview"], ["celebrities", "Celebrities"], ["bookings", "Bookings"], ["users", "Users"], ["inbox", "Support Inbox"]].map(([t, l]) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={[
-              "bg-transparent border-none px-4 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans whitespace-nowrap",
-              tab === t
-                ? "border-b-2 border-destructive text-destructive font-bold"
-                : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground",
-            ].join(" ")}
-          >
+      <div className="border-b border-border flex gap-0 mb-6 overflow-x-auto scrollbar-none">
+        {TABS.map(([t, l]) => (
+          <button key={t} onClick={() => setTab(t)} className={["bg-transparent border-none px-4 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans whitespace-nowrap", tab === t ? "border-b-2 border-destructive text-destructive font-bold" : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground"].join(" ")}>
             {l}
           </button>
         ))}
       </div>
 
-      {/* Overview Tab */}
+      {/* ── Overview ── */}
       {tab === "overview" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-6">
+          <div className="rounded-2xl border border-border bg-card shadow-[0_4px_20px_rgba(0,0,0,0.15)] p-6">
             <h3 className="text-foreground mb-4 font-serif text-xl m-0">📊 Platform Summary</h3>
-            <p className="text-muted-foreground leading-[1.8] text-sm">
-              You have <strong className="text-primary">{stats.celebs}</strong> celebrities listed — <strong className="text-[#6DBF7B]">{stats.available}</strong> currently available.
-            </p>
-            <p className="text-muted-foreground leading-[1.8] text-sm">
-              Total bookings: <strong className="text-primary">{stats.bookings}</strong>. Revenue: <strong className="text-[#6DBF7B]">${stats.revenue.toLocaleString()}</strong>.
-            </p>
-            <p className="text-muted-foreground leading-[1.8] text-sm">
-              <strong className="text-[#D4A84B]">{stats.pending}</strong> bookings pending your review.
-            </p>
+            <p className="text-muted-foreground leading-[1.8] text-sm">You have <strong className="text-primary">{stats.celebs}</strong> celebrities listed — <strong className="text-[#6DBF7B]">{stats.available}</strong> currently available.</p>
+            <p className="text-muted-foreground leading-[1.8] text-sm">Total bookings: <strong className="text-primary">{stats.bookings}</strong>. Confirmed revenue: <strong className="text-[#6DBF7B]">${stats.revenue.toLocaleString()}</strong>.</p>
+            <p className="text-muted-foreground leading-[1.8] text-sm"><strong className="text-[#D4A84B]">{stats.pending}</strong> bookings pending your review.</p>
           </div>
-          <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-6">
+          <div className="rounded-2xl border border-border bg-card shadow-[0_4px_20px_rgba(0,0,0,0.15)] p-6">
             <h3 className="text-foreground mb-4 font-serif text-xl m-0">⚡ Quick Actions</h3>
             <div className="flex flex-col gap-2.5">
-              <Button onClick={() => setTab("celebrities")} variant="ghost" className="justify-start">📋 Manage Celebrity Listings</Button>
-              <Button onClick={() => setTab("bookings")} variant="ghost" className="justify-start">📅 Review Pending Bookings</Button>
-              <Button onClick={() => setTab("users")} variant="ghost" className="justify-start">👥 Manage Users</Button>
-              <Button onClick={() => setTab("inbox")} variant="ghost" className="justify-start">💬 Open Support Inbox</Button>
+              <Button onClick={() => setTab("celebrities")}  variant="ghost" className="justify-start">📋 Manage Celebrity Listings</Button>
+              <Button onClick={() => setTab("bookings")}     variant="ghost" className="justify-start">📅 Review Pending Bookings</Button>
+              <Button onClick={() => setTab("transactions")} variant="ghost" className="justify-start">🧾 View Transactions</Button>
+              <Button onClick={() => setTab("blogs")}        variant="ghost" className="justify-start">✍️ Manage Blog Posts</Button>
+              <Button onClick={() => setTab("users")}        variant="ghost" className="justify-start">👥 Manage Users</Button>
+              <Button onClick={() => setTab("inbox")}        variant="ghost" className="justify-start">💬 Open Support Inbox</Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Celebrities Tab */}
+      {/* ── Celebrities ── */}
       {tab === "celebrities" && (
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-foreground font-serif text-xl m-0">Celebrity Roster</h3>
-            <Button onClick={() => setShowAddCeleb(v => !v)} className="px-5 py-2 text-xs">
+            <Button onClick={() => { setShowAddCeleb(v => !v); setEditCeleb(null); }} className="px-5 py-2 text-xs">
               {showAddCeleb ? "✕ Cancel" : "+ Add Celebrity"}
             </Button>
           </div>
@@ -233,18 +404,12 @@ export default function AdminPage({ user }) {
           {showAddCeleb && (
             <div className="bg-card border border-primary/20 rounded-xl p-6 mb-5">
               <h4 className="text-primary mb-4 font-serif text-base m-0">New Celebrity</h4>
-              {celebError && (
-                <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{celebError}</div>
-              )}
+              {celebError && <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{celebError}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <Input label="Name *" value={celebForm.name} onChange={e => setCelebForm(f => ({ ...f, name: e.target.value }))} placeholder="Celebrity name" />
                 <div>
                   <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category *</label>
-                  <select
-                    value={celebForm.category}
-                    onChange={e => setCelebForm(f => ({ ...f, category: e.target.value }))}
-                    className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans"
-                  >
+                  <select value={celebForm.category} onChange={e => setCelebForm(f => ({ ...f, category: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
                     {CATS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
@@ -254,26 +419,10 @@ export default function AdminPage({ user }) {
                 <div>
                   <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Photo</label>
                   <div className="flex gap-2 items-center">
-                    {celebForm.photo ? (
-                      <img src={celebForm.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shrink-0">📷</div>
-                    )}
+                    {celebForm.photo ? <img src={celebForm.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0" /> : <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center text-lg shrink-0">📷</div>}
                     <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                        className="w-full rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold py-1.5 cursor-pointer hover:bg-primary/10 transition-colors font-sans"
-                      >
-                        Upload Photo
-                      </button>
-                      <input
-                        type="text"
-                        value={celebForm.photo.startsWith("data:") ? "" : celebForm.photo}
-                        onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))}
-                        placeholder="or paste URL"
-                        className="w-full rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/60 font-sans"
-                      />
+                      <button type="button" onClick={() => photoInputRef.current?.click()} className="w-full rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold py-1.5 cursor-pointer hover:bg-primary/10 transition-colors font-sans">Upload Photo</button>
+                      <input type="text" value={celebForm.photo.startsWith("data:") ? "" : celebForm.photo} onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))} placeholder="or paste URL" className="w-full rounded-full border border-border bg-input px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/60 font-sans" />
                     </div>
                   </div>
                   <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoFile} className="hidden" />
@@ -288,34 +437,269 @@ export default function AdminPage({ user }) {
 
           <div className="flex flex-col gap-2.5">
             {celebs.map(c => (
-              <div key={c.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={c.img || avatar(c.name)}
-                    alt={c.name}
-                    className="w-[42px] h-[42px] rounded-full object-cover border-2 border-primary/10"
-                    onError={e => e.target.src = avatar(c.name)}
-                  />
-                  <div>
-                    <div className="text-foreground font-semibold text-sm">{c.name}</div>
-                    <div className="text-muted-foreground text-xs">{c.flag} {c.country} • {c.cat} • ${(c.price || 0).toLocaleString()}</div>
+              <div key={c.id}>
+                <div className="rounded-xl border border-border bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <img src={c.img || avatar(c.name)} alt={c.name} className="w-[42px] h-[42px] rounded-full object-cover border-2 border-primary/10" onError={e => e.target.src = avatar(c.name)} />
+                    <div>
+                      <div className="text-foreground font-semibold text-sm">{c.name}</div>
+                      <div className="text-muted-foreground text-xs">{c.flag} {c.country} • {c.cat} • ${(c.price || 0).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Stars r={c.rating} size={12} />
+                    <Button onClick={() => toggleAvail(c)} variant={c.avail ? "success" : "danger"} className="px-3.5 py-1.5 text-xs">{c.avail ? "✓ Available" : "✗ Unavailable"}</Button>
+                    <button onClick={() => editCeleb === c.id ? setEditCeleb(null) : startEditCeleb(c)} className="bg-transparent border border-primary/40 rounded-lg text-primary cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-primary/10 transition-colors">✏️</button>
+                    <button onClick={() => deleteCeleb(c.id)} className="bg-transparent border border-destructive/40 rounded-lg text-destructive cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-destructive/10 transition-colors">🗑</button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <Stars r={c.rating} size={12} />
-                  <Button
-                    onClick={() => toggleAvail(c)}
-                    variant={c.avail ? "success" : "danger"}
-                    className="px-3.5 py-1.5 text-xs"
-                  >
-                    {c.avail ? "✓ Available" : "✗ Unavailable"}
-                  </Button>
-                  <button
-                    onClick={() => deleteCeleb(c.id)}
-                    className="bg-transparent border border-destructive/40 rounded-lg text-destructive cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-destructive/10 hover:border-destructive/70 transition-colors"
-                  >
-                    🗑
-                  </button>
+
+                {editCeleb === c.id && (
+                  <div className="bg-card border border-primary/20 rounded-xl p-5 mt-1 ml-2">
+                    <h4 className="text-primary mb-3 font-serif text-sm m-0">Edit — {c.name}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                      <Input label="Name" value={editCelebForm.name} onChange={e => setEditCelebForm(f => ({ ...f, name: e.target.value }))} />
+                      <div>
+                        <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category</label>
+                        <select value={editCelebForm.category} onChange={e => setEditCelebForm(f => ({ ...f, category: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
+                          {CATS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                      </div>
+                      <Input label="Price ($)" value={editCelebForm.price} onChange={e => setEditCelebForm(f => ({ ...f, price: e.target.value }))} type="number" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                      <div>
+                        <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Photo</label>
+                        <div className="flex gap-2 items-center">
+                          {editCelebForm.photo ? <img src={editCelebForm.photo} alt="" className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0" /> : <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center text-lg shrink-0">📷</div>}
+                          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                            <button type="button" onClick={() => editPhotoInputRef.current?.click()} className="w-full rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold py-1.5 cursor-pointer hover:bg-primary/10 transition-colors font-sans">Upload Photo</button>
+                            <input type="text" value={editCelebForm.photo?.startsWith("data:") ? "" : editCelebForm.photo} onChange={e => setEditCelebForm(f => ({ ...f, photo: e.target.value }))} placeholder="or paste URL" className="w-full rounded-full border border-border bg-input px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/60 font-sans" />
+                          </div>
+                        </div>
+                        <input ref={editPhotoInputRef} type="file" accept="image/*" onChange={handleEditPhotoFile} className="hidden" />
+                      </div>
+                      <Input label="Country" value={editCelebForm.country} onChange={e => setEditCelebForm(f => ({ ...f, country: e.target.value }))} />
+                      <Input label="Flag Emoji" value={editCelebForm.flag} onChange={e => setEditCelebForm(f => ({ ...f, flag: e.target.value }))} />
+                    </div>
+                    <Input label="Bio" value={editCelebForm.bio} onChange={e => setEditCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
+                    <div className="flex gap-2 mt-3">
+                      <Button onClick={() => saveEditCeleb(c.id)} className="px-5 py-2 text-xs">Save Changes →</Button>
+                      <Button onClick={() => setEditCeleb(null)} variant="ghost" className="px-5 py-2 text-xs">Cancel</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Bookings ── */}
+      {tab === "bookings" && (
+        <div>
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1">
+              <SearchBar value={bookingSearch} onChange={setBookingSearch} placeholder="Search by celebrity, client or email..." />
+            </div>
+            <FilterPills
+              value={bookingStatusFilter}
+              onChange={setBookingStatusFilter}
+              options={[["all","All"], ["pending","Pending"], ["approved","Approved"], ["declined","Declined"]]}
+            />
+          </div>
+          {loadingBookings ? (
+            <div className="text-center py-16 text-muted-foreground">Loading bookings...</div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="text-5xl mb-3.5">📭</div>
+              <div>{adminBookings.length === 0 ? "No bookings yet" : "No results"}</div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {filteredBookings.map(b => {
+                const form = b.form || {};
+                return (
+                  <div key={b.id} onClick={() => setDetailBooking(b)} className="bg-card rounded-xl border border-border hover:border-primary/30 transition-colors cursor-pointer px-4 sm:px-5 py-4 flex justify-between items-start sm:items-center flex-wrap gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
+                      <div className="text-muted-foreground text-xs mt-0.5 truncate">{form.name || b.userName} • {form.email}</div>
+                      <div className="text-muted-foreground/60 text-[11px] mt-px">{b.type} • {new Date(b.date).toLocaleDateString()}</div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                      <span className="text-primary font-bold text-[14px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
+                      <Badge variant={statusVariant[b.status] || "warning"}>{(b.status || "pending").toUpperCase()}</Badge>
+                      <span className="text-muted-foreground/60 text-xs">View →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Transactions ── */}
+      {tab === "transactions" && (
+        <div>
+          <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <h3 className="text-foreground font-serif text-xl m-0">Transaction Ledger</h3>
+            <div className="text-muted-foreground text-xs">{filteredTxns.length} of {transactions.length} records</div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1">
+              <SearchBar value={txnSearch} onChange={setTxnSearch} placeholder="Search by invoice ID, celebrity or client..." />
+            </div>
+            <FilterPills
+              value={txnPaymentFilter}
+              onChange={setTxnPaymentFilter}
+              options={[["all","All"], ["crypto","Crypto"], ["giftcard","Gift Card"], ["other","Other"]]}
+            />
+          </div>
+
+          {loadingTxns ? (
+            <div className="text-center py-16 text-muted-foreground">Loading transactions...</div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="text-5xl mb-3.5">🧾</div>
+              <div>No approved transactions yet</div>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-border bg-card p-4 mb-4 flex gap-6 flex-wrap">
+                <div><div className="text-muted-foreground/60 text-[10px] uppercase tracking-widest">Total Revenue</div><div className="text-[#6DBF7B] font-bold text-xl font-serif">${filteredTxns.reduce((s, t) => s + (t.amount || 0), 0).toLocaleString()}</div></div>
+                <div><div className="text-muted-foreground/60 text-[10px] uppercase tracking-widest">Transactions</div><div className="text-primary font-bold text-xl font-serif">{filteredTxns.length}</div></div>
+                <div><div className="text-muted-foreground/60 text-[10px] uppercase tracking-widest">Avg. Value</div><div className="text-foreground font-bold text-xl font-serif">${filteredTxns.length ? Math.round(filteredTxns.reduce((s, t) => s + (t.amount || 0), 0) / filteredTxns.length).toLocaleString() : 0}</div></div>
+              </div>
+
+              {filteredTxns.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground text-sm">No results matching your search</div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredTxns.map(t => {
+                    const form = t.form || {};
+                    return (
+                      <div key={t.id} className="rounded-xl border border-border bg-card px-4 py-3.5 flex justify-between items-start sm:items-center gap-3 flex-wrap">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                            <span className="text-foreground font-semibold text-sm">{t.celeb?.name}</span>
+                            <Badge variant="secondary" className="text-[9px] px-2 py-0.5">{t.type}</Badge>
+                          </div>
+                          <div className="text-muted-foreground text-xs truncate">{form.name || t.userName} • {form.email || t.userEmail}</div>
+                          <div className="text-muted-foreground/60 text-[11px] mt-0.5">{new Date(t.date).toLocaleString()}</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-[#6DBF7B] font-bold text-base">${(t.amount || 0).toLocaleString()}</span>
+                          <span className="text-muted-foreground/60 text-[10px] capitalize">{t.payment}</span>
+                          {t.invoiceId && <span className="text-primary font-mono text-[10px] bg-primary/5 border border-primary/20 rounded px-1.5 py-0.5">{t.invoiceId}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Blogs ── */}
+      {tab === "blogs" && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-foreground font-serif text-xl m-0">Blog Posts</h3>
+            <Button onClick={() => { setShowAddBlog(v => !v); if (editBlog) { setEditBlog(null); setBlogForm(emptyBlogForm); } }} className="px-5 py-2 text-xs">
+              {showAddBlog ? "✕ Cancel" : "+ New Post"}
+            </Button>
+          </div>
+
+          {showAddBlog && (
+            <div className="bg-card border border-primary/20 rounded-xl p-6 mb-5">
+              <h4 className="text-primary mb-4 font-serif text-base m-0">{editBlog ? "Edit Post" : "New Blog Post"}</h4>
+              {blogError && <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{blogError}</div>}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <Input label="Title *" value={blogForm.title} onChange={e => setBlogForm(f => ({ ...f, title: e.target.value }))} placeholder="Post title" />
+                <div>
+                  <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category</label>
+                  <select value={blogForm.category} onChange={e => setBlogForm(f => ({ ...f, category: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
+                    {BLOG_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <Input label="Author" value={blogForm.author} onChange={e => setBlogForm(f => ({ ...f, author: e.target.value }))} placeholder="Author name" />
+                <Input label="Author Role" value={blogForm.authorRole} onChange={e => setBlogForm(f => ({ ...f, authorRole: e.target.value }))} placeholder="e.g. Senior Concierge" />
+                <Input label="Read Time" value={blogForm.readTime} onChange={e => setBlogForm(f => ({ ...f, readTime: e.target.value }))} placeholder="5 min read" />
+              </div>
+
+              {/* Cover Image — upload or URL */}
+              <div className="mb-3">
+                <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Cover Image</label>
+                <div className="flex gap-2 items-start flex-wrap">
+                  {blogForm.img ? (
+                    <div className="relative shrink-0">
+                      <img src={blogForm.img} alt="cover" className="w-24 h-16 rounded-lg object-cover border border-border" />
+                      <button type="button" onClick={() => setBlogForm(f => ({ ...f, img: "" }))} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-white text-[10px] flex items-center justify-center cursor-pointer border-none">✕</button>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+                    <button
+                      type="button"
+                      onClick={() => blogImgInputRef.current?.click()}
+                      disabled={blogImgUploading}
+                      className="rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold py-2 px-4 cursor-pointer hover:bg-primary/10 transition-colors font-sans disabled:opacity-50 disabled:cursor-default"
+                    >
+                      {blogImgUploading ? "⏳ Uploading..." : "📷 Upload Image"}
+                    </button>
+                    <input type="text" value={blogForm.img?.startsWith("data:") ? "" : blogForm.img} onChange={e => setBlogForm(f => ({ ...f, img: e.target.value }))} placeholder="or paste image URL" className="w-full rounded-full border border-border bg-input px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary/60 font-sans" />
+                  </div>
+                  <input ref={blogImgInputRef} type="file" accept="image/*" onChange={handleBlogImgFile} className="hidden" />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <Input label="Excerpt" value={blogForm.excerpt} onChange={e => setBlogForm(f => ({ ...f, excerpt: e.target.value }))} placeholder="Short summary shown on blog listing..." />
+              </div>
+
+              <div className="mb-3">
+                <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Content</label>
+                <p className="text-muted-foreground/50 text-[10px] mb-2">Separate paragraphs with a blank line. Start a line with <code className="text-primary bg-primary/8 px-1 rounded">## </code> for headings.</p>
+                <textarea value={blogForm.body} onChange={e => setBlogForm(f => ({ ...f, body: e.target.value }))} placeholder={"First paragraph...\n\n## Section Heading\n\nAnother paragraph."} rows={10} className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground outline-none focus:border-primary/60 font-sans resize-y leading-relaxed" />
+              </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={blogForm.feat} onChange={e => setBlogForm(f => ({ ...f, feat: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                  <span className="text-sm text-foreground">Featured post</span>
+                </label>
+              </div>
+
+              <Button onClick={submitBlog} className="px-6 py-2 text-xs">{editBlog ? "Save Changes →" : "Publish Post →"}</Button>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2.5">
+            {blogs.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <div className="text-5xl mb-3.5">✍️</div>
+                <div>No blog posts yet</div>
+              </div>
+            ) : blogs.map(b => (
+              <div key={b.id} className="rounded-xl border border-border bg-card px-4 py-3.5 flex justify-between items-start sm:items-center gap-3 flex-wrap">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  {b.img && <img src={b.img} alt="" className="w-14 h-10 rounded-lg object-cover shrink-0 border border-border" />}
+                  <div className="min-w-0">
+                    <div className="text-foreground font-semibold text-sm truncate">{b.title}</div>
+                    <div className="text-muted-foreground text-xs mt-0.5">{b.category} • {b.author} • {b.date}</div>
+                    {b.feat && <Badge variant="warning" className="text-[9px] mt-1">Featured</Badge>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => startEditBlog(b)} className="bg-transparent border border-primary/40 rounded-lg text-primary cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-primary/10 transition-colors">✏️ Edit</button>
+                  <button onClick={() => deleteBlog(b.id)} className="bg-transparent border border-destructive/40 rounded-lg text-destructive cursor-pointer px-2.5 py-1.5 text-xs font-sans hover:bg-destructive/10 transition-colors">🗑</button>
                 </div>
               </div>
             ))}
@@ -323,60 +707,18 @@ export default function AdminPage({ user }) {
         </div>
       )}
 
-      {/* Bookings Tab */}
-      {tab === "bookings" && (
-        loadingBookings ? (
-          <div className="text-center py-16 text-muted-foreground">Loading bookings...</div>
-        ) : adminBookings.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <div className="text-5xl mb-3.5">📭</div>
-            <div>No bookings yet</div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {adminBookings.map(b => {
-              const form = b.form || {};
-              return (
-                <div
-                  key={b.id}
-                  onClick={() => setDetailBooking(b)}
-                  className="bg-card rounded-xl border border-white/8 hover:border-primary/30 transition-colors duration-200 cursor-pointer px-4 sm:px-5 py-4 flex justify-between items-start sm:items-center flex-wrap gap-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
-                    <div className="text-muted-foreground text-xs mt-0.5 truncate">{form.name || b.userName} • {form.email}</div>
-                    <div className="text-muted-foreground/60 text-[11px] mt-px">{b.type} • {new Date(b.date).toLocaleDateString()}</div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap shrink-0">
-                    <span className="text-primary font-bold text-[14px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
-                    <Badge variant={statusVariant[b.status] || "warning"}>
-                      {(b.status || "pending").toUpperCase()}
-                    </Badge>
-                    <span className="text-muted-foreground/60 text-xs">View →</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )
-      )}
-
-      {/* Users Tab */}
+      {/* ── Users ── */}
       {tab === "users" && (
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-foreground font-serif text-xl m-0">User Management</h3>
-            <Button onClick={() => setShowAddUser(v => !v)} className="px-5 py-2 text-xs">
-              {showAddUser ? "✕ Cancel" : "+ Add User"}
-            </Button>
+            <Button onClick={() => setShowAddUser(v => !v)} className="px-5 py-2 text-xs">{showAddUser ? "✕ Cancel" : "+ Add User"}</Button>
           </div>
 
           {showAddUser && (
             <div className="bg-card border border-primary/20 rounded-xl p-6 mb-5">
               <h4 className="text-primary mb-4 font-serif text-base m-0">New User</h4>
-              {userError && (
-                <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{userError}</div>
-              )}
+              {userError && <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{userError}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <Input label="Full Name *" value={userForm.name} onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))} placeholder="John Smith" />
                 <Input label="Email *" value={userForm.email} onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))} type="email" placeholder="user@email.com" />
@@ -385,11 +727,7 @@ export default function AdminPage({ user }) {
                 <Input label="Password *" value={userForm.password} onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))} type="password" placeholder="••••••••" />
                 <div>
                   <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Role</label>
-                  <select
-                    value={userForm.role}
-                    onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans"
-                  >
+                  <select value={userForm.role} onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                   </select>
@@ -399,39 +737,40 @@ export default function AdminPage({ user }) {
             </div>
           )}
 
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1">
+              <SearchBar value={userSearch} onChange={setUserSearch} placeholder="Search by name or email..." />
+            </div>
+            <FilterPills
+              value={userRoleFilter}
+              onChange={setUserRoleFilter}
+              options={[["all","All"], ["user","Users"], ["admin","Admins"]]}
+            />
+          </div>
+
           <div className="flex flex-col gap-2">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <div className="text-4xl mb-3">👥</div>
-                <div>No users found</div>
+                <div>{users.length === 0 ? "No users found" : "No results"}</div>
               </div>
-            ) : users.map(u => (
-              <div key={u.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-start sm:items-center gap-3 flex-wrap">
+            ) : filteredUsers.map(u => (
+              <div key={u.id} className="rounded-xl border border-border bg-card p-4 flex justify-between items-start sm:items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-3">
-                  <div className="w-[38px] h-[38px] rounded-full bg-primary/10 border border-primary/15 flex items-center justify-center text-base">
-                    {u.role === "admin" ? "⚙" : "👤"}
-                  </div>
+                  <div className="w-[38px] h-[38px] rounded-full bg-primary/10 border border-primary/15 flex items-center justify-center text-base">{u.role === "admin" ? "⚙" : "👤"}</div>
                   <div>
                     <div className="text-foreground font-semibold text-sm">{u.name}</div>
                     <div className="text-muted-foreground text-xs">{u.email}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Badge variant={u.role === "admin" ? "destructive" : "default"}>
-                    {u.role?.toUpperCase()}
-                  </Badge>
+                  <Badge variant={u.role === "admin" ? "destructive" : "default"}>{u.role?.toUpperCase()}</Badge>
                   <span className="text-muted-foreground/60 text-[11px]">Joined {new Date(u.joined).toLocaleDateString()}</span>
                   {u.id !== user.id && (
                     <button
                       onClick={() => deleteUser(u)}
                       disabled={deletingUserId === u.id}
-                      title="Delete user"
-                      className={[
-                        "bg-transparent border border-destructive/40 rounded-lg text-[13px] px-2.5 py-1 font-sans transition-colors duration-200",
-                        deletingUserId === u.id
-                          ? "text-muted-foreground/60 cursor-default opacity-50"
-                          : "text-destructive cursor-pointer hover:bg-destructive/10 hover:border-destructive/70",
-                      ].join(" ")}
+                      className={["bg-transparent border border-destructive/40 rounded-lg text-[13px] px-2.5 py-1 font-sans transition-colors duration-200", deletingUserId === u.id ? "text-muted-foreground/60 cursor-default opacity-50" : "text-destructive cursor-pointer hover:bg-destructive/10"].join(" ")}
                     >
                       {deletingUserId === u.id ? "⏳" : "🗑"}
                     </button>
@@ -445,7 +784,7 @@ export default function AdminPage({ user }) {
 
       {tab === "inbox" && <ConciergeInbox user={user} />}
 
-      {/* Booking Detail Modal */}
+      {/* ── Booking Detail Modal ── */}
       {detailBooking && (() => {
         const b = detailBooking;
         const form = b.form || {};
@@ -455,114 +794,82 @@ export default function AdminPage({ user }) {
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <div className="flex items-center gap-2.5 flex-wrap mb-1">
-                  <Badge variant={statusVariant[b.status] || "warning"}>
-                    {(b.status || "pending").toUpperCase()}
-                  </Badge>
+                  <Badge variant={statusVariant[b.status] || "warning"}>{(b.status || "pending").toUpperCase()}</Badge>
                   <Badge variant="secondary" className="text-[10px]">{b.type}</Badge>
                 </div>
                 <DialogTitle className="text-xl font-serif">{b.celeb?.name}</DialogTitle>
               </DialogHeader>
-
               <div className="space-y-4 text-sm">
-                {/* Client info */}
-                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
                   <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Client</div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Name</span>
-                    <span className="text-foreground font-semibold">{form.name || b.userName || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Email</span>
-                    <span className="text-foreground">{form.email || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Submitted</span>
-                    <span className="text-foreground">{new Date(b.date).toLocaleString()}</span>
-                  </div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="text-foreground font-semibold">{form.name || b.userName || "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="text-foreground">{form.email || "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Submitted</span><span className="text-foreground">{new Date(b.date).toLocaleString()}</span></div>
                 </div>
-
-                {/* Booking details */}
-                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
                   <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Booking Details</div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Amount</span>
-                    <span className="text-primary font-bold">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
-                  </div>
-                  {form.date && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Event Date</span>
-                      <span className="text-foreground">{form.date}</span>
-                    </div>
-                  )}
-                  {form.guests && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Guests</span>
-                      <span className="text-foreground">{form.guests}</span>
-                    </div>
-                  )}
-                  {form.message && (
-                    <div>
-                      <div className="text-muted-foreground mb-1">Additional Details</div>
-                      <div className="text-foreground text-xs bg-background rounded-lg p-2.5 border border-white/8">{form.message}</div>
-                    </div>
-                  )}
+                  <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="text-primary font-bold">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span></div>
+                  {form.date    && <div className="flex justify-between"><span className="text-muted-foreground">Event Date</span><span className="text-foreground">{form.date}</span></div>}
+                  {form.guests  && <div className="flex justify-between"><span className="text-muted-foreground">Guests</span><span className="text-foreground">{form.guests}</span></div>}
+                  {form.message && <div><div className="text-muted-foreground mb-1">Additional Details</div><div className="text-foreground text-xs bg-background rounded-lg p-2.5 border border-border">{form.message}</div></div>}
+                  {b.invoiceId  && <div className="flex justify-between"><span className="text-muted-foreground">Invoice ID</span><span className="text-primary font-mono text-xs">{b.invoiceId}</span></div>}
                 </div>
-
-                {/* Payment */}
-                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
                   <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Payment</div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Method</span>
-                    <span className="text-foreground font-semibold capitalize">{b.payment || "—"}</span>
+                    <span className="text-foreground font-semibold">
+                      {b.payment === "giftcard" ? "🎁 Gift Card"
+                        : b.payment === "crypto" ? "₿ Crypto"
+                        : b.payment === "other" ? "💬 Other"
+                        : b.payment || "—"}
+                    </span>
                   </div>
-                  {form.giftCardType && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Card Type</span>
-                      <span className="text-foreground">{form.giftCardType}</span>
-                    </div>
-                  )}
-                  {form.giftCardCode && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Card Code</span>
-                      <span className="text-foreground font-mono text-xs">{form.giftCardCode}</span>
-                    </div>
-                  )}
+                  {form.giftCardType  && <div className="flex justify-between"><span className="text-muted-foreground">Card Type</span><span className="text-foreground">{form.giftCardType}</span></div>}
+                  {form.giftCardCode  && <div className="flex justify-between"><span className="text-muted-foreground">Card Code</span><span className="text-foreground font-mono text-xs">{form.giftCardCode}</span></div>}
                   {form.giftCardPhoto && (
                     <div>
                       <div className="text-muted-foreground mb-1.5">Card Photo</div>
-                      <img src={form.giftCardPhoto} alt="Gift card" className="w-full max-h-48 object-contain rounded-lg border border-white/8" />
+                      <img
+                        src={form.giftCardPhoto}
+                        alt="Gift card"
+                        onClick={() => setPhotoPreview(form.giftCardPhoto)}
+                        className="w-full max-h-48 object-contain rounded-lg border border-border cursor-zoom-in hover:opacity-90 transition-opacity"
+                      />
                     </div>
                   )}
                 </div>
-
-                {/* Actions */}
                 {isPending && (
                   <div className="flex gap-3 pt-1">
-                    <Button
-                      onClick={async () => { await updateStatus(b.id, "approved"); setDetailBooking(null); }}
-                      className="flex-1"
-                    >
-                      ✓ Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={async () => { await updateStatus(b.id, "declined"); setDetailBooking(null); }}
-                      className="flex-1"
-                    >
-                      ✗ Decline
-                    </Button>
+                    <Button onClick={async () => { await updateStatus(b.id, "approved"); setDetailBooking(null); }} className="flex-1">✓ Approve</Button>
+                    <Button variant="destructive" onClick={async () => { await updateStatus(b.id, "declined"); setDetailBooking(null); }} className="flex-1">✗ Decline</Button>
                   </div>
                 )}
-                {!isPending && (
-                  <div className="text-center text-muted-foreground text-xs pt-1">
-                    This booking has been <strong className="text-foreground">{b.status}</strong>.
-                  </div>
-                )}
+                {!isPending && <div className="text-center text-muted-foreground text-xs pt-1">This booking has been <strong className="text-foreground">{b.status}</strong>.</div>}
               </div>
             </DialogContent>
           </Dialog>
         );
       })()}
+
+      {/* ── Photo Preview Lightbox ── */}
+      {photoPreview && (
+        <div
+          className="fixed inset-0 z-[1100] bg-black/92 flex items-center justify-center p-4"
+          onClick={() => setPhotoPreview(null)}
+        >
+          <button
+            onClick={() => setPhotoPreview(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl bg-transparent border-none cursor-pointer leading-none"
+          >✕</button>
+          <img
+            src={photoPreview}
+            alt="Gift card preview"
+            className="max-w-full max-h-[90vh] rounded-xl object-contain shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <ConfirmModal
         open={!!confirmModal}

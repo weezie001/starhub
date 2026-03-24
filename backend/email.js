@@ -182,7 +182,7 @@ async function sendInvoice({ name, email, invoiceId, celeb, type, amount, paymen
     </table>
 
     <div style="background:#0a2a18;border:1px solid rgba(109,191,123,0.3);border-radius:12px;padding:18px 22px;margin-top:22px;text-align:center">
-      <div style="font-size:16px;font-weight:800;color:#6DBF7B">✅ Booking Confirmed</div>
+      <div style="font-size:16px;font-weight:800;color:#6DBF7B">Booking Confirmed</div>
       <div style="font-size:13px;color:${muted};margin-top:6px;line-height:1.6">
         Your booking has been approved. Our concierge team will be in touch within 24 hours with next steps.
       </div>
@@ -194,7 +194,7 @@ async function sendInvoice({ name, email, invoiceId, celeb, type, amount, paymen
       Questions? <a href="mailto:support@starbooknow.com" style="color:${gold};text-decoration:none">support@starbooknow.com</a>
     </p>`;
 
-  return send({ to: email, subject: `✅ Invoice ${invoiceId} — Booking Confirmed`, html: base('Your Booking is Confirmed!', body) });
+  return send({ to: email, subject: `Invoice ${invoiceId} — Booking Confirmed`, html: base('Your Booking is Confirmed!', body) });
 }
 
 // ── 5. New booking alert to admin ────────────────────────────────────────────
