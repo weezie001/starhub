@@ -55,11 +55,43 @@ function CryptoWallets() {
 
 const GIFT_CARD_TYPES = ["Apple", "Amazon", "Visa", "Google Play", "iTunes", "Steam"];
 
+async function uploadToCloudinary(file) {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  if (!cloudName || !uploadPreset) throw new Error("Cloudinary not configured");
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", uploadPreset);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: fd });
+  if (!res.ok) throw new Error("Upload failed");
+  const data = await res.json();
+  return data.secure_url;
+}
+
 function GiftCardForm({ value, onChange }) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
+  const fileRef = useState(null);
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadErr("");
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      onChange({ ...value, photo: url });
+    } catch (err) {
+      setUploadErr(err.message || "Upload failed. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="mt-3 space-y-3 border border-border rounded-xl p-3 bg-secondary">
       <p className="text-muted-foreground text-[11px] leading-relaxed">
-        Select card type, enter the amount and the redemption code. Your booking will be <strong className="text-foreground">pending</strong> until the card is verified.
+        Select card type, upload a photo of the card, and enter the redemption code. Your booking will be <strong className="text-foreground">pending</strong> until verified.
       </p>
       <div>
         <Label className="mb-1.5 block text-[12px]">Card Type</Label>
@@ -82,13 +114,29 @@ function GiftCardForm({ value, onChange }) {
         </div>
       </div>
       <div>
-        <Label className="mb-1.5 block text-[12px]">Card Amount ($)</Label>
-        <Input
-          type="number"
-          placeholder="e.g. 100"
-          value={value.amount}
-          onChange={e => onChange({ ...value, amount: e.target.value })}
-        />
+        <Label className="mb-1.5 block text-[12px]">Card Photo</Label>
+        <label className={cn(
+          "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-4 cursor-pointer transition-colors",
+          value.photo ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/30"
+        )}>
+          {value.photo ? (
+            <img src={value.photo} alt="Gift card" className="max-h-28 rounded-lg object-contain" />
+          ) : (
+            <>
+              <span className="text-2xl">{uploading ? "⏳" : "📷"}</span>
+              <span className="text-muted-foreground text-[11px] text-center">
+                {uploading ? "Uploading..." : "Tap to take photo or upload card image"}
+              </span>
+            </>
+          )}
+          <input type="file" accept="image/*" capture="environment" onChange={handleFile} disabled={uploading} className="hidden" />
+        </label>
+        {uploadErr && <p className="text-destructive text-[11px] mt-1">{uploadErr}</p>}
+        {value.photo && (
+          <button type="button" onClick={() => onChange({ ...value, photo: "" })} className="text-muted-foreground text-[10px] mt-1 underline cursor-pointer bg-transparent border-none">
+            Remove photo
+          </button>
+        )}
       </div>
       <div>
         <Label className="mb-1.5 block text-[12px]">Gift Card Code</Label>
@@ -147,7 +195,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
   const [payment, setPayment] = useState("");
   const [donateAmt, setDonateAmt] = useState(500);
-  const [giftCard, setGiftCard] = useState({ type: "", amount: "", code: "" });
+  const [giftCard, setGiftCard] = useState({ type: "", code: "", photo: "" });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -155,7 +203,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
     if (open) {
       setForm({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
       setPayment("");
-      setGiftCard({ type: "", amount: "", code: "" });
+      setGiftCard({ type: "", code: "", photo: "" });
       setDone(false);
     }
   }, [open]);
@@ -165,14 +213,14 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
   const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", video: "Video Message", meet: "Meet & Greet" };
   const donateOptions = [200, 500, 1000, 1500, 2000];
 
-  const giftCardReady = payment === "giftcard" && giftCard.type && giftCard.amount && giftCard.code;
+  const giftCardReady = payment === "giftcard" && giftCard.type && giftCard.code && giftCard.photo;
   const canSubmit = !loading && form.name && form.email && payment && (payment !== "giftcard" || giftCardReady);
 
   async function submit() {
     setLoading(true);
     try {
       const extraForm = payment === "giftcard"
-        ? { ...form, giftCardType: giftCard.type, giftCardAmount: giftCard.amount, giftCardCode: giftCard.code }
+        ? { ...form, giftCardType: giftCard.type, giftCardCode: giftCard.code, giftCardPhoto: giftCard.photo }
         : form;
       await api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null);
       onConfirm();

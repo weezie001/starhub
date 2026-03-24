@@ -160,7 +160,7 @@ const WL_PROMPTS = {
   budget:        "What's your approximate budget? (e.g. Under $5k, $5k–$15k, $15k+)",
 };
 
-export default function SupportChat({ user, setPage, triggerOpen }) {
+export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState("idle");
   const [botName, setBotName] = useState(user?.name || "");
@@ -778,8 +778,32 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
           {/* Body */}
           <div className="flex-1 overflow-hidden flex flex-col">
 
+            {/* Auth gate — not logged in */}
+            {!user && (
+              <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
+                <div className="text-[44px]">🔒</div>
+                <div className="text-foreground font-semibold text-[15px]">Login required</div>
+                <div className="text-muted-foreground text-[13px] leading-relaxed">
+                  Please sign in to chat with our support team and access your bookings.
+                </div>
+                <button
+                  onClick={() => { setOpen(false); onAuth?.("login"); }}
+                  className="mt-1 rounded-full px-7 py-3 text-[13px] font-extrabold border-none cursor-pointer text-[#1a1000] hover:brightness-110 transition-all"
+                  style={{ background: "linear-gradient(135deg,#f5cc6a,#c98a10)" }}
+                >
+                  Sign In →
+                </button>
+                <button
+                  onClick={() => { setOpen(false); onAuth?.("register"); }}
+                  className="text-primary text-[12px] font-semibold underline underline-offset-2 cursor-pointer bg-transparent border-none"
+                >
+                  Create a free account
+                </button>
+              </div>
+            )}
+
             {/* Name input */}
-            {stage === "bot_name" && (
+            {user && stage === "bot_name" && (
               <div className="flex-1 px-[22px] py-7 flex flex-col justify-center gap-3.5">
                 <div className="text-[32px] text-center">🤖</div>
                 <div className="text-muted-foreground text-[13px] leading-[1.75] text-center">
@@ -805,7 +829,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
             )}
 
             {/* Bot chat */}
-            {(stage === "bot" || stage === "email_prompt") && (
+            {user && (stage === "bot" || stage === "email_prompt") && (
               <div className="flex-1 flex flex-col overflow-hidden">
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-3.5 flex flex-col gap-2.5">
                   {botMessages.map((m, i) => (
@@ -883,7 +907,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
             )}
 
             {/* Connecting */}
-            {stage === "connecting" && (
+            {user && stage === "connecting" && (
               <div className="flex-1 flex flex-col items-center justify-center gap-3.5">
                 <div className="flex gap-1.5">
                   {[0,1,2].map(i => <div key={i} className="w-2.5 h-2.5 rounded-full bg-primary" style={{ animation: `chatPulse 1.2s ${i*0.2}s infinite ease-in-out` }} />)}
@@ -893,7 +917,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
             )}
 
             {/* Waiting */}
-            {stage === "waiting" && (
+            {user && stage === "waiting" && (
               <div className="flex-1 flex flex-col overflow-y-auto">
                 <div className="mx-4 mt-4 mb-2 bg-white/5 border border-white/10 rounded-xl p-4 text-center">
                   <div className="text-muted-foreground text-[11px] tracking-[2px] uppercase font-bold mb-2.5">Queue Position</div>
@@ -916,7 +940,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
             )}
 
             {/* Active live chat */}
-            {stage === "active" && (
+            {user && stage === "active" && (
               <div ref={scrollRef} className="flex-1 overflow-y-auto p-3.5 flex flex-col gap-2.5">
                 {liveMessages.map((m, i) => {
                   if (m.role === "system") return (
@@ -949,7 +973,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
             )}
 
             {/* Ended */}
-            {stage === "ended" && (
+            {user && stage === "ended" && (
               <div className="flex-1 flex flex-col items-center justify-center gap-3.5 p-6 text-center">
                 <div className="text-[40px]">✅</div>
                 <div className="text-foreground font-bold text-[15px] font-serif">Session Ended</div>

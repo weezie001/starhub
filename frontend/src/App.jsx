@@ -216,7 +216,10 @@ export default function App() {
   }
 
   const sharedProps = {
-    onView: c => setCelebModal(c),
+    onView: c => {
+      if (!user) { setAuthModal("login"); return; }
+      setCelebModal(c);
+    },
     onBook: handleBook,
     favorites,
     onFav: handleFav,
@@ -244,7 +247,7 @@ export default function App() {
       <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} onOpenChat={() => { setBookingModal(null); openChat(); }} />
 
       {/* Live support chat widget — hidden on admin page to avoid covering inbox UI */}
-      {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} />}
+      {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} onAuth={m => setAuthModal(m)} />}
     </div>
   );
 }

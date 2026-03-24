@@ -4,6 +4,7 @@ import { Stars } from "../../components/ui.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Badge } from "../../components/ui/badge.jsx";
 import { Input } from "../../components/ui/input.jsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog.jsx";
 import ConfirmModal from "../../components/ui/confirm-modal.jsx";
 import { api } from "../../api.js";
 import ConciergeInbox from "./ConciergeInbox.jsx";
@@ -14,7 +15,7 @@ export default function AdminPage({ user }) {
   const [celebs, setCelebs] = useState([]);
   const [users, setUsers] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
-  const [expandedBooking, setExpandedBooking] = useState(null);
+  const [detailBooking, setDetailBooking] = useState(null);
 
   // Celebrity add form
   const [showAddCeleb, setShowAddCeleb] = useState(false);
@@ -335,114 +336,24 @@ export default function AdminPage({ user }) {
           <div className="flex flex-col gap-2.5">
             {adminBookings.map(b => {
               const form = b.form || {};
-              const isExpanded = expandedBooking === b.id;
               return (
                 <div
                   key={b.id}
-                  className={[
-                    "bg-card rounded-xl overflow-hidden transition-colors duration-200 border",
-                    isExpanded ? "border-primary/40" : "border-white/8",
-                  ].join(" ")}
+                  onClick={() => setDetailBooking(b)}
+                  className="bg-card rounded-xl border border-white/8 hover:border-primary/30 transition-colors duration-200 cursor-pointer px-4 sm:px-5 py-4 flex justify-between items-start sm:items-center flex-wrap gap-3"
                 >
-                  <div
-                    onClick={() => setExpandedBooking(isExpanded ? null : b.id)}
-                    className="px-4 sm:px-5 py-4 flex justify-between items-start sm:items-center flex-wrap gap-3 cursor-pointer"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
-                      <div className="text-muted-foreground text-xs mt-0.5 truncate">{form.name || b.userName} • {form.email}</div>
-                      <div className="text-muted-foreground/60 text-[11px] mt-px">{b.type} • {new Date(b.date).toLocaleDateString()}</div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap shrink-0">
-                      <span className="text-primary font-bold text-[14px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
-                      <Badge variant={statusVariant[b.status] || "warning"}>
-                        {(b.status || "pending").toUpperCase()}
-                      </Badge>
-                      {b.status === "pending" && (
-                        <>
-                          <Button
-                            onClick={e => { e.stopPropagation(); updateStatus(b.id, "approved"); }}
-                            variant="success"
-                            className="px-3 py-1.5 text-xs"
-                          >
-                            ✓ Approve
-                          </Button>
-                          <Button
-                            onClick={e => { e.stopPropagation(); updateStatus(b.id, "declined"); }}
-                            variant="danger"
-                            className="px-3 py-1.5 text-xs"
-                          >
-                            ✕ Decline
-                          </Button>
-                        </>
-                      )}
-                      <span className="text-muted-foreground/60 text-xs">{isExpanded ? "▲" : "▼"}</span>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
+                    <div className="text-muted-foreground text-xs mt-0.5 truncate">{form.name || b.userName} • {form.email}</div>
+                    <div className="text-muted-foreground/60 text-[11px] mt-px">{b.type} • {new Date(b.date).toLocaleDateString()}</div>
                   </div>
-
-                  {isExpanded && (
-                    <div className="border-t border-white/8 p-4 sm:p-5 bg-background/50 grid grid-cols-1 sm:grid-cols-3 gap-5">
-                      {/* Client Info */}
-                      <div>
-                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Client Info</div>
-                        {[["Name", form.name || b.userName || "—"], ["Email", form.email || "—"], ["Phone", form.phone || "—"], ["Account", b.userName || "—"]].map(([k, v]) => (
-                          <div key={k} className="flex gap-2 mb-1.5 text-xs">
-                            <span className="text-muted-foreground/60 font-semibold min-w-[60px]">{k}:</span>
-                            <span className="text-foreground">{v}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Booking Details */}
-                      <div>
-                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Booking Details</div>
-                        {[["Celebrity", b.celeb?.name || "—"], ["Type", b.type || "—"], ["Event Date", form.eventDate || form.date || "—"], ["Guests", form.guests || form.attendees || "—"], ["Event", form.eventType || form.event || "—"]].map(([k, v]) => (
-                          <div key={k} className="flex gap-2 mb-1.5 text-xs">
-                            <span className="text-muted-foreground/60 font-semibold min-w-[80px]">{k}:</span>
-                            <span className="text-foreground">{v}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Payment & Message */}
-                      <div>
-                        <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Payment</div>
-                        <div className="bg-card border border-primary/15 rounded-lg px-3 py-2.5 mb-3 flex items-center gap-2">
-                          <span className="text-lg">{b.paymentMethod === "crypto" ? "₿" : b.paymentMethod === "giftcard" ? "🎁" : "🏦"}</span>
-                          <span className="text-foreground text-[13px] font-semibold capitalize">{b.paymentMethod || "—"}</span>
-                        </div>
-
-                        {/* Gift card details */}
-                        {b.paymentMethod === "giftcard" && (form.giftCardType || form.giftCardCode) && (
-                          <div className="bg-primary/5 border border-primary/20 rounded-lg px-3.5 py-2.5 mb-3">
-                            <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2">🎁 Gift Card Details</div>
-                            {[
-                              ["Card Type",   form.giftCardType   || "—"],
-                              ["Amount",      form.giftCardAmount ? `$${form.giftCardAmount}` : "—"],
-                              ["Redeem Code", form.giftCardCode   || "—"],
-                            ].map(([k, v]) => (
-                              <div key={k} className="flex gap-2 mb-1.5 text-xs">
-                                <span className="text-muted-foreground/60 font-semibold min-w-[90px]">{k}:</span>
-                                <span className={[
-                                  "break-all",
-                                  k === "Redeem Code" ? "text-primary font-bold font-mono tracking-wide" : "text-foreground",
-                                ].join(" ")}>{v}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {(form.message || form.notes) ? (
-                          <>
-                            <div className="text-muted-foreground/60 text-[10px] tracking-[1.5px] font-bold uppercase mb-1.5">Message</div>
-                            <div className="text-muted-foreground text-xs leading-[1.6] bg-card border border-white/8 rounded-lg px-3 py-2.5">
-                              {form.message || form.notes}
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    <span className="text-primary font-bold text-[14px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
+                    <Badge variant={statusVariant[b.status] || "warning"}>
+                      {(b.status || "pending").toUpperCase()}
+                    </Badge>
+                    <span className="text-muted-foreground/60 text-xs">View →</span>
+                  </div>
                 </div>
               );
             })}
@@ -533,6 +444,125 @@ export default function AdminPage({ user }) {
       )}
 
       {tab === "inbox" && <ConciergeInbox user={user} />}
+
+      {/* Booking Detail Modal */}
+      {detailBooking && (() => {
+        const b = detailBooking;
+        const form = b.form || {};
+        const isPending = (b.status || "pending") === "pending";
+        return (
+          <Dialog open={!!detailBooking} onOpenChange={o => !o && setDetailBooking(null)}>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <div className="flex items-center gap-2.5 flex-wrap mb-1">
+                  <Badge variant={statusVariant[b.status] || "warning"}>
+                    {(b.status || "pending").toUpperCase()}
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px]">{b.type}</Badge>
+                </div>
+                <DialogTitle className="text-xl font-serif">{b.celeb?.name}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                {/* Client info */}
+                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Client</div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Name</span>
+                    <span className="text-foreground font-semibold">{form.name || b.userName || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="text-foreground">{form.email || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Submitted</span>
+                    <span className="text-foreground">{new Date(b.date).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Booking details */}
+                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Booking Details</div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="text-primary font-bold">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
+                  </div>
+                  {form.date && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Event Date</span>
+                      <span className="text-foreground">{form.date}</span>
+                    </div>
+                  )}
+                  {form.guests && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Guests</span>
+                      <span className="text-foreground">{form.guests}</span>
+                    </div>
+                  )}
+                  {form.message && (
+                    <div>
+                      <div className="text-muted-foreground mb-1">Additional Details</div>
+                      <div className="text-foreground text-xs bg-background rounded-lg p-2.5 border border-white/8">{form.message}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment */}
+                <div className="rounded-xl border border-white/8 bg-card p-4 space-y-1.5">
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Payment</div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Method</span>
+                    <span className="text-foreground font-semibold capitalize">{b.payment || "—"}</span>
+                  </div>
+                  {form.giftCardType && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Card Type</span>
+                      <span className="text-foreground">{form.giftCardType}</span>
+                    </div>
+                  )}
+                  {form.giftCardCode && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Card Code</span>
+                      <span className="text-foreground font-mono text-xs">{form.giftCardCode}</span>
+                    </div>
+                  )}
+                  {form.giftCardPhoto && (
+                    <div>
+                      <div className="text-muted-foreground mb-1.5">Card Photo</div>
+                      <img src={form.giftCardPhoto} alt="Gift card" className="w-full max-h-48 object-contain rounded-lg border border-white/8" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {isPending && (
+                  <div className="flex gap-3 pt-1">
+                    <Button
+                      onClick={async () => { await updateStatus(b.id, "approved"); setDetailBooking(null); }}
+                      className="flex-1"
+                    >
+                      ✓ Approve
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => { await updateStatus(b.id, "declined"); setDetailBooking(null); }}
+                      className="flex-1"
+                    >
+                      ✗ Decline
+                    </Button>
+                  </div>
+                )}
+                {!isPending && (
+                  <div className="text-center text-muted-foreground text-xs pt-1">
+                    This booking has been <strong className="text-foreground">{b.status}</strong>.
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       <ConfirmModal
         open={!!confirmModal}
