@@ -227,7 +227,7 @@ export default function App() {
       <GlobalStyles />
       <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} />
 
-      {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} />}
+      {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "celebrities" && <CelebritiesPage {...sharedProps} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}

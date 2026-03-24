@@ -726,7 +726,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
       {/* ── Floating button ── */}
       <button
         onClick={() => open ? setOpen(false) : openChat()}
-        className="fixed bottom-7 right-7 w-[58px] h-[58px] rounded-full border-none cursor-pointer z-[900] flex items-center justify-center text-[22px] transition-all duration-300 active:scale-95"
+        className="fixed bottom-5 right-5 sm:bottom-7 sm:right-7 w-[52px] h-[52px] sm:w-[58px] sm:h-[58px] rounded-full border-none cursor-pointer z-[900] flex items-center justify-center text-[20px] sm:text-[22px] transition-all duration-300 active:scale-95"
         style={{
           background: "linear-gradient(135deg,#f5cc6a,#c98a10)",
           boxShadow: "0 4px 28px rgba(240,191,90,0.55)",
@@ -743,7 +743,7 @@ export default function SupportChat({ user, setPage, triggerOpen }) {
 
       {/* ── Chat panel ── */}
       {open && (
-        <div className="fixed bottom-[100px] right-7 w-[380px] h-[580px] flex flex-col z-[900] rounded-[20px] overflow-hidden border border-white/10"
+        <div className="fixed bottom-[80px] right-3 left-3 sm:left-auto sm:bottom-[100px] sm:right-7 sm:w-[380px] h-[75vh] sm:h-[580px] flex flex-col z-[900] rounded-[20px] overflow-hidden border border-white/10"
           style={{ background: "#111111", boxShadow: "0 28px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,191,90,0.06)" }}>
 
           {/* Header */}

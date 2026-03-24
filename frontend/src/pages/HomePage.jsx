@@ -29,7 +29,7 @@ function useReveal() {
   return ref;
 }
 
-export default function HomePage({ onView, onBook, favorites, onFav, setPage, openChat }) {
+export default function HomePage({ onView, onBook, favorites, onFav, setPage, openChat, user, onAuth }) {
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -101,6 +101,18 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
               Search
             </Button>
           </div>
+
+          {/* Auth CTAs — shown only when logged out */}
+          {!user && (
+            <div className="flex gap-3 flex-wrap mb-7">
+              <Button onClick={() => onAuth("register")} className="px-7 py-2.5 text-sm">
+                Create Account →
+              </Button>
+              <Button onClick={() => onAuth("login")} variant="outline" className="px-7 py-2.5 text-sm">
+                Sign In
+              </Button>
+            </div>
+          )}
 
           {/* Category pills */}
           <div className="flex gap-2.5 flex-wrap items-center">
