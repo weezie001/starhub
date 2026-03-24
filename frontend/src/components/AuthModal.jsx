@@ -33,7 +33,7 @@ export default function AuthModal({ mode, onClose, onAuth, switchMode }) {
         <div style={{ textAlign: "center", marginBottom: 30 }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>{mode === "login" ? "🔐" : "✨"}</div>
           <h2 style={{ margin: 0, color: G.text, fontFamily: G.serif, fontSize: 28, fontWeight: 700 }}>
-            {mode === "login" ? "Welcome Back" : "Join StarBook"}
+            {mode === "login" ? "Welcome Back" : "Join StraBook"}
           </h2>
           <p style={{ color: G.muted, fontSize: 13, marginTop: 7 }}>
             {mode === "login" ? "Sign in to access your bookings and favorites" : "Create your free account and start booking celebrities"}
@@ -62,11 +62,11 @@ export default function AuthModal({ mode, onClose, onAuth, switchMode }) {
             {mode === "login" ? "Register free" : "Sign in"}
           </button>
         </p>
-        {mode === "login" && (
+        {/* {mode === "login" && (
           <p style={{ textAlign: "center", color: G.dim, fontSize: 11, marginTop: 6 }}>
-            💡 Register with "admin" in your email for admin access
+            Forgot your password? <button onClick={() => {}} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>Reset it</button>
           </p>
-        )}
+        )} */}
       </div>
     </div>
   );

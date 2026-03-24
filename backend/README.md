@@ -1,6 +1,6 @@
-# StarBook — Premium Celebrity Booking Backend
+# StraBook — Premium Celebrity Booking Backend
 
-Professional Node.js/Express backend for the StarBook platform.
+Professional Node.js/Express backend for the StraBook platform.
 
 ## Features
 - **SQLite Database**: Lightweight, no configuration required.
@@ -47,4 +47,4 @@ To transition to production:
 3. Deploy to Heroku/DigitalOcean/AWS.
 
 ---
-© 2025 StarBook Engineering Team
+© 2025 StraBook Engineering Team

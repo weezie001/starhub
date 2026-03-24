@@ -163,7 +163,7 @@ export default function BlogsPage() {
     <div style={{ paddingTop: 68, minHeight: "100vh" }}>
       {/* Header */}
       <section style={{ padding: isMobile ? "48px 20px 40px" : "80px 60px 60px", maxWidth: 1280, margin: "0 auto" }}>
-        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, marginBottom: 14, textTransform: "uppercase" }}>StarBook Journal</div>
+        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 700, marginBottom: 14, textTransform: "uppercase" }}>StraBook Journal</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20, marginBottom: 40 }}>
           <div>
             <h1 style={{ fontFamily: G.serif, fontSize: isMobile ? 32 : 52, fontWeight: 800, color: G.cream, margin: "0 0 12px", lineHeight: 1.05 }}>Insights & Stories</h1>

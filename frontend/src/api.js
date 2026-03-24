@@ -61,7 +61,13 @@ export const api = {
     req(`/admin/bookings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   getAdminUsers: () => req('/admin/users'),
   getAdminChatSessions: () => req('/admin/chat/sessions'),
+  deleteAdminChatSession: (id) => req(`/admin/chat/sessions/${id}`, { method: 'DELETE' }),
   getAdminWaitlist: () => req('/admin/waitlist'),
   updateWaitlistStatus: (id, status) =>
     req(`/admin/waitlist/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  // Admin celebrities
+  addCelebrity: (data) => req('/admin/celebrities', { method: 'POST', body: JSON.stringify(data) }),
+  deleteCelebrity: (id) => req(`/admin/celebrities/${id}`, { method: 'DELETE' }),
+  createUser: (data) => req('/admin/users', { method: 'POST', body: JSON.stringify(data) }),
+  deleteUser: (id) => req(`/admin/users/${id}`, { method: 'DELETE' }),
 };

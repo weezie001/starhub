@@ -34,6 +34,12 @@ export default function WaitlistPage({ user }) {
       if (msg.type === "waitlist_updated" && msg.id === entry.id) {
         setEntry(prev => ({ ...prev, status: msg.status }));
       }
+      if (msg.type === "waitlist_attended" && msg.sessionId) {
+        setEntry(prev => ({ ...prev, status: "attending", chatSessionId: msg.sessionId }));
+        // Pre-save session so SupportChat can auto-join
+        const saved = { sessionId: msg.sessionId, name: entry.name, email: entry.email };
+        localStorage.setItem("sb_chat_session", JSON.stringify(saved));
+      }
     };
     socket.onclose = () => setWsConnected(false);
 
@@ -202,7 +208,14 @@ export default function WaitlistPage({ user }) {
                 <div style={{ background: `${G.green}14`, border: `1px solid ${G.green}30`, borderRadius: 16, padding: 24, textAlign: "center" }}>
                   <div style={{ fontSize: 32, marginBottom: 10 }}>🎯</div>
                   <div style={{ color: G.green, fontWeight: 700, fontSize: 16, marginBottom: 6 }}>An agent is ready for you!</div>
-                  <div style={{ color: G.muted, fontSize: 13, lineHeight: 1.7 }}>Open the chat widget to begin your personalized concierge session.</div>
+                  <div style={{ color: G.muted, fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>Your personal concierge is waiting. Open the live chat now.</div>
+                  <Btn onClick={() => {
+                    if (entry.chatSessionId) {
+                      window.dispatchEvent(new CustomEvent("strabook:join-chat", { detail: { sessionId: entry.chatSessionId } }));
+                    }
+                  }} style={{ padding: "12px 32px", fontSize: 13 }}>
+                    💬 Open Live Chat →
+                  </Btn>
                 </div>
               )}
             </div>

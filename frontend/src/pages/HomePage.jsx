@@ -298,7 +298,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage }) 
             <span style={{ color: G.gold, fontStyle: "italic" }}>Expectation.</span>
           </h2>
           <p style={{ color: G.muted, fontSize: isMobile ? 15 : 17, maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.8 }}>
-            Join thousands of event planners, brands, and creators who trust StarBook for their most important moments.
+            Join thousands of event planners, brands, and creators who trust StraBook for their most important moments.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <Btn onClick={() => setPage("celebrities")} style={{ padding: isMobile ? "14px 32px" : "18px 48px", fontSize: 14 }}>Start Your Inquiry</Btn>
@@ -314,7 +314,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage }) 
           <h2 style={{ fontSize: "clamp(22px,4vw,40px)", fontFamily: G.serif, color: G.text, margin: "0 0 14px", fontWeight: 700 }}>Join Our Newsletter</h2>
           <p style={{ color: G.muted, fontSize: 14, marginBottom: 32, lineHeight: 1.8 }}>Get exclusive updates on new celebrity listings, VIP offers, and special events. No spam, just stars.</p>
           {subscribed ? (
-            <div style={{ color: G.green, fontSize: 16, fontWeight: 600 }}>✅ You're subscribed! Welcome to StarBook.</div>
+            <div style={{ color: G.green, fontSize: 16, fontWeight: 600 }}>✅ You're subscribed! Welcome to StraBook.</div>
           ) : (
             <div style={{ display: "flex", gap: 0, maxWidth: 460, margin: "0 auto", background: G.card, border: `1px solid ${G.border}`, borderRadius: 50, padding: "6px 6px 6px 22px", alignItems: "center" }}>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" style={{ flex: 1, background: "transparent", border: "none", color: G.text, fontSize: 14, outline: "none", fontFamily: G.sans, minWidth: 0 }} />
@@ -329,22 +329,22 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage }) 
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: "flex-start", gap: 40, marginBottom: 48 }}>
             <div style={{ maxWidth: 300 }}>
-              <span style={{ color: G.gold, fontFamily: G.serif, fontSize: 22, fontWeight: 800, letterSpacing: 3, display: "block", marginBottom: 18, textTransform: "uppercase" }}>StarBook</span>
+              <span style={{ color: G.gold, fontFamily: G.serif, fontSize: 22, fontWeight: 800, letterSpacing: 3, display: "block", marginBottom: 18, textTransform: "uppercase" }}>StraBook</span>
               <p style={{ color: G.dim, fontSize: 13, lineHeight: 1.9, margin: "0 0 20px" }}>The world's premier platform for high-impact celebrity bookings. Redefining how excellence meets enterprise.</p>
-              <div style={{ color: G.dim, fontSize: 12 }}>support@starbook.io</div>
+              <div style={{ color: G.dim, fontSize: 12 }}>support@strabook.io</div>
               <div style={{ color: G.dim, fontSize: 12, marginTop: 4 }}>Available worldwide</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: isMobile ? 28 : 52 }}>
-              {[["Company", ["Press Kit", "About Us", "Contact"]], ["Services", ["Bookings", "Video Messages", "VIP Fan Card"]], ["Resources", ["Blog", "Terms of Service", "Privacy Policy"]]].map(([title, links]) => (
+              {[["Company", [["Press Kit", null], ["About Us", "about"], ["Contact", "contact"]]], ["Services", [["Bookings", "celebrities"], ["Video Messages", "celebrities"], ["VIP Fan Card", "waitlist"]]], ["Resources", [["Blog", "blog"], ["Terms of Service", "terms"], ["Privacy Policy", "privacy"]]]].map(([title, links]) => (
                 <div key={title}>
                   <div style={{ color: G.text, fontWeight: 700, fontSize: 11, marginBottom: 18, letterSpacing: 2, textTransform: "uppercase" }}>{title}</div>
-                  {links.map(l => <div key={l} style={{ color: G.dim, fontSize: 13, marginBottom: 10, cursor: "pointer", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color = G.muted} onMouseLeave={e => e.target.style.color = G.dim}>{l}</div>)}
+                  {links.map(([label, page]) => <div key={label} onClick={page ? () => setPage(page) : undefined} style={{ color: G.dim, fontSize: 13, marginBottom: 10, cursor: page ? "pointer" : "default", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color = page ? G.gold : G.dim} onMouseLeave={e => e.target.style.color = G.dim}>{label}</div>)}
                 </div>
               ))}
             </div>
           </div>
           <div style={{ borderTop: `1px solid ${G.border}`, paddingTop: 24, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12 }}>
-            <div style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>© 2025 StarBook. All rights reserved.</div>
+            <div style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>© 2025 StraBook. All rights reserved.</div>
             <div style={{ display: "flex", gap: isMobile ? 20 : 32, flexWrap: "wrap" }}>
               {["New York", "London", "Dubai", "Singapore"].map(c => <span key={c} style={{ color: G.dim, fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>{c}</span>)}
             </div>

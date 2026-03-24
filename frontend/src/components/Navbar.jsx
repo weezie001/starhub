@@ -49,7 +49,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flexShrink: 0 }}
           onClick={() => setPage("home")}>
           <span style={{ color: G.gold, fontFamily: G.serif, fontSize: 22, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase" }}>
-            StarBook
+            StraBook
           </span>
         </div>
 

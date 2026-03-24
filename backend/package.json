@@ -1,5 +1,5 @@
 {
-  "name": "starbook-backend",
+  "name": "strabook-backend",
   "version": "1.0.0",
   "description": "Premium Celebrity Booking Backend with authentication and payment integrations.",
   "main": "server.js",

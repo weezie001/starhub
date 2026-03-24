@@ -32,11 +32,11 @@ export const SERVICES = [
 
 export const TESTIMONIALS = [
   { name:"James Richardson", role:"Event Director, London", text:"Booked a celebrity for our corporate gala and the experience was absolutely flawless. The team handled every detail professionally.", stars:5 },
-  { name:"Emily Hartwell", role:"Repeat Client, New York", text:"I've used StarBook three times now and it never disappoints. The process is seamless, the celebrities always deliver.", stars:5 },
+  { name:"Emily Hartwell", role:"Repeat Client, New York", text:"I've used StraBook three times now and it never disappoints. The process is seamless, the celebrities always deliver.", stars:5 },
   { name:"Felix Andersen", role:"Brand Manager, Copenhagen", text:"Organized a meet & greet for 500 fans and everything was perfectly coordinated. Outstanding service!", stars:5 },
-  { name:"Charlotte Beaumont", role:"PR Director, Paris", text:"StarBook transformed our product launch into an unforgettable evening. The celebrity they matched us with was the perfect fit.", stars:5 },
-  { name:"David Thornton", role:"CEO, Thornton Group, Dubai", text:"We've partnered with StarBook for three consecutive annual galas. Their professionalism and A-list roster is unmatched.", stars:5 },
-  { name:"Sophie Laurent", role:"Wedding Planner, Milan", text:"My client wanted a surprise celebrity appearance and StarBook made the impossible happen in just two weeks.", stars:5 },
+  { name:"Charlotte Beaumont", role:"PR Director, Paris", text:"StraBook transformed our product launch into an unforgettable evening. The celebrity they matched us with was the perfect fit.", stars:5 },
+  { name:"David Thornton", role:"CEO, Thornton Group, Dubai", text:"We've partnered with StraBook for three consecutive annual galas. Their professionalism and A-list roster is unmatched.", stars:5 },
+  { name:"Sophie Laurent", role:"Wedding Planner, Milan", text:"My client wanted a surprise celebrity appearance and StraBook made the impossible happen in just two weeks.", stars:5 },
 ];
 
 export const BLOGS = [
@@ -59,12 +59,12 @@ export const BLOGS = [
       { type: "h2", text: "Define Your Objective First" },
       { type: "p", text: "Are you trying to boost morale, attract press, launch a product, or reward clients? The answer shapes everything — which celebrity, what format (keynote, performance, Q&A), and how much stage time is needed. A misaligned booking wastes budget and underwhelms your audience." },
       { type: "h2", text: "Respect the Rider" },
-      { type: "p", text: "Every professional celebrity has a rider — a document listing technical, logistical, and personal requirements. This isn't diva behavior; it's professionalism. Your venue needs to accommodate these requests to ensure the talent can deliver their best. StarBook's team reviews riders and negotiates on your behalf to keep requirements practical." },
+      { type: "p", text: "Every professional celebrity has a rider — a document listing technical, logistical, and personal requirements. This isn't diva behavior; it's professionalism. Your venue needs to accommodate these requests to ensure the talent can deliver their best. StraBook's team reviews riders and negotiates on your behalf to keep requirements practical." },
       { type: "h2", text: "Brief the Celebrity Thoroughly" },
       { type: "p", text: "The best appearances feel personal. Share your company story, key messages, and audience demographics with the talent well ahead of the event. Great celebrities use this to tailor their appearance — mentioning your brand milestones, acknowledging your team, making the moment feel genuine rather than transactional." },
       { type: "h2", text: "Prepare for Day-Of Logistics" },
       { type: "p", text: "Assign a dedicated point-of-contact for the talent on the day. Ensure transport, green room access, and timing are locked down. Buffer 30 minutes before the celebrity's slot for any last-minute needs. Nothing undermines a great appearance like rushed logistics at the end." },
-      { type: "p", text: "When you work with StarBook, our concierge handles all of this coordination from contract to curtain call. Your job is to enjoy the moment." },
+      { type: "p", text: "When you work with StraBook, our concierge handles all of this coordination from contract to curtain call. Your job is to enjoy the moment." },
     ],
   },
   {
@@ -88,7 +88,7 @@ export const BLOGS = [
       { type: "h2", text: "What Makes a Great Video Message" },
       { type: "p", text: "The best celebrity messages are specific. Vague generic shoutouts land flat. When briefing the talent, include the recipient's name, why they're being celebrated, a personal detail or two, and the tone you want (heartfelt, humorous, motivational). The celebrity will craft something that feels made-for-them — because it is." },
       { type: "h2", text: "Turnaround and Quality" },
-      { type: "p", text: "StarBook's video message service delivers in HD within 7 business days. For premium requests, express 48-hour delivery is available. Every video is reviewed for quality before delivery. If it doesn't meet our standards, we request a reshoot at no cost to you." },
+      { type: "p", text: "StraBook's video message service delivers in HD within 7 business days. For premium requests, express 48-hour delivery is available. Every video is reviewed for quality before delivery. If it doesn't meet our standards, we request a reshoot at no cost to you." },
     ],
   },
   {
@@ -108,7 +108,7 @@ export const BLOGS = [
       { type: "h2", text: "What Separates a Speaker from a Star Speaker" },
       { type: "p", text: "The difference isn't fame — it's story. Celebrities who have navigated extreme pressure, built empires from scratch, or overcome public adversity carry lessons that resonate with business audiences in a way that career speakers simply cannot replicate. Authenticity, drama, and real stakes make for unforgettable content." },
       { type: "h2", text: "Matching the Speaker to the Room" },
-      { type: "p", text: "A motivational athlete works brilliantly for a sales conference. A philanthropist-entrepreneur resonates with CSR-focused leadership teams. A creative icon fits a brand or marketing summit. The match between speaker ethos and audience identity is the single biggest determinant of keynote success. StarBook's matching engine uses your event brief to surface exactly the right options." },
+      { type: "p", text: "A motivational athlete works brilliantly for a sales conference. A philanthropist-entrepreneur resonates with CSR-focused leadership teams. A creative icon fits a brand or marketing summit. The match between speaker ethos and audience identity is the single biggest determinant of keynote success. StraBook's matching engine uses your event brief to surface exactly the right options." },
       { type: "h2", text: "Format Matters" },
       { type: "p", text: "The traditional 45-minute talk is no longer the gold standard. Fireside chats, moderated Q&As, and workshop-style sessions with celebrity co-facilitators are outperforming solo presentations on almost every engagement metric. Consider building interactivity into the format from the start." },
     ],
@@ -126,7 +126,7 @@ export const BLOGS = [
     img: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80",
     excerpt: "Most clients see a confirmation email. We show you everything that happens in between — the calls, the negotiations, the logistics, and the moments when it all comes together.",
     content: [
-      { type: "p", text: "When you submit a booking request on StarBook, you see a clean interface and a confirmation notification. What you don't see is the flurry of activity that begins the moment your request lands in our system." },
+      { type: "p", text: "When you submit a booking request on StraBook, you see a clean interface and a confirmation notification. What you don't see is the flurry of activity that begins the moment your request lands in our system." },
       { type: "h2", text: "Step 1: Talent Assessment (0–4 hours)" },
       { type: "p", text: "A dedicated concierge reviews your event brief and cross-references it against the talent's current schedule, contractual restrictions, and known preferences. If there's a flag — a conflicting brand endorsement, a blackout date, or a geographic restriction — we identify it immediately and surface alternatives." },
       { type: "h2", text: "Step 2: Initial Inquiry to Management (4–24 hours)" },
@@ -134,7 +134,7 @@ export const BLOGS = [
       { type: "h2", text: "Step 3: Negotiation and Contracting (1–5 days)" },
       { type: "p", text: "Once the talent expresses interest, our legal and contracts team works with management to finalise terms — fee, format, rider requirements, usage rights, and cancellation clauses. We protect your interests throughout and flag anything unusual before you sign." },
       { type: "h2", text: "Step 4: Day-Of Coordination" },
-      { type: "p", text: "On the event day, a StarBook coordinator is on call to manage any last-minute changes. Travel delays, equipment issues, timing adjustments — we handle them so you don't have to. Our goal is a seamless handoff: celebrity to stage, stage to standing ovation." },
+      { type: "p", text: "On the event day, a StraBook coordinator is on call to manage any last-minute changes. Travel delays, equipment issues, timing adjustments — we handle them so you don't have to. Our goal is a seamless handoff: celebrity to stage, stage to standing ovation." },
     ],
   },
   {
@@ -156,7 +156,7 @@ export const BLOGS = [
       { type: "h2", text: "The Cost-Efficiency Argument" },
       { type: "p", text: "A tier-1 Hollywood star might command fees that consume the entirety of a mid-sized brand's annual marketing budget — for a single campaign. A regional star with equivalent cultural influence in the target market can deliver comparable impact at a fraction of the cost, leaving budget for production quality and distribution." },
       { type: "h2", text: "Building a Balanced Roster Strategy" },
-      { type: "p", text: "The most effective global brands are building layered celebrity strategies: one globally-recognised anchor ambassador for brand prestige, supported by a roster of regional talent for market-specific activation. StarBook's international roster across 40+ countries makes this strategy accessible to brands of any size." },
+      { type: "p", text: "The most effective global brands are building layered celebrity strategies: one globally-recognised anchor ambassador for brand prestige, supported by a roster of regional talent for market-specific activation. StraBook's international roster across 40+ countries makes this strategy accessible to brands of any size." },
     ],
   },
   {

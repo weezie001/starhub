@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { G } from "./lib/tokens.js";
 import { api } from "./api.js";
+import { useIsMobile } from "./lib/useIsMobile.js";
 
 // Components
 import Navbar from "./components/Navbar.jsx";
@@ -16,6 +17,8 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import WaitlistPage from "./pages/WaitlistPage.jsx";
 import BlogsPage from "./pages/BlogsPage.jsx";
 import AdminPage from "./pages/admin/AdminPage.jsx";
+import TermsPage from "./pages/TermsPage.jsx";
+import PrivacyPage from "./pages/PrivacyPage.jsx";
 
 // ── GLOBAL STYLES ────────────────────────────────────────────
 const GLOBAL_CSS = `
@@ -53,35 +56,36 @@ function GlobalStyles() {
 
 // ── ABOUT PAGE (inline, simple) ────────────────────────────
 function AboutPage({ setPage }) {
+  const isMobile = useIsMobile();
   return (
     <div style={{ paddingTop: 72, minHeight: "100vh" }}>
-      <section style={{ padding: "80px 40px", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 14 }}>ABOUT STARBOOK</div>
-        <h1 style={{ fontSize: "clamp(32px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 28px", fontWeight: 700, lineHeight: 1.1 }}>
+      <section style={{ padding: isMobile ? "48px 20px" : "80px 40px", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 14 }}>ABOUT STRABOOK</div>
+        <h1 style={{ fontSize: "clamp(28px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 28px", fontWeight: 700, lineHeight: 1.1 }}>
           The World's Premier<br />Celebrity Booking Platform
         </h1>
-        <p style={{ color: G.muted, fontSize: 16, lineHeight: 2, marginBottom: 28 }}>
-          StarBook connects brands, event organizers, and individuals with the world's most sought-after celebrities. With over a decade of experience and a roster of 500+ verified A-list talent, we've facilitated more than 100,000 successful bookings worldwide.
+        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: 28 }}>
+          StraBook connects brands, event organizers, and individuals with the world's most sought-after celebrities. With over a decade of experience and a roster of 500+ verified A-list talent, we've facilitated more than 100,000 successful bookings worldwide.
         </p>
-        <p style={{ color: G.muted, fontSize: 16, lineHeight: 2, marginBottom: 40 }}>
+        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: 40 }}>
           Whether you're planning a corporate gala, launching a product, organizing a charity event, or creating an unforgettable personal experience — our dedicated team ensures every interaction is seamless, professional, and exceeds expectations.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 40 }}>
           {[
             ["✨", "Verified Talent", "Every celebrity is personally vetted. No fake profiles, no intermediaries — direct access to authentic star power."],
             ["🛡️", "Secure & Confidential", "Bank-level encryption protects every transaction. All bookings handled with strict confidentiality."],
             ["⚡", "AI-Powered Matching", "Our intelligent engine analyzes your event type, audience, and budget to match the perfect celebrity — in seconds."],
             ["🌐", "Global Reach", "From Hollywood to Dubai, London to Tokyo — our network spans every continent."],
           ].map(([icon, title, desc]) => (
-            <div key={title} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: "28px 24px" }}>
+            <div key={title} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: isMobile ? "20px 18px" : "28px 24px" }}>
               <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
               <div style={{ color: G.cream, fontWeight: 600, fontSize: 15, marginBottom: 8, fontFamily: G.serif }}>{title}</div>
               <div style={{ color: G.dim, fontSize: 13, lineHeight: 1.7 }}>{desc}</div>
             </div>
           ))}
         </div>
-        <div style={{ background: `linear-gradient(135deg, ${G.gold}15, ${G.gold}08)`, border: `1px solid ${G.gold}25`, borderRadius: 16, padding: "36px 32px", textAlign: "center" }}>
-          <h3 style={{ color: G.cream, fontFamily: G.serif, fontSize: 28, margin: "0 0 12px" }}>Ready to Book Your Star?</h3>
+        <div style={{ background: `linear-gradient(135deg, ${G.gold}15, ${G.gold}08)`, border: `1px solid ${G.gold}25`, borderRadius: 16, padding: isMobile ? "28px 20px" : "36px 32px", textAlign: "center" }}>
+          <h3 style={{ color: G.cream, fontFamily: G.serif, fontSize: isMobile ? 22 : 28, margin: "0 0 12px" }}>Ready to Book Your Star?</h3>
           <p style={{ color: G.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>Join 100,000+ satisfied clients. Your unforgettable celebrity experience starts here.</p>
           <button onClick={() => setPage("celebrities")} style={{ background: `linear-gradient(45deg, ${G.gold}, ${G.goldD})`, color: "#261900", border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: G.sans, letterSpacing: 0.8 }}>
             Browse Celebrities Now
@@ -94,24 +98,25 @@ function AboutPage({ setPage }) {
 
 // ── CONTACT / SUPPORT PAGE ───────────────────────────────────
 function ContactPage({ setPage }) {
+  const isMobile = useIsMobile();
   return (
     <div style={{ paddingTop: 72, minHeight: "100vh" }}>
-      <section style={{ padding: "80px 40px", maxWidth: 860, margin: "0 auto" }}>
+      <section style={{ padding: isMobile ? "48px 20px" : "80px 40px", maxWidth: 860, margin: "0 auto" }}>
         <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 14 }}>SUPPORT</div>
-        <h1 style={{ fontSize: "clamp(32px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 20px", fontWeight: 700, lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: "clamp(28px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 20px", fontWeight: 700, lineHeight: 1.1 }}>
           We're Here to Help
         </h1>
-        <p style={{ color: G.muted, fontSize: 16, lineHeight: 2, marginBottom: 48, maxWidth: 560 }}>
+        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: isMobile ? 32 : 48, maxWidth: 560 }}>
           Our concierge team is available 24/7. Use the live chat widget in the bottom-right corner to connect with a real agent instantly, or join the waitlist for dedicated one-on-one booking assistance.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 40 }}>
           {[
             ["💬", "Live Chat", "Click the chat icon in the bottom-right corner to connect with a live support agent immediately.", null],
             ["📋", "Concierge Waitlist", "Join our waitlist for a dedicated booking concierge to personally assist you.", "waitlist"],
-            ["✉️", "Email Support", "Reach our team at support@starbook.io for detailed inquiries.", null],
+            ["✉️", "Email Support", "Reach our team at support@strabook.io for detailed inquiries.", null],
             ["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
           ].map(([icon, title, desc, link]) => (
-            <div key={title} onClick={link ? () => setPage(link) : undefined} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: "28px 24px", cursor: link ? "pointer" : "default", transition: "all 0.3s" }}
+            <div key={title} onClick={link ? () => setPage(link) : undefined} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: isMobile ? "20px 18px" : "28px 24px", cursor: link ? "pointer" : "default", transition: "all 0.3s" }}
               onMouseEnter={e => { if (link) { e.currentTarget.style.borderColor = G.gold + "50"; e.currentTarget.style.transform = "translateY(-3px)"; }}}
               onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.transform = "none"; }}>
               <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
@@ -127,7 +132,7 @@ function ContactPage({ setPage }) {
 }
 
 // ── MAIN APP ─────────────────────────────────────────────────
-const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog"];
+const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy"];
 
 function getHashPage() {
   const hash = window.location.hash.slice(1);
@@ -137,6 +142,7 @@ function getHashPage() {
 export default function App() {
   const [page, setPageState] = useState(getHashPage);
   const [user, setUser] = useState(null);
+  const [userLoaded, setUserLoaded] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [authModal, setAuthModal] = useState(null);
@@ -155,7 +161,7 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // Load persisted state
+  // Load persisted state — mark userLoaded when done so auth gate can run
   useEffect(() => {
     try {
       const raw = localStorage.getItem("sb_user");
@@ -167,16 +173,15 @@ export default function App() {
       const favRaw = localStorage.getItem("sb_favs");
       if (favRaw) setFavorites(JSON.parse(favRaw));
     } catch {}
+    setUserLoaded(true);
   }, []);
 
-  // Redirect auth-gated pages when user isn't loaded
+  // Only redirect after we know whether a user is logged in
   useEffect(() => {
+    if (!userLoaded) return;
     const authPages = ["dashboard", "admin"];
-    if (authPages.includes(page) && !user) {
-      const raw = localStorage.getItem("sb_user");
-      if (!raw) setPage("home");
-    }
-  }, [page, user]);
+    if (authPages.includes(page) && !user) setPage("home");
+  }, [page, user, userLoaded]);
 
   function handleAuth(userData) {
     setUser(userData);
@@ -225,6 +230,8 @@ export default function App() {
       {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} />}
       {page === "admin"       && user?.role === "admin" && <AdminPage user={user} />}
       {page === "blog"        && <BlogsPage setPage={setPage} />}
+      {page === "terms"       && <TermsPage setPage={setPage} />}
+      {page === "privacy"     && <PrivacyPage setPage={setPage} />}
 
       {/* Modals */}
       {authModal && <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />}
@@ -232,7 +239,7 @@ export default function App() {
       {bookingModal && <BookingModal c={bookingModal.celeb} type={bookingModal.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} />}
 
       {/* Live support chat widget */}
-      <SupportChat user={user} />
+      <SupportChat user={user} setPage={setPage} />
     </div>
   );
 }
