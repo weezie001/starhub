@@ -120,15 +120,15 @@ export default function AdminPage({ user }) {
   const statusVariant = { pending: "warning", approved: "success", declined: "destructive" };
 
   return (
-    <div className="pt-16 pb-12 px-7 max-w-[1140px] mx-auto min-h-screen">
+    <div className="pt-16 pb-12 px-4 sm:px-7 max-w-[1140px] mx-auto min-h-screen">
       {/* Header */}
-      <div className="flex items-center gap-3.5 mb-8 mt-8">
+      <div className="flex items-center gap-3.5 mb-8 mt-8 flex-wrap">
         <Badge variant="destructive" className="text-[11px] px-3 py-1">⚙ ADMIN PANEL</Badge>
         <h1 className="text-[clamp(20px,3.5vw,36px)] font-serif text-foreground m-0 font-bold">Control Dashboard</h1>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-5 gap-3 mb-7">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-7">
         {statCards.map(({ label, value, icon, colorClass }) => (
           <div key={label} className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-5">
             <div className="text-lg mb-1.5">{icon}</div>
@@ -139,13 +139,13 @@ export default function AdminPage({ user }) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/8 flex gap-0 mb-6">
+      <div className="border-b border-white/8 flex gap-0 mb-6 overflow-x-auto scrollbar-none">
         {[["overview", "Overview"], ["celebrities", "Celebrities"], ["bookings", "Bookings"], ["users", "Users"], ["inbox", "Support Inbox"]].map(([t, l]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={[
-              "bg-transparent border-none px-5 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans",
+              "bg-transparent border-none px-4 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans whitespace-nowrap",
               tab === t
                 ? "border-b-2 border-destructive text-destructive font-bold"
                 : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground",
@@ -158,7 +158,7 @@ export default function AdminPage({ user }) {
 
       {/* Overview Tab */}
       {tab === "overview" && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-white/8 bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-6">
             <h3 className="text-foreground mb-4 font-serif text-xl m-0">📊 Platform Summary</h3>
             <p className="text-muted-foreground leading-[1.8] text-sm">
@@ -199,7 +199,7 @@ export default function AdminPage({ user }) {
               {celebError && (
                 <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{celebError}</div>
               )}
-              <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <Input label="Name *" value={celebForm.name} onChange={e => setCelebForm(f => ({ ...f, name: e.target.value }))} placeholder="Celebrity name" />
                 <div>
                   <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category *</label>
@@ -213,7 +213,7 @@ export default function AdminPage({ user }) {
                 </div>
                 <Input label="Price ($) *" value={celebForm.price} onChange={e => setCelebForm(f => ({ ...f, price: e.target.value }))} placeholder="5000" type="number" />
               </div>
-              <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <Input label="Photo URL" value={celebForm.photo} onChange={e => setCelebForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." />
                 <Input label="Country" value={celebForm.country} onChange={e => setCelebForm(f => ({ ...f, country: e.target.value }))} placeholder="USA" />
                 <Input label="Flag Emoji" value={celebForm.flag} onChange={e => setCelebForm(f => ({ ...f, flag: e.target.value }))} placeholder="🇺🇸" />
@@ -284,15 +284,15 @@ export default function AdminPage({ user }) {
                 >
                   <div
                     onClick={() => setExpandedBooking(isExpanded ? null : b.id)}
-                    className="px-5 py-4 flex justify-between items-center flex-wrap gap-3 cursor-pointer"
+                    className="px-4 sm:px-5 py-4 flex justify-between items-start sm:items-center flex-wrap gap-3 cursor-pointer"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="text-foreground font-semibold text-sm">{b.celeb?.name}</div>
-                      <div className="text-muted-foreground text-xs mt-0.5">{form.name || b.userName} • {form.email} • {b.type}</div>
-                      <div className="text-muted-foreground/60 text-[11px] mt-px">Submitted: {new Date(b.date).toLocaleString()}</div>
+                      <div className="text-muted-foreground text-xs mt-0.5 truncate">{form.name || b.userName} • {form.email}</div>
+                      <div className="text-muted-foreground/60 text-[11px] mt-px">{b.type} • {new Date(b.date).toLocaleDateString()}</div>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-primary font-bold text-[15px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                      <span className="text-primary font-bold text-[14px]">${(b.amount || b.celeb?.price || 0).toLocaleString()}</span>
                       <Badge variant={statusVariant[b.status] || "warning"}>
                         {(b.status || "pending").toUpperCase()}
                       </Badge>
@@ -301,14 +301,14 @@ export default function AdminPage({ user }) {
                           <Button
                             onClick={e => { e.stopPropagation(); updateStatus(b.id, "approved"); }}
                             variant="success"
-                            className="px-3.5 py-1.5 text-xs"
+                            className="px-3 py-1.5 text-xs"
                           >
                             ✓ Approve
                           </Button>
                           <Button
                             onClick={e => { e.stopPropagation(); updateStatus(b.id, "declined"); }}
                             variant="danger"
-                            className="px-3.5 py-1.5 text-xs"
+                            className="px-3 py-1.5 text-xs"
                           >
                             ✕ Decline
                           </Button>
@@ -319,7 +319,7 @@ export default function AdminPage({ user }) {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t border-white/8 p-5 bg-background/50 grid grid-cols-3 gap-5">
+                    <div className="border-t border-white/8 p-4 sm:p-5 bg-background/50 grid grid-cols-1 sm:grid-cols-3 gap-5">
                       {/* Client Info */}
                       <div>
                         <div className="text-primary text-[10px] tracking-[1.5px] font-bold uppercase mb-2.5">Client Info</div>
@@ -404,11 +404,11 @@ export default function AdminPage({ user }) {
               {userError && (
                 <div className="bg-destructive/10 text-destructive rounded-lg px-3.5 py-2 text-xs mb-3">{userError}</div>
               )}
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <Input label="Full Name *" value={userForm.name} onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))} placeholder="John Smith" />
                 <Input label="Email *" value={userForm.email} onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))} type="email" placeholder="user@email.com" />
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <Input label="Password *" value={userForm.password} onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))} type="password" placeholder="••••••••" />
                 <div>
                   <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Role</label>
@@ -433,7 +433,7 @@ export default function AdminPage({ user }) {
                 <div>No users found</div>
               </div>
             ) : users.map(u => (
-              <div key={u.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
+              <div key={u.id} className="rounded-xl border border-white/8 bg-card p-4 flex justify-between items-start sm:items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-3">
                   <div className="w-[38px] h-[38px] rounded-full bg-primary/10 border border-primary/15 flex items-center justify-center text-base">
                     {u.role === "admin" ? "⚙" : "👤"}
