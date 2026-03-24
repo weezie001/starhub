@@ -55,23 +55,31 @@ function CryptoWallets() {
 
 const GIFT_CARD_TYPES = ["Apple", "Amazon", "Visa", "Google Play", "iTunes", "Steam"];
 
-async function uploadToCloudinary(file) {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-  if (!cloudName || !uploadPreset) throw new Error("Cloudinary not configured");
-  const fd = new FormData();
-  fd.append("file", file);
-  fd.append("upload_preset", uploadPreset);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: fd });
-  if (!res.ok) throw new Error("Upload failed");
-  const data = await res.json();
-  return data.secure_url;
+function resizeToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 600;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function GiftCardForm({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
-  const fileRef = useState(null);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
@@ -79,10 +87,10 @@ function GiftCardForm({ value, onChange }) {
     setUploadErr("");
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file);
-      onChange({ ...value, photo: url });
-    } catch (err) {
-      setUploadErr(err.message || "Upload failed. Try again.");
+      const b64 = await resizeToBase64(file);
+      onChange({ ...value, photo: b64 });
+    } catch {
+      setUploadErr("Could not process image. Try again.");
     } finally {
       setUploading(false);
     }
