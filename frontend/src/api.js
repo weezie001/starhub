@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL || '/api';
+const BASE = import.meta.env.VITE_API_URL ||
+  `http://${window.location.hostname}:3000/api`;
 
 function getToken() {
   try {
@@ -49,6 +50,10 @@ export const api = {
   // Waitlist
   joinWaitlist: (data) => req('/waitlist', { method: 'POST', body: JSON.stringify(data) }),
   getWaitlistPosition: (id) => req(`/waitlist/${id}/position`),
+
+  // Blogs
+  getBlogs: () => req('/blogs'),
+  getBlog: (id) => req(`/blogs/${id}`),
 
   // Admin
   getAdminBookings: () => req('/admin/bookings').then(rows => rows.map(mapBooking)),

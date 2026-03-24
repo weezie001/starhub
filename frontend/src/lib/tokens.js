@@ -10,7 +10,8 @@ export const G = {
   sans: "'Manrope', sans-serif",
 };
 
-export const WS_URL = (import.meta.env.VITE_WS_URL || "ws://localhost:5000");
+export const WS_URL = import.meta.env.VITE_WS_URL ||
+  `ws://${window.location.hostname}:3000`;
 
 export function avatar(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a1200&color=D4AF37&bold=true&size=300&font-size=0.38`;

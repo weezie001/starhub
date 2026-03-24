@@ -14,6 +14,7 @@ import HomePage from "./pages/HomePage.jsx";
 import CelebritiesPage from "./pages/CelebritiesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import WaitlistPage from "./pages/WaitlistPage.jsx";
+import BlogsPage from "./pages/BlogsPage.jsx";
 import AdminPage from "./pages/admin/AdminPage.jsx";
 
 // ── GLOBAL STYLES ────────────────────────────────────────────
@@ -126,7 +127,7 @@ function ContactPage({ setPage }) {
 }
 
 // ── MAIN APP ─────────────────────────────────────────────────
-const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin"];
+const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog"];
 
 function getHashPage() {
   const hash = window.location.hash.slice(1);
@@ -223,6 +224,7 @@ export default function App() {
       {page === "contact"     && <ContactPage setPage={setPage} />}
       {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} />}
       {page === "admin"       && user?.role === "admin" && <AdminPage user={user} />}
+      {page === "blog"        && <BlogsPage setPage={setPage} />}
 
       {/* Modals */}
       {authModal && <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />}

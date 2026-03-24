@@ -2,9 +2,11 @@ import { useState } from "react";
 import { G, avatar } from "../lib/tokens.js";
 import { CELEBS } from "../lib/data.js";
 import { Stars, Badge, Btn } from "../components/ui.jsx";
+import { useIsMobile } from "../lib/useIsMobile.js";
 
 export default function DashboardPage({ user, bookings, favorites, onView, setPage }) {
   const [tab, setTab] = useState("bookings");
+  const isMobile = useIsMobile();
   const myBookings = bookings.filter(b => String(b.userId) === String(user.id));
   const myFavs = CELEBS.filter(c => favorites.includes(c.id));
   const spent = myBookings.reduce((s, b) => s + (b.amount || b.celeb?.price || 0), 0);
@@ -17,7 +19,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         <p style={{ color: G.muted, fontSize: 14, margin: 0 }}>{user.email} • {user.role === "admin" ? "🔑 Administrator" : "✨ Fan Account"}</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 30 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 30 }}>
         {[["Bookings", myBookings.length, "📅", G.gold], ["Favorites", myFavs.length, "❤️", G.red], ["Total Spent", `$${spent.toLocaleString()}`, "💰", G.green], ["Status", user.role === "admin" ? "Admin" : "VIP Fan", "👑", G.amber]].map(([l, v, icon, color]) => (
           <div key={l} style={{ background: G.card, border: `1px solid ${color}22`, borderRadius: 12, padding: "18px 20px" }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
