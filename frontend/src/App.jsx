@@ -228,7 +228,7 @@ export default function App() {
       <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} />
 
       {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} />}
-      {page === "celebrities" && <CelebritiesPage {...sharedProps} />}
+      {page === "celebrities" && <CelebritiesPage {...sharedProps} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}
       {page === "contact"     && <ContactPage setPage={setPage} />}

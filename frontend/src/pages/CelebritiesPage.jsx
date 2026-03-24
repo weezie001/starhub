@@ -6,7 +6,7 @@ import CelebCard from "../components/CelebCard.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
-export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
+export default function CelebritiesPage({ onView, onBook, favorites, onFav, user, onAuth }) {
   const [celebs, setCelebs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -110,7 +110,47 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
   );
 
   return (
-    <div className={cn("pt-[68px] min-h-screen flex", isMobile ? "flex-col" : "flex-row")}>
+    <div className="pt-[68px] min-h-screen flex flex-col">
+
+      {/* Hero */}
+      <div className="relative overflow-hidden border-b border-white/8"
+        style={{ background: "linear-gradient(135deg, #0d0d0d 0%, #141008 60%, #0d0d0d 100%)" }}>
+        {/* Gold glow orb */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[220px] rounded-full opacity-[0.07]"
+          style={{ background: "radial-gradient(ellipse, #f0bf5a 0%, transparent 70%)", filter: "blur(40px)" }} />
+
+        <div className="relative max-w-[860px] mx-auto px-5 py-10 sm:py-14 text-center">
+          <div className="inline-block text-primary text-[10px] tracking-[3px] font-bold uppercase border border-primary/20 rounded-full px-4 py-1.5 mb-5 bg-primary/5">
+            ★ Elite Celebrity Roster
+          </div>
+          <h1 className="font-serif text-foreground font-bold leading-tight mb-4"
+            style={{ fontSize: "clamp(26px, 5vw, 54px)" }}>
+            Book the World's<br />Biggest Stars
+          </h1>
+          <p className="text-muted-foreground text-[14px] sm:text-[15px] leading-relaxed mb-7 max-w-[520px] mx-auto">
+            From A-list actors to chart-topping musicians — browse our verified roster and submit a booking request in minutes.
+          </p>
+
+          {!user ? (
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button onClick={() => onAuth("register")} className="px-7 py-2.5 text-sm">
+                Create Account →
+              </Button>
+              <Button onClick={() => onAuth("login")} variant="outline" className="px-7 py-2.5 text-sm">
+                Sign In
+              </Button>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2.5 bg-primary/8 border border-primary/20 rounded-full px-5 py-2.5">
+              <span className="text-primary text-lg">✦</span>
+              <span className="text-foreground text-sm font-semibold">Welcome back, {user.name.split(" ")[0]}</span>
+              <span className="text-muted-foreground text-xs">— browse & book below</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={cn("flex flex-1", isMobile ? "flex-col" : "flex-row")}>
 
       {/* Mobile filter toggle bar */}
       {isMobile && (
@@ -210,6 +250,7 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
             {filtered.map(c => <CelebCard key={c.id} c={c} onView={onView} onBook={onBook} onFav={onFav} isFav={favorites.includes(c.id)} />)}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
