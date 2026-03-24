@@ -170,8 +170,8 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
               </>
             ) : (
               <>
-                <Button onClick={() => onAuth("login")} variant="ghost" className="flex-1">Sign In</Button>
-                <Button onClick={() => onAuth("register")} className="flex-1">Join VIP</Button>
+                <Button onClick={() => { setMenuOpen(false); onAuth("login"); }} variant="ghost" className="flex-1">Sign In</Button>
+                <Button onClick={() => { setMenuOpen(false); onAuth("register"); }} className="flex-1">Join VIP</Button>
               </>
             )}
           </div>
