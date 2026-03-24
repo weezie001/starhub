@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { G } from "../lib/tokens.js";
 import { CELEBS, CATS } from "../lib/data.js";
-import { Btn } from "../components/ui.jsx";
+import { Button } from "../components/ui/button.jsx";
 import CelebCard from "../components/CelebCard.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
+import { cn } from "../lib/utils.js";
 
 export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
   const [search, setSearch] = useState("");
@@ -31,56 +32,89 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
   }, [search, cat, maxPrice, availOnly, sort]);
 
   const hasActiveFilters = cat !== "all" || availOnly || maxPrice < 20000;
+  const activeFilterCount = [cat !== "all", availOnly, maxPrice < 20000].filter(Boolean).length;
 
   const FilterContent = () => (
     <>
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ color: G.muted, fontSize: 10, letterSpacing: 2, fontWeight: 700, marginBottom: 12, textTransform: "uppercase" }}>Category</div>
+      <div className="mb-7">
+        <div className="text-muted-foreground text-[10px] tracking-[2px] font-bold mb-3 uppercase">Category</div>
         {[{ id: "all", name: "All Talent", icon: "◼" }, ...CATS].map(c => (
-          <button key={c.id} onClick={() => { setCat(c.id); if (isMobile) setFiltersOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: cat === c.id ? `${G.gold}15` : "none", border: cat === c.id ? `1px solid ${G.gold}30` : "1px solid transparent", borderRadius: 8, padding: "9px 12px", cursor: "pointer", color: cat === c.id ? G.gold : G.muted, fontSize: 13, fontFamily: G.sans, fontWeight: cat === c.id ? 700 : 400, marginBottom: 4, textAlign: "left", transition: "all 0.2s" }}>
-            <span style={{ fontSize: 11 }}>{c.icon || "◼"}</span> {c.name}
+          <button
+            key={c.id}
+            onClick={() => { setCat(c.id); if (isMobile) setFiltersOpen(false); }}
+            className={cn(
+              "flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 cursor-pointer text-[13px] font-sans text-left transition-all mb-1 border",
+              cat === c.id
+                ? "bg-primary/10 border-primary/30 text-primary font-bold"
+                : "bg-transparent border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="text-[11px]">{c.icon || "◼"}</span> {c.name}
           </button>
         ))}
       </div>
 
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ color: G.muted, fontSize: 10, letterSpacing: 2, fontWeight: 700, marginBottom: 12, textTransform: "uppercase" }}>Max Budget</div>
-        <input type="range" min={1000} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: "100%", accentColor: G.gold }} />
-        <div style={{ color: G.text, fontSize: 13, fontWeight: 700, marginTop: 6 }}>${maxPrice.toLocaleString()}</div>
+      <div className="mb-7">
+        <div className="text-muted-foreground text-[10px] tracking-[2px] font-bold mb-3 uppercase">Max Budget</div>
+        <input
+          type="range" min={1000} max={20000} step={500} value={maxPrice}
+          onChange={e => setMaxPrice(Number(e.target.value))}
+          className="w-full accent-primary"
+        />
+        <div className="text-foreground text-[13px] font-bold mt-1.5">${maxPrice.toLocaleString()}</div>
       </div>
 
       <div>
-        <div style={{ color: G.muted, fontSize: 10, letterSpacing: 2, fontWeight: 700, marginBottom: 12, textTransform: "uppercase" }}>Availability</div>
-        <button onClick={() => setAvailOnly(!availOnly)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: availOnly ? `${G.green}15` : "none", border: availOnly ? `1px solid ${G.green}30` : `1px solid ${G.border}`, borderRadius: 8, padding: "9px 12px", cursor: "pointer", color: availOnly ? G.green : G.muted, fontSize: 13, fontFamily: G.sans, fontWeight: availOnly ? 700 : 400, transition: "all 0.2s" }}>
-          <span style={{ fontSize: 11 }}>✓</span> Available only
+        <div className="text-muted-foreground text-[10px] tracking-[2px] font-bold mb-3 uppercase">Availability</div>
+        <button
+          onClick={() => setAvailOnly(!availOnly)}
+          className={cn(
+            "flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 cursor-pointer text-[13px] font-sans transition-all border",
+            availOnly
+              ? "bg-[#6DBF7B]/10 border-[#6DBF7B]/30 text-[#6DBF7B] font-bold"
+              : "bg-transparent border-border text-muted-foreground"
+          )}
+        >
+          <span className="text-[11px]">✓</span> Available only
         </button>
       </div>
 
       {hasActiveFilters && (
-        <Btn onClick={() => { setCat("all"); setAvailOnly(false); setMaxPrice(20000); }} variant="ghost" style={{ width: "100%", marginTop: 20, padding: "8px 0", fontSize: 11 }}>
+        <Button
+          onClick={() => { setCat("all"); setAvailOnly(false); setMaxPrice(20000); }}
+          variant="ghost"
+          className="w-full mt-5 text-[11px]"
+        >
           Clear Filters
-        </Btn>
+        </Button>
       )}
     </>
   );
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", display: "flex", flexDirection: isMobile ? "column" : "row" }}>
+    <div className={cn("pt-[68px] min-h-screen flex", isMobile ? "flex-col" : "flex-row")}>
 
-      {/* ── MOBILE FILTER TOGGLE BAR ── */}
+      {/* Mobile filter toggle bar */}
       {isMobile && (
-        <div style={{ background: G.s1, borderBottom: `1px solid ${G.border}`, padding: "12px 16px", display: "flex", gap: 10, alignItems: "center" }}>
-          <button onClick={() => setFiltersOpen(o => !o)} style={{
-            background: filtersOpen ? `${G.gold}15` : G.card,
-            border: `1px solid ${filtersOpen ? G.gold + "50" : G.border}`,
-            color: filtersOpen ? G.gold : G.muted,
-            borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13,
-            fontFamily: G.sans, fontWeight: 600, display: "flex", alignItems: "center", gap: 8,
-          }}>
-            ⚙ Filters {hasActiveFilters ? `(${[cat !== "all", availOnly, maxPrice < 20000].filter(Boolean).length})` : ""}
+        <div className="bg-background border-b border-border px-4 py-3 flex gap-2.5 items-center">
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            className={cn(
+              "rounded-lg px-4 py-2 cursor-pointer text-[13px] font-sans font-semibold flex items-center gap-2 border transition-all",
+              filtersOpen ? "bg-primary/10 border-primary/50 text-primary" : "bg-card border-border text-muted-foreground"
+            )}
+          >
+            ⚙ Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
           </button>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search talent..." style={{ flex: 1, background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: "8px 14px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans }} />
-          <select value={sort} onChange={e => setSort(e.target.value)} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: "8px 10px", color: G.muted, fontSize: 12, outline: "none", cursor: "pointer", fontFamily: G.sans }}>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search talent..."
+            className="flex-1 bg-card border border-border rounded-lg px-3.5 py-2 text-foreground text-[13px] outline-none font-sans placeholder:text-muted-foreground"
+          />
+          <select
+            value={sort} onChange={e => setSort(e.target.value)}
+            className="bg-card border border-border rounded-lg px-2.5 py-2 text-muted-foreground text-[12px] outline-none cursor-pointer font-sans"
+          >
             <option value="featured">Featured</option>
             <option value="rating">Top Rated</option>
             <option value="reviews">Most Reviews</option>
@@ -90,31 +124,40 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
         </div>
       )}
 
-      {/* ── MOBILE FILTER DRAWER ── */}
+      {/* Mobile filter drawer */}
       {isMobile && filtersOpen && (
-        <div style={{ background: G.s1, borderBottom: `1px solid ${G.border}`, padding: "20px 16px" }}>
+        <div className="bg-background border-b border-border px-4 py-5">
           <FilterContent />
         </div>
       )}
 
-      {/* ── DESKTOP LEFT SIDEBAR ── */}
+      {/* Desktop sidebar */}
       {!isMobile && (
-        <aside style={{ width: 220, flexShrink: 0, background: G.s1, borderRight: `1px solid ${G.border}`, padding: "36px 24px", position: "sticky", top: 68, height: "calc(100vh - 68px)", overflowY: "auto" }}>
+        <aside className="w-[220px] shrink-0 bg-background border-r border-border px-6 py-9 sticky top-[68px] h-[calc(100vh-68px)] overflow-y-auto">
           <FilterContent />
         </aside>
       )}
 
-      {/* ── MAIN CONTENT ── */}
-      <div style={{ flex: 1, padding: isMobile ? "24px 16px" : "36px 36px" }}>
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ color: G.gold, fontSize: 10, letterSpacing: 3, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>The Stage is Yours</div>
-          <h1 style={{ fontSize: "clamp(24px,4vw,52px)", fontFamily: G.serif, color: G.text, margin: "0 0 10px", fontWeight: 700, lineHeight: 1.05 }}>Elite Talent Discovery.</h1>
+      {/* Main content */}
+      <div className={cn("flex-1", isMobile ? "px-4 py-6" : "px-9 py-9")}>
+        <div className="mb-7">
+          <div className="text-primary text-[10px] tracking-[3px] font-bold mb-2 uppercase">The Stage is Yours</div>
+          <h1 className="font-serif text-foreground font-bold leading-tight mb-2.5" style={{ fontSize: "clamp(24px,4vw,52px)" }}>
+            Elite Talent Discovery.
+          </h1>
           {!isMobile && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-              <p style={{ color: G.muted, fontSize: 13, margin: 0 }}>{filtered.length} Stars available</p>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search talent..." style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 50, padding: "9px 18px", color: G.text, fontSize: 13, outline: "none", fontFamily: G.sans, width: 200 }} />
-                <select value={sort} onChange={e => setSort(e.target.value)} style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 50, padding: "9px 16px", color: G.muted, fontSize: 12, outline: "none", cursor: "pointer", fontFamily: G.sans }}>
+            <div className="flex justify-between items-center flex-wrap gap-3">
+              <p className="text-muted-foreground text-[13px] m-0">{filtered.length} Stars available</p>
+              <div className="flex gap-2.5 items-center">
+                <input
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search talent..."
+                  className="bg-background border border-border rounded-full px-[18px] py-2.5 text-foreground text-[13px] outline-none font-sans w-[200px] placeholder:text-muted-foreground"
+                />
+                <select
+                  value={sort} onChange={e => setSort(e.target.value)}
+                  className="bg-background border border-border rounded-full px-4 py-2.5 text-muted-foreground text-[12px] outline-none cursor-pointer font-sans"
+                >
                   <option value="featured">Sort: Featured</option>
                   <option value="rating">Top Rated</option>
                   <option value="reviews">Most Reviews</option>
@@ -124,17 +167,20 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
               </div>
             </div>
           )}
-          {isMobile && <p style={{ color: G.muted, fontSize: 13, margin: 0 }}>{filtered.length} Stars available</p>}
+          {isMobile && <p className="text-muted-foreground text-[13px] m-0">{filtered.length} Stars available</p>}
         </div>
 
         {filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 20px", color: G.muted }}>
-            <div style={{ fontSize: 44, marginBottom: 16 }}>🔍</div>
-            <div style={{ fontSize: 16, marginBottom: 8, color: G.text }}>No celebrities match your filters</div>
-            <div style={{ fontSize: 13 }}>Try adjusting your search or clearing filters</div>
+          <div className="text-center py-20 text-muted-foreground">
+            <div className="text-[44px] mb-4">🔍</div>
+            <div className="text-[16px] mb-2 text-foreground">No celebrities match your filters</div>
+            <div className="text-[13px]">Try adjusting your search or clearing filters</div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: isMobile ? 14 : 22 }}>
+          <div className={cn(
+            "grid gap-[14px]",
+            isMobile ? "grid-cols-2" : "grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-[22px]"
+          )}>
             {filtered.map(c => <CelebCard key={c.id} c={c} onView={onView} onBook={onBook} onFav={onFav} isFav={favorites.includes(c.id)} />)}
           </div>
         )}

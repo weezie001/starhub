@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { G } from "../lib/tokens.js";
-import { Btn, Input } from "./ui.jsx";
 import { api } from "../api.js";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog.jsx";
+import { Button } from "./ui/button.jsx";
+import { Input } from "./ui/input.jsx";
+import { Label } from "./ui/label.jsx";
 
-export default function AuthModal({ mode, onClose, onAuth, switchMode }) {
+export default function AuthModal({ open, mode, onClose, onAuth, switchMode }) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -26,48 +28,54 @@ export default function AuthModal({ mode, onClose, onAuth, switchMode }) {
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#000000d0", zIndex: 1002, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
-      onClick={onClose}>
-      <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 18, maxWidth: 420, width: "100%", padding: 38 }}
-        onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>{mode === "login" ? "🔐" : "✨"}</div>
-          <h2 style={{ margin: 0, color: G.text, fontFamily: G.serif, fontSize: 28, fontWeight: 700 }}>
+    <Dialog open={open} onOpenChange={o => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader className="text-center items-center pb-2">
+          <div className="text-4xl mb-3">{mode === "login" ? "🔐" : "✨"}</div>
+          <DialogTitle className="text-2xl">
             {mode === "login" ? "Welcome Back" : "Join StraBook"}
-          </h2>
-          <p style={{ color: G.muted, fontSize: 13, marginTop: 7 }}>
-            {mode === "login" ? "Sign in to access your bookings and favorites" : "Create your free account and start booking celebrities"}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            {mode === "login"
+              ? "Sign in to access your bookings and favorites"
+              : "Create your free account and start booking celebrities"}
           </p>
-        </div>
+        </DialogHeader>
 
         {err && (
-          <div style={{ background: G.red + "1E", color: G.red, borderRadius: 8, padding: "10px 14px", fontSize: 13, marginBottom: 16, border: `1px solid ${G.red}30` }}>
+          <div className="bg-destructive/10 text-destructive border border-destructive/30 rounded-lg px-3.5 py-2.5 text-sm mb-2">
             ⚠️ {err}
           </div>
         )}
 
-        {mode === "register" && (
-          <Input label="Full Name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" />
-        )}
-        <Input label="Email Address" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} type="email" placeholder="your@email.com" />
-        <Input label="Password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} type="password" placeholder="••••••••" />
+        <div className="space-y-1">
+          {mode === "register" && (
+            <div className="mb-3.5">
+              <Label className="mb-1.5 block">Full Name</Label>
+              <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" />
+            </div>
+          )}
+          <div className="mb-3.5">
+            <Label className="mb-1.5 block">Email Address</Label>
+            <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" />
+          </div>
+          <div className="mb-4">
+            <Label className="mb-1.5 block">Password</Label>
+            <Input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" />
+          </div>
+        </div>
 
-        <Btn onClick={submit} full style={{ padding: "14px 0", marginTop: 6, fontSize: 14 }} disabled={loading}>
+        <Button onClick={submit} className="w-full py-6 text-sm" disabled={loading}>
           {loading ? "Please wait..." : mode === "login" ? "Sign In →" : "Create Account →"}
-        </Btn>
+        </Button>
 
-        <p style={{ textAlign: "center", color: G.muted, fontSize: 13, marginTop: 18 }}>
+        <p className="text-center text-muted-foreground text-sm mt-2">
           {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-          <button onClick={switchMode} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+          <button onClick={switchMode} className="text-primary font-semibold bg-transparent border-none cursor-pointer text-sm">
             {mode === "login" ? "Register free" : "Sign in"}
           </button>
         </p>
-        {/* {mode === "login" && (
-          <p style={{ textAlign: "center", color: G.dim, fontSize: 11, marginTop: 6 }}>
-            Forgot your password? <button onClick={() => {}} style={{ background: "none", border: "none", color: G.gold, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>Reset it</button>
-          </p>
-        )} */}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

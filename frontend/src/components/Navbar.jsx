@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { G } from "../lib/tokens.js";
-import { Btn } from "./ui.jsx";
+import { Button } from "./ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
+import { cn } from "../lib/utils.js";
 
 export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
   const [scrolled, setScrolled] = useState(false);
@@ -14,7 +15,6 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  // Close menu on page change
   useEffect(() => { setMenuOpen(false); }, [page]);
 
   const navLinks = [
@@ -25,75 +25,88 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
     ["contact", "Support"],
   ];
 
-  const linkStyle = (p) => ({
-    background: "none", border: "none",
-    borderBottom: page === p ? `2px solid ${G.gold}` : "2px solid transparent",
-    color: page === p ? G.gold : G.muted,
-    cursor: "pointer", fontSize: 13, fontWeight: page === p ? 700 : 500,
-    letterSpacing: 0.5, transition: "color 0.25s", padding: "4px 0",
-    fontFamily: G.sans,
-  });
-
   return (
     <>
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, height: 68, zIndex: 800,
-        background: scrolled ? "rgba(19,19,19,0.94)" : "rgba(19,19,19,0.6)",
-        backdropFilter: "blur(20px) saturate(1.3)",
-        borderBottom: `1px solid ${scrolled ? G.border : "transparent"}`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: isMobile ? "0 20px" : "0 48px",
-        transition: "all 0.4s cubic-bezier(0.4,0,0.2,1)",
-      }}>
+      <nav
+        className={cn(
+          "fixed top-0 left-0 right-0 h-[68px] z-[800] flex items-center justify-between transition-all duration-300",
+          scrolled ? "bg-background/94 border-b border-border backdrop-blur-xl" : "bg-background/60 border-b border-transparent backdrop-blur-xl"
+        )}
+        style={{ padding: isMobile ? "0 20px" : "0 48px" }}
+      >
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flexShrink: 0 }}
-          onClick={() => setPage("home")}>
-          <span style={{ color: G.gold, fontFamily: G.serif, fontSize: 22, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase" }}>
+        <div
+          className="flex items-center gap-2 cursor-pointer shrink-0"
+          onClick={() => setPage("home")}
+        >
+          <span className="text-primary font-serif text-[22px] font-extrabold tracking-[3px] uppercase">
             StraBook
           </span>
         </div>
 
-        {/* Desktop Nav links */}
+        {/* Desktop Nav */}
         {!isMobile && (
-          <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
+          <div className="flex items-center gap-9">
             {navLinks.map(([p, label]) => (
-              <button key={p} onClick={() => setPage(p)} style={linkStyle(p)}>{label}</button>
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={cn(
+                  "bg-transparent border-0 border-b-2 cursor-pointer text-[13px] font-sans tracking-wide transition-colors duration-200 py-1",
+                  page === p
+                    ? "border-primary text-primary font-bold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {label}
+              </button>
             ))}
             {user && (
-              <button onClick={() => setPage("dashboard")} style={linkStyle("dashboard")}>Bookings</button>
+              <button
+                onClick={() => setPage("dashboard")}
+                className={cn(
+                  "bg-transparent border-0 border-b-2 cursor-pointer text-[13px] font-sans tracking-wide transition-colors duration-200 py-1",
+                  page === "dashboard"
+                    ? "border-primary text-primary font-bold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Bookings
+              </button>
             )}
             {user?.role === "admin" && (
-              <button onClick={() => setPage("admin")} style={{
-                background: "none", border: "none",
-                color: page === "admin" ? G.red : G.red + "99",
-                cursor: "pointer", fontSize: 13, fontWeight: 600,
-                padding: "4px 0", fontFamily: G.sans,
-              }}>Admin</button>
+              <button
+                onClick={() => setPage("admin")}
+                className={cn(
+                  "bg-transparent border-0 cursor-pointer text-[13px] font-semibold font-sans py-1 transition-colors",
+                  page === "admin" ? "text-destructive" : "text-destructive/60 hover:text-destructive"
+                )}
+              >
+                Admin
+              </button>
             )}
           </div>
         )}
 
         {/* Desktop Auth */}
         {!isMobile && (
-          <div style={{ display: "flex", gap: 14, alignItems: "center", flexShrink: 0 }}>
+          <div className="flex gap-3.5 items-center shrink-0">
             {user ? (
               <>
-                <span style={{ color: G.muted, fontSize: 13 }}>
-                  Hi, <strong style={{ color: G.cream }}>{user.name.split(" ")[0]}</strong>
+                <span className="text-muted-foreground text-[13px]">
+                  Hi, <strong className="text-foreground">{user.name.split(" ")[0]}</strong>
                 </span>
-                <Btn onClick={onLogout} variant="ghost" style={{ padding: "8px 20px", fontSize: 11 }}>Sign Out</Btn>
+                <Button onClick={onLogout} variant="ghost" size="sm">Sign Out</Button>
               </>
             ) : (
               <>
-                <button onClick={() => onAuth("login")} style={{
-                  background: "none", border: "none", color: G.muted, cursor: "pointer",
-                  fontSize: 13, fontWeight: 500, fontFamily: G.sans, transition: "color 0.2s",
-                }}
-                  onMouseEnter={e => e.target.style.color = G.text}
-                  onMouseLeave={e => e.target.style.color = G.muted}>
+                <button
+                  onClick={() => onAuth("login")}
+                  className="bg-transparent border-0 text-muted-foreground cursor-pointer text-[13px] font-medium font-sans hover:text-foreground transition-colors"
+                >
                   Sign In
                 </button>
-                <Btn onClick={() => onAuth("register")} style={{ padding: "9px 22px", fontSize: 12 }}>Join VIP</Btn>
+                <Button onClick={() => onAuth("register")} size="sm">Join VIP</Button>
               </>
             )}
           </div>
@@ -101,62 +114,63 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
 
         {/* Mobile hamburger */}
         {isMobile && (
-          <button onClick={() => setMenuOpen(o => !o)} style={{
-            background: "none", border: `1px solid ${G.border}`, borderRadius: 8,
-            padding: "6px 10px", cursor: "pointer", color: G.muted, fontSize: 18,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            className="bg-transparent border border-border rounded-lg px-2.5 py-1.5 cursor-pointer text-muted-foreground text-lg flex items-center justify-center"
+          >
             {menuOpen ? "✕" : "☰"}
           </button>
         )}
       </nav>
 
-      {/* Mobile dropdown menu */}
+      {/* Mobile dropdown */}
       {isMobile && menuOpen && (
-        <div style={{
-          position: "fixed", top: 68, left: 0, right: 0, zIndex: 799,
-          background: "rgba(19,19,19,0.97)", backdropFilter: "blur(20px)",
-          borderBottom: `1px solid ${G.border}`,
-          padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: 4,
-        }}>
+        <div
+          className="fixed top-[68px] left-0 right-0 z-[799] bg-background/97 backdrop-blur-xl border-b border-border px-6 pt-5 pb-7 flex flex-col gap-1"
+        >
           {navLinks.map(([p, label]) => (
-            <button key={p} onClick={() => setPage(p)} style={{
-              background: page === p ? `${G.gold}12` : "none",
-              border: "none", borderRadius: 8,
-              color: page === p ? G.gold : G.muted,
-              cursor: "pointer", fontSize: 15, fontWeight: page === p ? 700 : 500,
-              padding: "12px 16px", fontFamily: G.sans, textAlign: "left",
-              letterSpacing: 0.3,
-            }}>{label}</button>
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={cn(
+                "border-0 rounded-lg cursor-pointer text-[15px] font-sans px-4 py-3 text-left transition-all",
+                page === p ? "bg-primary/10 text-primary font-bold" : "bg-transparent text-muted-foreground"
+              )}
+            >
+              {label}
+            </button>
           ))}
           {user && (
-            <button onClick={() => setPage("dashboard")} style={{
-              background: page === "dashboard" ? `${G.gold}12` : "none",
-              border: "none", borderRadius: 8,
-              color: page === "dashboard" ? G.gold : G.muted,
-              cursor: "pointer", fontSize: 15, fontWeight: page === "dashboard" ? 700 : 500,
-              padding: "12px 16px", fontFamily: G.sans, textAlign: "left",
-            }}>Bookings</button>
+            <button
+              onClick={() => setPage("dashboard")}
+              className={cn(
+                "border-0 rounded-lg cursor-pointer text-[15px] font-sans px-4 py-3 text-left",
+                page === "dashboard" ? "bg-primary/10 text-primary font-bold" : "bg-transparent text-muted-foreground"
+              )}
+            >
+              Bookings
+            </button>
           )}
           {user?.role === "admin" && (
-            <button onClick={() => setPage("admin")} style={{
-              background: "none", border: "none",
-              color: G.red, cursor: "pointer", fontSize: 15, fontWeight: 600,
-              padding: "12px 16px", fontFamily: G.sans, textAlign: "left",
-            }}>Admin</button>
+            <button
+              onClick={() => setPage("admin")}
+              className="bg-transparent border-0 text-destructive cursor-pointer text-[15px] font-semibold font-sans px-4 py-3 text-left"
+            >
+              Admin
+            </button>
           )}
-          <div style={{ borderTop: `1px solid ${G.border}`, marginTop: 8, paddingTop: 16, display: "flex", gap: 12, alignItems: "center" }}>
+          <div className="border-t border-border mt-2 pt-4 flex gap-3 items-center">
             {user ? (
               <>
-                <span style={{ color: G.muted, fontSize: 13, flex: 1 }}>
-                  Hi, <strong style={{ color: G.cream }}>{user.name.split(" ")[0]}</strong>
+                <span className="text-muted-foreground text-[13px] flex-1">
+                  Hi, <strong className="text-foreground">{user.name.split(" ")[0]}</strong>
                 </span>
-                <Btn onClick={onLogout} variant="ghost" style={{ padding: "9px 20px", fontSize: 12 }}>Sign Out</Btn>
+                <Button onClick={onLogout} variant="ghost" size="sm">Sign Out</Button>
               </>
             ) : (
               <>
-                <Btn onClick={() => onAuth("login")} variant="ghost" style={{ flex: 1, padding: "11px 0", fontSize: 13 }}>Sign In</Btn>
-                <Btn onClick={() => onAuth("register")} style={{ flex: 1, padding: "11px 0", fontSize: 13 }}>Join VIP</Btn>
+                <Button onClick={() => onAuth("login")} variant="ghost" className="flex-1">Sign In</Button>
+                <Button onClick={() => onAuth("register")} className="flex-1">Join VIP</Button>
               </>
             )}
           </div>

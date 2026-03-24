@@ -1,76 +1,82 @@
 import { useState } from "react";
 import { G, avatar } from "../lib/tokens.js";
-import { Stars, Badge, Btn } from "./ui.jsx";
+import { Stars } from "./ui.jsx";
+import { Badge } from "./ui/badge.jsx";
+import { Button } from "./ui/button.jsx";
+import { cn } from "../lib/utils.js";
 
 export default function CelebCard({ c, onView, onBook, onFav, isFav }) {
   const [hover, setHover] = useState(false);
   return (
-    <div className="celeb-card"
-      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      style={{
-        background: G.card, borderRadius: 12, overflow: "hidden",
-        border: `1px solid ${hover ? G.gold + "40" : G.border}`,
-        transition: "all 0.45s cubic-bezier(0.4,0,0.2,1)",
-        transform: hover ? "translateY(-5px)" : "none",
-        boxShadow: hover ? `0 20px 48px #00000060, 0 0 0 1px ${G.gold}20` : "0 2px 8px #00000040",
-        cursor: "pointer",
-      }}>
+    <div
+      className={cn(
+        "celeb-card rounded-xl overflow-hidden border cursor-pointer transition-all duration-500",
+        hover
+          ? "border-primary/40 -translate-y-1 shadow-[0_20px_48px_rgba(0,0,0,0.4)]"
+          : "border-border shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
+      )}
+      style={{ background: G.card }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       {/* Image */}
-      <div style={{ position: "relative", height: 300, overflow: "hidden" }} onClick={() => onView(c)}>
-        <img className="celeb-img"
+      <div className="relative h-72 overflow-hidden" onClick={() => onView(c)}>
+        <img
+          className="celeb-img w-full h-full object-cover transition-transform duration-500"
           src={c.img || avatar(c.name)} alt={c.name}
-          style={{ width: "100%", height: "100%", objectFit: "cover", transform: hover ? "scale(1.06)" : "scale(1)" }}
-          onError={e => { e.target.src = avatar(c.name); }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,#131313 0%,#13131350 45%,transparent 100%)" }} />
-        <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 6 }}>
-          {c.feat && <Badge>Featured</Badge>}
-          <Badge color={c.avail ? G.green : G.red}>{c.avail ? "Available" : "Booked"}</Badge>
+          style={{ transform: hover ? "scale(1.06)" : "scale(1)" }}
+          onError={e => { e.target.src = avatar(c.name); }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#13131350] to-transparent" />
+
+        {/* Badges */}
+        <div className="absolute top-3.5 left-3.5 flex gap-1.5">
+          {c.feat && <Badge className="text-[10px]">Featured</Badge>}
+          <Badge variant={c.avail ? "success" : "destructive"} className="text-[10px]">
+            {c.avail ? "Available" : "Booked"}
+          </Badge>
         </div>
-        <button onClick={e => { e.stopPropagation(); onFav(c.id); }} style={{
-          position: "absolute", top: 14, right: 14,
-          background: "#13131380", backdropFilter: "blur(8px)",
-          border: `1px solid ${G.border}`, borderRadius: "50%",
-          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", fontSize: 14, transition: "all 0.3s",
-        }}>
+
+        {/* Fav button */}
+        <button
+          onClick={e => { e.stopPropagation(); onFav(c.id); }}
+          className="absolute top-3.5 right-3.5 bg-[#13131380] backdrop-blur-sm border border-border rounded-full w-9 h-9 flex items-center justify-center cursor-pointer text-sm transition-all hover:bg-[#131313]"
+        >
           {isFav ? "❤️" : "🤍"}
         </button>
-        <div style={{ position: "absolute", bottom: 16, left: 16, right: 16 }}>
-          <h3 style={{ margin: "0 0 3px", fontSize: 20, fontWeight: 700, color: "#fff", fontFamily: G.serif, lineHeight: 1.2 }}>
-            {c.name}
-          </h3>
-          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", fontWeight: 500 }}>
+
+        {/* Name overlay */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="m-0 text-xl font-bold text-white font-serif leading-tight mb-1">{c.name}</h3>
+          <div className="text-white/60 text-[11px] tracking-wide uppercase font-medium">
             {c.flag} {c.country}
           </div>
         </div>
       </div>
 
       {/* Info */}
-      <div style={{ padding: "16px 18px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+      <div className="p-4 pb-5">
+        <div className="flex justify-between items-center mb-2">
           <Stars r={c.rating} />
-          <span style={{ color: G.gold, fontWeight: 700, fontSize: 15, fontFamily: G.serif }}>
+          <span className="text-primary font-bold text-sm font-serif">
             From ${c.price.toLocaleString()}
           </span>
         </div>
-        <div style={{ color: G.dim, fontSize: 11, marginBottom: 14, letterSpacing: 0.5 }}>
+        <div className="text-muted-foreground text-[11px] mb-3.5 tracking-wide">
           {c.reviews} verified reviews
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        <div className="flex gap-1.5 flex-wrap mb-4">
           {c.tags.slice(0, 2).map(t => (
-            <span key={t} style={{
-              background: G.s2, color: G.muted, borderRadius: 50,
-              padding: "3px 12px", fontSize: 10, letterSpacing: 0.8, fontWeight: 600, textTransform: "uppercase",
-            }}>{t}</span>
+            <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Btn onClick={() => onBook(c, "booking")} style={{ flex: 1, padding: "10px 0", fontSize: 11 }} disabled={!c.avail}>
+        <div className="flex gap-2">
+          <Button onClick={() => onBook(c, "booking")} size="sm" className="flex-1 text-[11px]" disabled={!c.avail}>
             Book Now
-          </Btn>
-          <Btn onClick={() => onView(c)} variant="ghost" style={{ padding: "10px 16px", fontSize: 11 }}>
+          </Button>
+          <Button onClick={() => onView(c)} variant="ghost" size="sm" className="text-[11px]">
             View
-          </Btn>
+          </Button>
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { G } from "./lib/tokens.js";
 import { api } from "./api.js";
 import { useIsMobile } from "./lib/useIsMobile.js";
+import { Button } from "./components/ui/button.jsx";
+import { Card } from "./components/ui/card.jsx";
 
 // Components
 import Navbar from "./components/Navbar.jsx";
@@ -54,76 +56,76 @@ function GlobalStyles() {
   return null;
 }
 
-// ── ABOUT PAGE (inline, simple) ────────────────────────────
+// ── ABOUT PAGE ────────────────────────────────────────────────
 function AboutPage({ setPage }) {
   const isMobile = useIsMobile();
   return (
-    <div style={{ paddingTop: 72, minHeight: "100vh" }}>
-      <section style={{ padding: isMobile ? "48px 20px" : "80px 40px", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 14 }}>ABOUT STRABOOK</div>
-        <h1 style={{ fontSize: "clamp(28px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 28px", fontWeight: 700, lineHeight: 1.1 }}>
+    <div className="pt-[72px] min-h-screen">
+      <section className="max-w-[900px] mx-auto" style={{ padding: isMobile ? "48px 20px" : "80px 40px" }}>
+        <div className="text-primary text-[11px] tracking-[3px] font-semibold mb-3.5 uppercase">About StraBook</div>
+        <h1 className="font-serif text-foreground font-bold leading-tight mb-7" style={{ fontSize: "clamp(28px,5vw,56px)" }}>
           The World's Premier<br />Celebrity Booking Platform
         </h1>
-        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: 28 }}>
+        <p className="text-muted-foreground leading-loose mb-7" style={{ fontSize: isMobile ? 14 : 16 }}>
           StraBook connects brands, event organizers, and individuals with the world's most sought-after celebrities. With over a decade of experience and a roster of 500+ verified A-list talent, we've facilitated more than 100,000 successful bookings worldwide.
         </p>
-        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: 40 }}>
+        <p className="text-muted-foreground leading-loose mb-10" style={{ fontSize: isMobile ? 14 : 16 }}>
           Whether you're planning a corporate gala, launching a product, organizing a charity event, or creating an unforgettable personal experience — our dedicated team ensures every interaction is seamless, professional, and exceeds expectations.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 40 }}>
+        <div className={`grid gap-4 mb-10 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
           {[
             ["✨", "Verified Talent", "Every celebrity is personally vetted. No fake profiles, no intermediaries — direct access to authentic star power."],
             ["🛡️", "Secure & Confidential", "Bank-level encryption protects every transaction. All bookings handled with strict confidentiality."],
             ["⚡", "AI-Powered Matching", "Our intelligent engine analyzes your event type, audience, and budget to match the perfect celebrity — in seconds."],
             ["🌐", "Global Reach", "From Hollywood to Dubai, London to Tokyo — our network spans every continent."],
           ].map(([icon, title, desc]) => (
-            <div key={title} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: isMobile ? "20px 18px" : "28px 24px" }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
-              <div style={{ color: G.cream, fontWeight: 600, fontSize: 15, marginBottom: 8, fontFamily: G.serif }}>{title}</div>
-              <div style={{ color: G.dim, fontSize: 13, lineHeight: 1.7 }}>{desc}</div>
-            </div>
+            <Card key={title} className={isMobile ? "p-5" : "p-7"}>
+              <div className="text-3xl mb-3">{icon}</div>
+              <div className="text-foreground font-semibold text-[15px] mb-2 font-serif">{title}</div>
+              <div className="text-muted-foreground text-sm leading-relaxed">{desc}</div>
+            </Card>
           ))}
         </div>
-        <div style={{ background: `linear-gradient(135deg, ${G.gold}15, ${G.gold}08)`, border: `1px solid ${G.gold}25`, borderRadius: 16, padding: isMobile ? "28px 20px" : "36px 32px", textAlign: "center" }}>
-          <h3 style={{ color: G.cream, fontFamily: G.serif, fontSize: isMobile ? 22 : 28, margin: "0 0 12px" }}>Ready to Book Your Star?</h3>
-          <p style={{ color: G.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>Join 100,000+ satisfied clients. Your unforgettable celebrity experience starts here.</p>
-          <button onClick={() => setPage("celebrities")} style={{ background: `linear-gradient(45deg, ${G.gold}, ${G.goldD})`, color: "#261900", border: "none", borderRadius: 50, padding: "14px 36px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: G.sans, letterSpacing: 0.8 }}>
-            Browse Celebrities Now
-          </button>
+        <div className="border border-primary/25 rounded-2xl text-center" style={{ background: `linear-gradient(135deg, ${G.gold}15, ${G.gold}08)`, padding: isMobile ? "28px 20px" : "36px 32px" }}>
+          <h3 className="text-foreground font-serif mb-3" style={{ fontSize: isMobile ? 22 : 28 }}>Ready to Book Your Star?</h3>
+          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">Join 100,000+ satisfied clients. Your unforgettable celebrity experience starts here.</p>
+          <Button onClick={() => setPage("celebrities")}>Browse Celebrities Now</Button>
         </div>
       </section>
     </div>
   );
 }
 
-// ── CONTACT / SUPPORT PAGE ───────────────────────────────────
+// ── CONTACT / SUPPORT PAGE ────────────────────────────────────
 function ContactPage({ setPage }) {
   const isMobile = useIsMobile();
   return (
-    <div style={{ paddingTop: 72, minHeight: "100vh" }}>
-      <section style={{ padding: isMobile ? "48px 20px" : "80px 40px", maxWidth: 860, margin: "0 auto" }}>
-        <div style={{ color: G.gold, fontSize: 11, letterSpacing: 3, fontWeight: 600, marginBottom: 14 }}>SUPPORT</div>
-        <h1 style={{ fontSize: "clamp(28px,5vw,56px)", fontFamily: G.serif, color: G.cream, margin: "0 0 20px", fontWeight: 700, lineHeight: 1.1 }}>
+    <div className="pt-[72px] min-h-screen">
+      <section className="max-w-[860px] mx-auto" style={{ padding: isMobile ? "48px 20px" : "80px 40px" }}>
+        <div className="text-primary text-[11px] tracking-[3px] font-semibold mb-3.5 uppercase">Support</div>
+        <h1 className="font-serif text-foreground font-bold leading-tight mb-5" style={{ fontSize: "clamp(28px,5vw,56px)" }}>
           We're Here to Help
         </h1>
-        <p style={{ color: G.muted, fontSize: isMobile ? 14 : 16, lineHeight: 2, marginBottom: isMobile ? 32 : 48, maxWidth: 560 }}>
+        <p className="text-muted-foreground leading-loose max-w-[560px]" style={{ fontSize: isMobile ? 14 : 16, marginBottom: isMobile ? 32 : 48 }}>
           Our concierge team is available 24/7. Use the live chat widget in the bottom-right corner to connect with a real agent instantly, or join the waitlist for dedicated one-on-one booking assistance.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 40 }}>
+        <div className={`grid gap-4 mb-10 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
           {[
             ["💬", "Live Chat", "Click the chat icon in the bottom-right corner to connect with a live support agent immediately.", null],
             ["📋", "Concierge Waitlist", "Join our waitlist for a dedicated booking concierge to personally assist you.", "waitlist"],
             ["✉️", "Email Support", "Reach our team at support@strabook.io for detailed inquiries.", null],
             ["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
           ].map(([icon, title, desc, link]) => (
-            <div key={title} onClick={link ? () => setPage(link) : undefined} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 14, padding: isMobile ? "20px 18px" : "28px 24px", cursor: link ? "pointer" : "default", transition: "all 0.3s" }}
-              onMouseEnter={e => { if (link) { e.currentTarget.style.borderColor = G.gold + "50"; e.currentTarget.style.transform = "translateY(-3px)"; }}}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = G.border; e.currentTarget.style.transform = "none"; }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{icon}</div>
-              <div style={{ color: G.cream, fontWeight: 600, fontSize: 15, marginBottom: 8, fontFamily: G.serif }}>{title}</div>
-              <div style={{ color: G.dim, fontSize: 13, lineHeight: 1.7 }}>{desc}</div>
-              {link && <div style={{ color: G.gold, fontSize: 12, marginTop: 12, fontWeight: 700 }}>Get Started →</div>}
-            </div>
+            <Card
+              key={title}
+              onClick={link ? () => setPage(link) : undefined}
+              className={`${isMobile ? "p-5" : "p-7"} ${link ? "cursor-pointer hover:border-primary/50 hover:-translate-y-1" : ""} transition-all duration-300`}
+            >
+              <div className="text-3xl mb-3">{icon}</div>
+              <div className="text-foreground font-semibold text-[15px] mb-2 font-serif">{title}</div>
+              <div className="text-muted-foreground text-sm leading-relaxed">{desc}</div>
+              {link && <div className="text-primary text-xs mt-3 font-bold">Get Started →</div>}
+            </Card>
           ))}
         </div>
       </section>
@@ -233,10 +235,10 @@ export default function App() {
       {page === "terms"       && <TermsPage setPage={setPage} />}
       {page === "privacy"     && <PrivacyPage setPage={setPage} />}
 
-      {/* Modals */}
-      {authModal && <AuthModal mode={authModal} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />}
-      {celebModal && <CelebModal c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={favorites.includes(celebModal.id)} onFav={handleFav} />}
-      {bookingModal && <BookingModal c={bookingModal.celeb} type={bookingModal.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} />}
+      {/* Modals — always rendered, visibility controlled by open prop */}
+      <AuthModal open={!!authModal} mode={authModal || "login"} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />
+      <CelebModal open={!!celebModal} c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={celebModal ? favorites.includes(celebModal.id) : false} onFav={handleFav} />
+      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} />
 
       {/* Live support chat widget */}
       <SupportChat user={user} setPage={setPage} />

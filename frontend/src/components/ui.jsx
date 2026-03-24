@@ -1,4 +1,30 @@
+// Bridge: re-exports shadcn/ui components with the existing API so all pages keep working
+import { Button as ShadBtn } from "./ui/button.jsx";
+import { Input as ShadInput } from "./ui/input.jsx";
+import { Textarea } from "./ui/textarea.jsx";
+import { Label } from "./ui/label.jsx";
+import { Badge as ShadBadge } from "./ui/badge.jsx";
 import { G } from "../lib/tokens.js";
+import { cn } from "../lib/utils.js";
+
+// Map old hex color props to shadcn badge variants
+function colorToVariant(color) {
+  if (!color) return "default";
+  if (color === G.green  || color?.includes("6DBF7B")) return "success";
+  if (color === G.red    || color?.includes("D4564E")) return "destructive";
+  if (color === G.amber  || color?.includes("D4A84B")) return "amber";
+  return "default";
+}
+
+// Map old Btn variant names to shadcn Button variants
+const VARIANT_MAP = {
+  gold:    "default",
+  outline: "outline",
+  ghost:   "ghost",
+  danger:  "danger",
+  green:   "success",
+  dark:    "dark",
+};
 
 export function Stars({ r, size = 14 }) {
   return (
@@ -9,62 +35,36 @@ export function Stars({ r, size = 14 }) {
   );
 }
 
-export function Badge({ children, color = G.gold, style = {} }) {
+export function Badge({ children, color, style = {}, className }) {
   return (
-    <span style={{
-      background: color + "14", color, border: `1px solid ${color}30`,
-      borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 600,
-      letterSpacing: 1.5, textTransform: "uppercase", ...style
-    }}>
+    <ShadBadge variant={colorToVariant(color)} className={className} style={style}>
       {children}
-    </span>
+    </ShadBadge>
   );
 }
 
-export function Btn({ children, onClick, variant = "gold", style = {}, disabled = false, full = false }) {
-  const base = {
-    padding: "12px 28px", borderRadius: 50, fontSize: 13,
-    cursor: disabled ? "not-allowed" : "pointer",
-    transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
-    letterSpacing: 0.8, fontFamily: G.sans, fontWeight: 700,
-    outline: "none", display: "inline-flex", alignItems: "center",
-    justifyContent: "center", gap: 8, whiteSpace: "nowrap", textTransform: "uppercase",
-  };
-  const variants = {
-    gold:    { background: `linear-gradient(45deg,${G.gold},${G.goldD})`, color: "#261900", border: "none", boxShadow: `0 2px 20px ${G.gold}30` },
-    outline: { background: "transparent", color: G.gold, border: `1.5px solid ${G.gold}50` },
-    ghost:   { background: G.warmGray + "60", color: G.text, border: `1px solid ${G.border}` },
-    danger:  { background: G.red + "18", color: G.red, border: `1px solid ${G.red}30` },
-    green:   { background: G.green + "18", color: G.green, border: `1px solid ${G.green}30` },
-    dark:    { background: G.s2, color: G.text, border: `1px solid ${G.border}` },
-  };
+export function Btn({ children, onClick, variant = "gold", style = {}, disabled = false, full = false, className }) {
   return (
-    <button onClick={onClick} disabled={disabled}
-      style={{ ...base, ...variants[variant], ...(full ? { width: "100%" } : {}), ...style, opacity: disabled ? 0.4 : 1 }}>
+    <ShadBtn
+      onClick={onClick}
+      variant={VARIANT_MAP[variant] || "default"}
+      disabled={disabled}
+      className={cn(full ? "w-full" : "", className)}
+      style={style}
+    >
       {children}
-    </button>
+    </ShadBtn>
   );
 }
 
-export function Input({ label, value, onChange, type = "text", placeholder = "", style = {}, rows }) {
-  const inputStyle = {
-    width: "100%", background: G.s2, border: `1px solid ${G.border}`,
-    borderRadius: 8, padding: "11px 14px", color: G.text, fontSize: 14,
-    outline: "none", boxSizing: "border-box", fontFamily: G.sans, transition: "border 0.2s",
-  };
+export function Input({ label, value, onChange, type = "text", placeholder = "", style = {}, rows, className }) {
   return (
-    <div style={{ marginBottom: 14, ...style }}>
-      {label && <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>{label}</label>}
+    <div className="mb-3.5" style={typeof style === "object" && !style.marginBottom ? style : {}}>
+      {label && <Label className="mb-1.5 block">{label}</Label>}
       {rows ? (
-        <textarea rows={rows} value={value} onChange={onChange} placeholder={placeholder}
-          style={{ ...inputStyle, resize: "vertical" }}
-          onFocus={e => e.target.style.borderColor = G.gold + "60"}
-          onBlur={e => e.target.style.borderColor = G.border} />
+        <Textarea rows={rows} value={value} onChange={onChange} placeholder={placeholder} className={className} />
       ) : (
-        <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-          style={inputStyle}
-          onFocus={e => e.target.style.borderColor = G.gold + "60"}
-          onBlur={e => e.target.style.borderColor = G.border} />
+        <ShadInput type={type} value={value} onChange={onChange} placeholder={placeholder} className={className} />
       )}
     </div>
   );
