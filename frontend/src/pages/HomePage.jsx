@@ -74,7 +74,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
 
           {/* Headline */}
           <h1
-            className="font-serif text-foreground leading-none mb-7 font-extrabold tracking-[-2px]"
+            className="font-serif text-white leading-none mb-7 font-extrabold tracking-[-2px]"
             style={{ fontSize: "clamp(42px,8vw,96px)" }}
           >
             The Stage is<br />
@@ -83,18 +83,18 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
 
           {/* Subheading */}
           <p
-            className="text-muted-foreground leading-[1.8] max-w-[560px] mb-11 font-normal"
+            className="text-white/70 leading-[1.8] max-w-[560px] mb-11 font-normal"
             style={{ fontSize: "clamp(14px,1.8vw,19px)" }}
           >
             Secure exclusive bookings with the world's most influential talent. An elite gateway to iconic performances and private appearances.
           </p>
 
           {/* Search bar pill */}
-          <div className="flex items-center gap-3 max-w-[580px] mb-7 bg-[rgba(42,42,42,0.7)] backdrop-blur-md border border-border rounded-full pl-6 pr-1.5 py-1.5">
+          <div className="flex items-center gap-3 max-w-[580px] mb-7 bg-black/50 backdrop-blur-md border border-white/20 rounded-full pl-6 pr-1.5 py-1.5">
             <span className="text-primary text-base">⌕</span>
             <input
               placeholder="Search celebrity, genre, or event type..."
-              className="flex-1 bg-transparent border-none text-foreground text-sm outline-none py-2.5 min-w-0 placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent border-none text-white text-sm outline-none py-2.5 min-w-0 placeholder:text-white/45"
               onFocus={() => setPage("celebrities")}
             />
             <Button onClick={() => setPage("celebrities")} size="sm" className="shrink-0 px-6 py-[11px] text-xs">
@@ -116,12 +116,12 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
 
           {/* Category pills */}
           <div className="flex gap-2.5 flex-wrap items-center">
-            <span className="text-muted-foreground/60 text-[11px] tracking-[2px] uppercase font-bold">Explore:</span>
+            <span className="text-white/50 text-[11px] tracking-[2px] uppercase font-bold">Explore:</span>
             {CATS.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setPage("celebrities")}
-                className="bg-[rgba(53,53,52,0.5)] border border-border rounded-full px-[18px] py-[7px] text-muted-foreground text-xs font-medium transition-all duration-200 cursor-pointer hover:border-primary/50 hover:text-primary"
+                className="bg-black/40 border border-white/20 rounded-full px-[18px] py-[7px] text-white/70 text-xs font-medium transition-all duration-200 cursor-pointer hover:border-primary/50 hover:text-primary"
               >
                 {cat.icon} {cat.name}
               </button>
@@ -132,7 +132,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
         {/* Scroll indicator */}
         {!isMobile && (
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-            <span className="text-muted-foreground text-[10px] tracking-[3px] uppercase">Scroll</span>
+            <span className="text-white/50 text-[10px] tracking-[3px] uppercase">Scroll</span>
             <div
               className="w-px h-10"
               style={{ background: "linear-gradient(to bottom, var(--primary), transparent)" }}
@@ -147,7 +147,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
           "border-t border-primary/[0.15] border-b border-border",
           isMobile ? "px-5 py-10" : "px-10 py-14"
         )}
-        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%)" }}
+        style={{ background: "linear-gradient(180deg, hsl(var(--secondary)/0.5) 0%, transparent 100%)" }}
       >
         <div className={cn(
           "max-w-[1000px] mx-auto grid text-center",
@@ -165,7 +165,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
               {!isMobile && i < 3 && (
                 <div
                   className="absolute right-0 top-[10%] h-[80%] w-px"
-                  style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent)" }}
+                  style={{ background: "linear-gradient(to bottom, transparent, hsl(var(--border)), transparent)" }}
                 />
               )}
             </div>
@@ -427,7 +427,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
             {SERVICES.map(s => (
               <div
                 key={s.title}
-                className="rounded-2xl border border-white/[0.08] bg-card shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-7 transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:bg-white/[0.05]"
+                className="rounded-2xl border border-border bg-card shadow-[0_4px_20px_rgba(0,0,0,0.2)] p-7 transition-all duration-300 hover:border-primary/40 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:bg-secondary/30"
               >
                 <div className="text-[32px] mb-4">{s.icon}</div>
                 <h3 className="text-foreground m-0 mb-2.5 text-lg font-serif font-bold">{s.title}</h3>
@@ -496,7 +496,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
           >
             What Our Clients Say
           </h2>
-          <div className="rounded-2xl border border-white/[0.08] bg-card relative text-left px-7 py-7 md:px-[52px] md:py-11">
+          <div className="rounded-2xl border border-border bg-card relative text-left px-7 py-7 md:px-[52px] md:py-11">
             <div className="font-serif text-[80px] text-primary opacity-15 absolute top-2.5 left-7 leading-none select-none pointer-events-none">"</div>
             <div className="flex gap-0.5 text-primary text-sm mb-[22px]">
               {"★".repeat(TESTIMONIALS[testimonialIdx].stars)}
@@ -641,7 +641,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
       {/* ── FOOTER ── */}
       <footer
         className={cn(
-          "bg-[#0e0e0e] border-t border-border",
+          "bg-card border-t border-border",
           isMobile ? "px-5 pt-12 pb-7" : "px-[60px] pt-[72px] pb-8"
         )}
       >

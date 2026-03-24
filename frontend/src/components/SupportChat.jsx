@@ -14,17 +14,17 @@ function FilePreviewModal({ file, onClose }) {
   const isPDF = file.name?.toLowerCase().endsWith(".pdf") || (file.data || "").startsWith("data:application/pdf");
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000000e0", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: G.card, borderRadius: 16, overflow: "hidden", maxWidth: "92vw", maxHeight: "90vh", display: "flex", flexDirection: "column", minWidth: 320 }}>
-        <div style={{ padding: "12px 16px", background: G.s1, borderBottom: `1px solid ${G.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <span style={{ color: G.text, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "hsl(var(--card))", borderRadius: 16, overflow: "hidden", maxWidth: "92vw", maxHeight: "90vh", display: "flex", flexDirection: "column", minWidth: 320 }}>
+        <div style={{ padding: "12px 16px", background: "hsl(var(--secondary))", borderBottom: "1px solid hsl(var(--border))", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <span style={{ color: "hsl(var(--foreground))", fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {file._ft === "img" ? "🖼" : "📄"} {file.name}
           </span>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
-            <a href={file.data} download={file.name} style={{ color: G.gold, fontSize: 12, textDecoration: "none", fontWeight: 700, background: `${G.gold}18`, border: `1px solid ${G.gold}40`, borderRadius: 50, padding: "4px 12px" }}>⬇ Download</a>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: G.muted, cursor: "pointer", fontSize: 20, lineHeight: 1 }}>✕</button>
+            <a href={file.data} download={file.name} style={{ color: "hsl(var(--primary))", fontSize: 12, textDecoration: "none", fontWeight: 700, background: "hsl(var(--primary)/0.1)", border: "1px solid hsl(var(--primary)/0.3)", borderRadius: 50, padding: "4px 12px" }}>⬇ Download</a>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "hsl(var(--muted-foreground))", cursor: "pointer", fontSize: 20, lineHeight: 1 }}>✕</button>
           </div>
         </div>
-        <div style={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 260, background: G.bg }}>
+        <div style={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", minHeight: 260, background: "hsl(var(--background))" }}>
           {file._ft === "img" ? (
             <img src={file.data} alt={file.name} style={{ maxWidth: "88vw", maxHeight: "76vh", objectFit: "contain", borderRadius: 4 }} />
           ) : isPDF ? (
@@ -32,8 +32,8 @@ function FilePreviewModal({ file, onClose }) {
           ) : (
             <div style={{ padding: 48, textAlign: "center" }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>📄</div>
-              <div style={{ color: G.text, fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{file.name}</div>
-              <div style={{ color: G.muted, fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>Preview not available for this file type.<br />Click download to open it locally.</div>
+              <div style={{ color: "hsl(var(--foreground))", fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{file.name}</div>
+              <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>Preview not available for this file type.<br />Click download to open it locally.</div>
               <a href={file.data} download={file.name} style={{ background: `linear-gradient(45deg,${G.gold},${G.goldD})`, color: "#261900", padding: "11px 28px", borderRadius: 50, fontSize: 13, fontWeight: 800, textDecoration: "none", display: "inline-block" }}>⬇ Download File</a>
             </div>
           )}
@@ -69,15 +69,15 @@ function renderContent(text, onPreview) {
 // ── Rich card renderers ───────────────────────────────────────────────────────
 function CelebCard({ c, onNavigate }) {
   return (
-    <div style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
       {c.img ? (
         <img src={c.img} alt={c.name} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0, filter: "grayscale(40%)" }} onError={e => { e.target.style.display = "none"; }} />
       ) : (
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${G.gold}20`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🌟</div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: G.cream, fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.flag} {c.name}</div>
-        <div style={{ color: G.dim, fontSize: 10, textTransform: "capitalize" }}>{c.cat} · from ${c.price?.toLocaleString()}</div>
+        <div style={{ color: "hsl(var(--foreground))", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.flag} {c.name}</div>
+        <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 10, textTransform: "capitalize" }}>{c.cat} · from ${c.price?.toLocaleString()}</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
         <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 50, background: c.avail ? `${G.green}25` : `${G.red}20`, color: c.avail ? G.green : G.red, border: `1px solid ${c.avail ? G.green : G.red}40` }}>
@@ -97,24 +97,24 @@ function BookingCard({ b }) {
   const amount = b.amount ? `$${Number(b.amount).toLocaleString()}` : "";
   const date = b.date ? new Date(b.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
   return (
-    <div style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 10, padding: "10px 12px" }}>
+    <div style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))", borderRadius: 10, padding: "10px 12px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <div style={{ color: G.cream, fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>🌟 {celebName}</div>
+        <div style={{ color: "hsl(var(--foreground))", fontWeight: 700, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>🌟 {celebName}</div>
         <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 50, background: statusColor + "25", color: statusColor, border: `1px solid ${statusColor}40`, flexShrink: 0, marginLeft: 6, textTransform: "capitalize" }}>{b.status}</span>
       </div>
-      <div style={{ color: G.dim, fontSize: 10, textTransform: "capitalize" }}>{(b.type || b.bookingType || "").replace(/_/g, " ")} {amount && `· ${amount}`} {date && `· ${date}`}</div>
+      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 10, textTransform: "capitalize" }}>{(b.type || b.bookingType || "").replace(/_/g, " ")} {amount && `· ${amount}`} {date && `· ${date}`}</div>
     </div>
   );
 }
 
 function BlogCard({ blog, onNavigate }) {
   return (
-    <div onClick={onNavigate} style={{ background: G.bg, border: `1px solid ${G.border}`, borderRadius: 10, padding: "10px 12px", cursor: "pointer", transition: "border-color 0.2s" }}
+    <div onClick={onNavigate} style={{ background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))", borderRadius: 10, padding: "10px 12px", cursor: "pointer", transition: "border-color 0.2s" }}
       onMouseEnter={e => e.currentTarget.style.borderColor = G.gold + "50"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = G.border}>
-      <div style={{ color: G.gold, fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{blog.category}</div>
-      <div style={{ color: G.cream, fontWeight: 700, fontSize: 12, marginBottom: 4, lineHeight: 1.4 }}>{blog.title}</div>
-      <div style={{ color: G.dim, fontSize: 10, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{blog.excerpt}</div>
+      onMouseLeave={e => e.currentTarget.style.borderColor = "hsl(var(--border))"}>
+      <div style={{ color: "hsl(var(--primary))", fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{blog.category}</div>
+      <div style={{ color: "hsl(var(--foreground))", fontWeight: 700, fontSize: 12, marginBottom: 4, lineHeight: 1.4 }}>{blog.title}</div>
+      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 10, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{blog.excerpt}</div>
     </div>
   );
 }
@@ -716,7 +716,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
   // ── Bold markdown helper ──────────────────────────────────────────────────
   function renderBotText(text) {
     const parts = text.split(/\*\*(.+?)\*\*/g);
-    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} style={{ color: G.cream }}>{p}</strong> : p);
+    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} style={{ color: "hsl(var(--foreground))" }}>{p}</strong> : p);
   }
 
   return (
@@ -743,12 +743,11 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
 
       {/* ── Chat panel ── */}
       {open && (
-        <div className="fixed bottom-[80px] right-3 left-3 sm:left-auto sm:bottom-[100px] sm:right-7 sm:w-[380px] h-[75vh] sm:h-[580px] flex flex-col z-[900] rounded-[20px] overflow-hidden border border-white/10"
-          style={{ background: "#111111", boxShadow: "0 28px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,191,90,0.06)" }}>
+        <div className="fixed bottom-[80px] right-3 left-3 sm:left-auto sm:bottom-[100px] sm:right-7 sm:w-[380px] h-[75vh] sm:h-[580px] flex flex-col z-[900] rounded-[20px] overflow-hidden border border-border"
+          style={{ background: "hsl(var(--card))", boxShadow: "0 28px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(240,191,90,0.06)" }}>
 
           {/* Header */}
-          <div className="px-[18px] py-3.5 flex items-center justify-between shrink-0 border-b border-white/8"
-            style={{ background: "rgba(255,255,255,0.03)" }}>
+          <div className="px-[18px] py-3.5 flex items-center justify-between shrink-0 border-b border-border bg-secondary/50">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-lg">
@@ -815,12 +814,12 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                   onKeyDown={e => e.key === "Enter" && submitName()}
                   autoFocus
                   placeholder="Your first name..."
-                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-foreground text-[14px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
+                  className="bg-secondary border border-border rounded-xl px-4 py-3 text-foreground text-[14px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
                 />
                 <button
                   onClick={submitName}
                   disabled={!botName.trim()}
-                  className={`rounded-xl py-3 text-[13px] font-extrabold border-none transition-all duration-200 ${botName.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-white/5"}`}
+                  className={`rounded-xl py-3 text-[13px] font-extrabold border-none transition-all duration-200 ${botName.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-secondary"}`}
                   style={botName.trim() ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}
                 >
                   Start Chat →
@@ -841,7 +840,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                         <div className={`px-3.5 py-2.5 max-w-[92%] text-[13px] leading-[1.7] whitespace-pre-line ${
                           m.role === "user"
                             ? "text-[#1a1000] rounded-[14px_14px_2px_14px]"
-                            : "text-foreground bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px]"
+                            : "text-foreground bg-secondary border border-border rounded-[14px_14px_14px_2px]"
                         }`}
                           style={m.role === "user" ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}>
                           {m.role === "bot" ? renderBotText(m.text) : m.text}
@@ -868,7 +867,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
 
                   {/* Email prompt */}
                   {stage === "email_prompt" && (
-                    <div className="bg-white/5 border border-primary/20 rounded-xl p-4 mt-1">
+                    <div className="bg-secondary border border-primary/20 rounded-xl p-4 mt-1">
                       <div className="text-muted-foreground text-[12px] mb-2.5">Your email address:</div>
                       <input
                         value={botEmail}
@@ -877,12 +876,12 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                         type="email"
                         autoFocus
                         placeholder="your@email.com"
-                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2.5 text-foreground text-[13px] outline-none font-sans mb-2 focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
+                        className="w-full bg-muted/60 border border-border rounded-lg px-3 py-2.5 text-foreground text-[13px] outline-none font-sans mb-2 focus:border-primary/50 transition-colors placeholder:text-muted-foreground/50"
                       />
                       <button
                         onClick={goLive}
                         disabled={!botEmail.trim()}
-                        className={`w-full rounded-lg py-2.5 text-[12px] font-extrabold border-none transition-all ${botEmail.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-white/5"}`}
+                        className={`w-full rounded-lg py-2.5 text-[12px] font-extrabold border-none transition-all ${botEmail.trim() ? "cursor-pointer text-[#1a1000] hover:brightness-110" : "cursor-default text-muted-foreground/40 bg-secondary"}`}
                         style={botEmail.trim() ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}
                       >
                         Connect to Live Agent →
@@ -893,13 +892,13 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
 
                 {/* Bot input */}
                 {stage === "bot" && (
-                  <div className="px-3 py-2.5 border-t border-white/8 shrink-0" style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <div className="px-3 py-2.5 border-t border-border/60 shrink-0 bg-secondary/40">
                     <input
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={handleBotKeyDown}
                       placeholder={wlStep ? WL_PROMPTS[wlStep].split("?")[0] + "..." : "Ask me anything or select above..."}
-                      className={`w-full bg-white/5 rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans transition-colors placeholder:text-muted-foreground/40 border ${wlStep ? "border-primary/50" : "border-white/10"} focus:border-primary/50`}
+                      className={`w-full bg-secondary rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans transition-colors placeholder:text-muted-foreground/40 border ${wlStep ? "border-primary/50" : "border-border"} focus:border-primary/50`}
                     />
                   </div>
                 )}
@@ -919,7 +918,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
             {/* Waiting */}
             {user && stage === "waiting" && (
               <div className="flex-1 flex flex-col overflow-y-auto">
-                <div className="mx-4 mt-4 mb-2 bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="mx-4 mt-4 mb-2 bg-secondary border border-border rounded-xl p-4 text-center">
                   <div className="text-muted-foreground text-[11px] tracking-[2px] uppercase font-bold mb-2.5">Queue Position</div>
                   <div className="text-primary font-extrabold font-serif leading-none text-[52px]">{position != null ? `#${position}` : "—"}</div>
                   <div className="text-muted-foreground text-[12px] mt-2 leading-[1.6]">
@@ -932,7 +931,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                 <div ref={scrollRef} className="flex-1 px-3.5 pb-3.5 overflow-y-auto">
                   {liveMessages.filter(m => m.role === "system").map((m, i) => (
                     <div key={m.id || i} className="text-center mb-2">
-                      <span className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
+                      <span className="bg-secondary border border-border rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
                     </div>
                   ))}
                 </div>
@@ -945,7 +944,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                 {liveMessages.map((m, i) => {
                   if (m.role === "system") return (
                     <div key={m.id || i} className="text-center">
-                      <span className="bg-white/5 border border-white/10 rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
+                      <span className="bg-secondary border border-border rounded-full px-3.5 py-1 text-muted-foreground text-[11px] inline-block">{m.text}</span>
                     </div>
                   );
                   const isMe = m.role === "customer";
@@ -955,7 +954,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                       <div className={`px-3.5 py-2.5 max-w-[82%] text-[13px] leading-[1.65] ${
                         isMe
                           ? "text-[#1a1000] rounded-[14px_14px_2px_14px]"
-                          : "text-foreground bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px]"
+                          : "text-foreground bg-secondary border border-border rounded-[14px_14px_14px_2px]"
                       }`}
                         style={isMe ? { background: "linear-gradient(135deg,#f5cc6a,#c98a10)" } : {}}>
                         {renderContent(m.text, setPreview)}
@@ -965,7 +964,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                   );
                 })}
                 {isTyping && (
-                  <div className="flex items-center gap-1 px-3.5 py-2.5 bg-white/6 border border-white/10 rounded-[14px_14px_14px_2px] self-start">
+                  <div className="flex items-center gap-1 px-3.5 py-2.5 bg-secondary border border-border rounded-[14px_14px_14px_2px] self-start">
                     {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" style={{ animation: `chatPulse 1.2s ${i*0.15}s infinite` }} />)}
                   </div>
                 )}
@@ -980,7 +979,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                 <div className="text-muted-foreground text-[13px] leading-[1.7]">Thank you for contacting StarBookNow.<br />We hope we could help!</div>
                 <button
                   onClick={resetChat}
-                  className="bg-transparent border border-white/15 rounded-full px-7 py-2.5 text-muted-foreground cursor-pointer text-[12px] hover:border-primary/40 hover:text-primary transition-colors"
+                  className="bg-transparent border border-border/60 rounded-full px-7 py-2.5 text-muted-foreground cursor-pointer text-[12px] hover:border-primary/40 hover:text-primary transition-colors"
                 >
                   New Conversation
                 </button>
@@ -990,19 +989,19 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
 
           {/* Live chat input bar */}
           {stage === "active" && (
-            <div className="px-3 py-2.5 border-t border-white/8 flex gap-2 items-center shrink-0" style={{ background: "rgba(255,255,255,0.02)" }}>
+            <div className="px-3 py-2.5 border-t border-border/60 flex gap-2 items-center shrink-0 bg-secondary/40">
               <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xlsx,.pptx,.txt" className="hidden" onChange={handleFileSelect} />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach file"
-                className="w-[34px] h-[34px] rounded-full bg-white/5 border border-white/10 cursor-pointer flex items-center justify-center text-[15px] shrink-0 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                className="w-[34px] h-[34px] rounded-full bg-secondary border border-border cursor-pointer flex items-center justify-center text-[15px] shrink-0 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
               >📎</button>
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleLiveKey}
                 placeholder="Type a message..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/40"
+                className="flex-1 bg-secondary border border-border rounded-full px-4 py-2.5 text-foreground text-[13px] outline-none font-sans focus:border-primary/50 transition-colors placeholder:text-muted-foreground/40"
               />
               <button
                 onClick={sendMessage}

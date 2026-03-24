@@ -26,7 +26,7 @@ import PrivacyPage from "./pages/PrivacyPage.jsx";
 const GLOBAL_CSS = `
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth}
-  body{margin:0;padding:0;background:${G.bg};color:${G.text};font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body{margin:0;padding:0;font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
   ::-webkit-scrollbar{width:5px;height:5px}
   ::-webkit-scrollbar-track{background:#0a0a0a}
   ::-webkit-scrollbar-thumb{background:#2a2518;border-radius:10px}
@@ -145,6 +145,14 @@ export default function App() {
   const [page, setPageState] = useState(getHashPage);
   const [user, setUser] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("sb_theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme === "light");
+    localStorage.setItem("sb_theme", theme);
+  }, [theme]);
+
+  function toggleTheme() { setTheme(t => t === "dark" ? "light" : "dark"); }
   const [favorites, setFavorites] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [authModal, setAuthModal] = useState(null);
@@ -226,9 +234,9 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: G.bg }}>
+    <div className="bg-background" style={{ minHeight: "100vh" }}>
       <GlobalStyles />
-      <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} />
+      <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
 
       {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "celebrities" && <CelebritiesPage {...sharedProps} user={user} onAuth={m => setAuthModal(m)} />}

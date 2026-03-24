@@ -4,7 +4,7 @@ import { Button } from "./ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
-export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
+export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, toggleTheme }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -30,7 +30,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
       <nav
         className={cn(
           "fixed top-0 left-0 right-0 h-[68px] z-[800] flex items-center justify-between transition-all duration-300",
-          scrolled ? "bg-background/95 border-b border-white/8 backdrop-blur-2xl shadow-[0_4px_24px_rgba(0,0,0,0.4)]" : "bg-background/40 border-b border-transparent backdrop-blur-xl"
+          scrolled ? "bg-background/98 border-b border-border backdrop-blur-2xl shadow-[0_4px_24px_rgba(0,0,0,0.15)]" : "bg-background/90 border-b border-border/50 backdrop-blur-xl"
         )}
         style={{ padding: isMobile ? "0 20px" : "0 48px" }}
       >
@@ -92,6 +92,13 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
         {/* Desktop Auth */}
         {!isMobile && (
           <div className="flex gap-3.5 items-center shrink-0">
+            <button
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-border bg-transparent cursor-pointer text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all text-base"
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
             {user ? (
               <>
                 <span className="text-muted-foreground text-[13px]">
@@ -115,12 +122,20 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
 
         {/* Mobile hamburger */}
         {isMobile && (
-          <button
-            onClick={() => setMenuOpen(o => !o)}
-            className="bg-transparent border border-border rounded-lg px-2.5 py-1.5 cursor-pointer text-muted-foreground text-lg flex items-center justify-center"
-          >
-            {menuOpen ? "✕" : "☰"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-border bg-transparent cursor-pointer text-base"
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className="bg-transparent border border-border rounded-lg px-2.5 py-1.5 cursor-pointer text-muted-foreground text-lg flex items-center justify-center"
+            >
+              {menuOpen ? "✕" : "☰"}
+            </button>
+          </div>
         )}
       </nav>
 
