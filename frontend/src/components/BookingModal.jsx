@@ -9,13 +9,104 @@ import { Textarea } from "./ui/textarea.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { cn } from "../lib/utils.js";
 
-function PaymentSelect({ value, onChange }) {
+// ── Crypto wallet addresses (update these with real addresses) ──────────────
+const WALLETS = {
+  BTC:  "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",  // TODO: replace with real BTC address
+  ETH:  "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", // TODO: replace with real ETH address
+  USDT: "TKFHt3aMqvhEkH7kS9dGj2KA4GmLUkK29A",         // TODO: replace with real USDT (TRC20) address
+};
+
+function CopyBtn({ text }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="text-[10px] font-bold px-2 py-0.5 rounded border border-primary/40 text-primary hover:bg-primary/10 transition-colors shrink-0"
+    >
+      {copied ? "✓ Copied" : "Copy"}
+    </button>
+  );
+}
+
+function CryptoWallets() {
+  return (
+    <div className="mt-3 space-y-2 border border-border rounded-xl p-3 bg-secondary">
+      <p className="text-muted-foreground text-[11px] mb-2 leading-relaxed">
+        Send your payment to any of the addresses below, then confirm your booking. Your request will be <strong className="text-foreground">pending</strong> until payment is verified.
+      </p>
+      {Object.entries(WALLETS).map(([coin, addr]) => (
+        <div key={coin} className="flex items-center gap-2">
+          <span className="text-primary text-[11px] font-bold w-10 shrink-0">{coin}</span>
+          <span className="text-foreground text-[10px] font-mono flex-1 truncate bg-background rounded px-2 py-1 border border-border">
+            {addr}
+          </span>
+          <CopyBtn text={addr} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const GIFT_CARD_TYPES = ["Apple", "Amazon", "Visa", "Google Play", "iTunes", "Steam"];
+
+function GiftCardForm({ value, onChange }) {
+  return (
+    <div className="mt-3 space-y-3 border border-border rounded-xl p-3 bg-secondary">
+      <p className="text-muted-foreground text-[11px] leading-relaxed">
+        Select card type, enter the amount and the redemption code. Your booking will be <strong className="text-foreground">pending</strong> until the card is verified.
+      </p>
+      <div>
+        <Label className="mb-1.5 block text-[12px]">Card Type</Label>
+        <div className="flex gap-1.5 flex-wrap">
+          {GIFT_CARD_TYPES.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onChange({ ...value, type: t })}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer",
+                value.type === t
+                  ? "bg-primary/10 border-primary/50 text-primary"
+                  : "bg-background border-border text-muted-foreground hover:border-border/80"
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <Label className="mb-1.5 block text-[12px]">Card Amount ($)</Label>
+        <Input
+          type="number"
+          placeholder="e.g. 100"
+          value={value.amount}
+          onChange={e => onChange({ ...value, amount: e.target.value })}
+        />
+      </div>
+      <div>
+        <Label className="mb-1.5 block text-[12px]">Gift Card Code</Label>
+        <Input
+          placeholder="Enter the full redemption code"
+          value={value.code}
+          onChange={e => onChange({ ...value, code: e.target.value })}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PaymentSelect({ value, onChange, onContactAdmin }) {
   const methods = [
     { id: "crypto",   label: "₿ Crypto",    desc: "BTC / ETH / USDT" },
-    { id: "cashapp",  label: "$ CashApp",   desc: "Instant transfer" },
-    { id: "venmo",    label: "V Venmo",     desc: "Quick & easy" },
-    { id: "paypal",   label: "P PayPal",    desc: "Buyer protection" },
     { id: "giftcard", label: "🎁 Gift Card", desc: "Apple / Amazon / Visa" },
+    { id: "other",    label: "💬 Other",     desc: "Contact admin" },
   ];
   return (
     <div className="mb-4">
@@ -25,15 +116,25 @@ function PaymentSelect({ value, onChange }) {
           <button
             key={m.id}
             type="button"
-            onClick={() => onChange(m.id)}
+            onClick={() => {
+              if (m.id === "other") { onContactAdmin(); return; }
+              onChange(m.id);
+            }}
             className={cn(
               "rounded-xl p-2.5 cursor-pointer text-center transition-all border",
               value === m.id
                 ? "bg-primary/10 border-primary/50"
-                : "bg-secondary border-border hover:border-border/80"
+                : m.id === "other"
+                  ? "bg-secondary border-border hover:border-primary/40 hover:bg-primary/5"
+                  : "bg-secondary border-border hover:border-border/80"
             )}
           >
-            <div className={cn("text-[13px] font-semibold", value === m.id ? "text-primary" : "text-foreground")}>{m.label}</div>
+            <div className={cn(
+              "text-[13px] font-semibold",
+              m.id === "other" ? "text-primary" : value === m.id ? "text-primary" : "text-foreground"
+            )}>
+              {m.label}
+            </div>
             <div className="text-muted-foreground text-[10px] mt-0.5">{m.desc}</div>
           </button>
         ))}
@@ -42,10 +143,11 @@ function PaymentSelect({ value, onChange }) {
   );
 }
 
-export default function BookingModal({ open, c, type, onClose, onConfirm, user }) {
+export default function BookingModal({ open, c, type, onClose, onConfirm, user, onOpenChat }) {
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
   const [payment, setPayment] = useState("");
   const [donateAmt, setDonateAmt] = useState(500);
+  const [giftCard, setGiftCard] = useState({ type: "", amount: "", code: "" });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -54,10 +156,16 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user }
   const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", video: "Video Message", meet: "Meet & Greet" };
   const donateOptions = [200, 500, 1000, 1500, 2000];
 
+  const giftCardReady = payment === "giftcard" && giftCard.type && giftCard.amount && giftCard.code;
+  const canSubmit = !loading && form.name && form.email && payment && (payment !== "giftcard" || giftCardReady);
+
   async function submit() {
     setLoading(true);
     try {
-      await api.createBooking(c, type, form, payment, type === "donate" ? donateAmt : null);
+      const extraForm = payment === "giftcard"
+        ? { ...form, giftCardType: giftCard.type, giftCardAmount: giftCard.amount, giftCardCode: giftCard.code }
+        : form;
+      await api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null);
       onConfirm();
       setDone(true);
     } catch {
@@ -73,13 +181,14 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user }
           <div className="text-center py-4">
             <div className="text-5xl mb-5">✅</div>
             <h3 className="text-primary font-serif text-2xl mb-2.5">
-              {type === "fan_card" ? "Card Purchased!" : "Confirmed!"}
+              {type === "fan_card" ? "Card Purchased!" : "Request Submitted!"}
             </h3>
             <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto mb-6 text-sm">
               Your <strong className="text-foreground">{labels[type]}</strong>{" "}
               {type === "donate" ? "donation" : "request"} for{" "}
-              <strong className="text-primary">{c.name}</strong> has been submitted.
-              Our team will contact you within 24 hours.
+              <strong className="text-primary">{c.name}</strong> is{" "}
+              <strong className="text-foreground">pending review</strong>.
+              Our team will contact you within 24 hours to confirm.
             </p>
             <Button onClick={onClose} className="px-8">Done ✓</Button>
           </div>
@@ -162,12 +271,20 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user }
               )}
             </div>
 
-            <PaymentSelect value={payment} onChange={setPayment} />
+            <PaymentSelect value={payment} onChange={setPayment} onContactAdmin={onOpenChat} />
+
+            {/* Crypto wallet addresses */}
+            {payment === "crypto" && <CryptoWallets />}
+
+            {/* Gift card sub-form */}
+            {payment === "giftcard" && (
+              <GiftCardForm value={giftCard} onChange={setGiftCard} />
+            )}
 
             <Button
               onClick={submit}
-              className="w-full py-6 text-sm mt-1"
-              disabled={loading || !form.name || !form.email || !payment}
+              className="w-full py-6 text-sm mt-3"
+              disabled={!canSubmit}
             >
               {loading
                 ? "⏳ Processing..."

@@ -150,6 +150,9 @@ export default function App() {
   const [authModal, setAuthModal] = useState(null);
   const [celebModal, setCelebModal] = useState(null);
   const [bookingModal, setBookingModal] = useState(null);
+  const [chatTrigger, setChatTrigger] = useState(0);
+
+  function openChat() { setChatTrigger(k => k + 1); }
 
   function setPage(p) {
     setPageState(p);
@@ -224,7 +227,7 @@ export default function App() {
       <GlobalStyles />
       <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} />
 
-      {page === "home"        && <HomePage {...sharedProps} setPage={setPage} />}
+      {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} />}
       {page === "celebrities" && <CelebritiesPage {...sharedProps} />}
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}
@@ -238,10 +241,10 @@ export default function App() {
       {/* Modals — always rendered, visibility controlled by open prop */}
       <AuthModal open={!!authModal} mode={authModal || "login"} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />
       <CelebModal open={!!celebModal} c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={celebModal ? favorites.includes(celebModal.id) : false} onFav={handleFav} />
-      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} />
+      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} onOpenChat={() => { setBookingModal(null); openChat(); }} />
 
       {/* Live support chat widget */}
-      <SupportChat user={user} setPage={setPage} />
+      <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} />
     </div>
   );
 }

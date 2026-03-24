@@ -27,7 +27,7 @@ function useReveal() {
   return ref;
 }
 
-export default function HomePage({ onView, onBook, favorites, onFav, setPage }) {
+export default function HomePage({ onView, onBook, favorites, onFav, setPage, openChat }) {
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -222,7 +222,7 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage }) 
                 <div style={{ fontSize: 32, marginBottom: 16 }}>{s.icon}</div>
                 <h3 style={{ color: G.text, margin: "0 0 10px", fontSize: 18, fontFamily: G.serif, fontWeight: 700 }}>{s.title}</h3>
                 <p style={{ color: G.muted, fontSize: 13, lineHeight: 1.8, margin: "0 0 22px" }}>{s.desc}</p>
-                <Btn variant="outline" style={{ padding: "9px 20px", fontSize: 11 }}>{s.cta} →</Btn>
+                <Btn variant="outline" onClick={openChat} style={{ padding: "9px 20px", fontSize: 11 }}>{s.cta} →</Btn>
               </div>
             ))}
           </div>

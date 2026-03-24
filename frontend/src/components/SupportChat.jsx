@@ -160,7 +160,7 @@ const WL_PROMPTS = {
   budget:        "What's your approximate budget? (e.g. Under $5k, $5k–$15k, $15k+)",
 };
 
-export default function SupportChat({ user, setPage }) {
+export default function SupportChat({ user, setPage, triggerOpen }) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState("idle");
   const [botName, setBotName] = useState(user?.name || "");
@@ -174,6 +174,12 @@ export default function SupportChat({ user, setPage }) {
   const [unread, setUnread] = useState(0);
   const [wsStatus, setWsStatus] = useState("disconnected");
   const [preview, setPreview] = useState(null);
+
+  // Open chat when triggered externally (e.g. from service cards or payment)
+  useEffect(() => {
+    if (triggerOpen) openChat();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerOpen]);
 
   // Live data cache
   const [celebs, setCelebs] = useState([]);
