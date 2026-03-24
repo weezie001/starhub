@@ -243,8 +243,8 @@ export default function App() {
       <CelebModal open={!!celebModal} c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={celebModal ? favorites.includes(celebModal.id) : false} onFav={handleFav} />
       <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} onOpenChat={() => { setBookingModal(null); openChat(); }} />
 
-      {/* Live support chat widget */}
-      <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} />
+      {/* Live support chat widget — hidden on admin page to avoid covering inbox UI */}
+      {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} />}
     </div>
   );
 }
