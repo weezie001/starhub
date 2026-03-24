@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { G, WS_URL, fmtDate } from "../lib/tokens.js";
 import { Btn, Input } from "../components/ui.jsx";
 import { api } from "../api.js";
+import { useIsMobile } from "../lib/useIsMobile.js";
 
 const TOPICS = ["Celebrity Booking", "Corporate Event", "Private Gala", "Brand Campaign", "Meet & Greet", "Keynote Speaker", "Custom Experience"];
 const BUDGETS = ["$1,000 – $5,000", "$5,000 – $15,000", "$15,000 – $50,000", "$50,000+", "Flexible"];
 
 export default function WaitlistPage({ user }) {
+  const isMobile = useIsMobile();
   const [stage, setStage] = useState("form"); // form | submitted | live
   const [form, setForm] = useState({
     name: user?.name || "", email: user?.email || "",
@@ -84,7 +86,7 @@ export default function WaitlistPage({ user }) {
   return (
     <div style={{ paddingTop: 68, minHeight: "100vh", background: G.bg }}>
       {/* Hero */}
-      <div style={{ position: "relative", padding: "80px 60px 60px", overflow: "hidden" }}>
+      <div style={{ position: "relative", padding: isMobile ? "48px 20px 40px" : "80px 60px 60px", overflow: "hidden" }}>
         <div style={{
           position: "absolute", inset: 0,
           backgroundImage: "url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&q=80')",
@@ -103,13 +105,13 @@ export default function WaitlistPage({ user }) {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 60px 80px", display: "grid", gridTemplateColumns: "1fr 380px", gap: 48, alignItems: "start" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "0 16px 60px" : "0 60px 80px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 380px", gap: isMobile ? 24 : 48, alignItems: "start" }}>
 
         {/* Left: form or status */}
         <div>
           {stage === "form" && (
-            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 40 }}>
-              <h2 style={{ fontFamily: G.serif, fontSize: 26, fontWeight: 700, color: G.text, margin: "0 0 28px" }}>Reserve Your Spot</h2>
+            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: isMobile ? 20 : 40 }}>
+              <h2 style={{ fontFamily: G.serif, fontSize: isMobile ? 22 : 26, fontWeight: 700, color: G.text, margin: "0 0 28px" }}>Reserve Your Spot</h2>
 
               {error && (
                 <div style={{ background: G.red + "1E", color: G.red, border: `1px solid ${G.red}30`, borderRadius: 8, padding: "10px 16px", marginBottom: 20, fontSize: 13 }}>
@@ -117,7 +119,7 @@ export default function WaitlistPage({ user }) {
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                 <Input label="Full Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your full name" />
                 <Input label="Email Address *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} type="email" placeholder="your@email.com" />
               </div>
@@ -136,7 +138,7 @@ export default function WaitlistPage({ user }) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                 <Input label="Preferred Date" value={form.preferredDate} onChange={e => setForm(f => ({ ...f, preferredDate: e.target.value }))} type="date" />
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ color: G.muted, fontSize: 11, letterSpacing: 0.8, display: "block", marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Budget Range</label>
@@ -159,7 +161,7 @@ export default function WaitlistPage({ user }) {
           )}
 
           {stage === "submitted" && (
-            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 60, textAlign: "center" }}>
+            <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: isMobile ? 32 : 60, textAlign: "center" }}>
               <div style={{ fontSize: 52, marginBottom: 20 }}>🎉</div>
               <h2 style={{ fontFamily: G.serif, fontSize: 28, fontWeight: 700, color: G.gold, margin: "0 0 12px" }}>You're In!</h2>
               <p style={{ color: G.muted, fontSize: 14, lineHeight: 1.8 }}>Loading your queue status...</p>
@@ -171,7 +173,7 @@ export default function WaitlistPage({ user }) {
               {/* Position card */}
               <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 36, textAlign: "center" }}>
                 <div style={{ color: G.muted, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", fontWeight: 700, marginBottom: 16 }}>Your Queue Position</div>
-                <div style={{ fontFamily: G.serif, fontSize: 96, fontWeight: 800, color: G.gold, lineHeight: 1, marginBottom: 8 }}>
+                <div style={{ fontFamily: G.serif, fontSize: isMobile ? 72 : 96, fontWeight: 800, color: G.gold, lineHeight: 1, marginBottom: 8 }}>
                   #{entry.position || "—"}
                 </div>
                 <div style={{
@@ -223,7 +225,7 @@ export default function WaitlistPage({ user }) {
         </div>
 
         {/* Right: info panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, position: "sticky", top: 100 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, position: isMobile ? "static" : "sticky", top: 100 }}>
           <div style={{ background: G.s1, border: `1px solid ${G.border}`, borderRadius: 16, padding: 28 }}>
             <h3 style={{ fontFamily: G.serif, fontSize: 18, fontWeight: 700, color: G.text, margin: "0 0 20px" }}>What to Expect</h3>
             {[["🎯", "Personalised Matching", "A dedicated agent will curate a shortlist of celebrities tailored to your event."],
