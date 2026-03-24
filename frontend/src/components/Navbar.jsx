@@ -36,11 +36,12 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
       >
         {/* Logo */}
         <div
-          className="flex items-center gap-2 cursor-pointer shrink-0"
+          className="flex items-center gap-2.5 cursor-pointer shrink-0"
           onClick={() => setPage("home")}
         >
+          <img src="/favicon.svg" alt="StarBook" className="w-8 h-8" />
           <span className="text-primary font-serif text-[22px] font-extrabold tracking-[3px] uppercase">
-            StraBook
+            StarBook
           </span>
         </div>
 
