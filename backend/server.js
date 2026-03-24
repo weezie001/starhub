@@ -121,6 +121,8 @@ async function initDB() {
     )
   `);
 
+  await pool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "chatSessionId" TEXT`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS blogs (
       id TEXT PRIMARY KEY,

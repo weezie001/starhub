@@ -219,7 +219,7 @@ export default function BlogsPage() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))", gap: isMobile ? 20 : 28 }}>
-            {(activeCat === "All" ? BLOGS : filtered).map(post => (
+            {(activeCat === "All" ? blogs : filtered).map(post => (
               <BlogCard key={post.id} post={post} onClick={setSelected} />
             ))}
           </div>
