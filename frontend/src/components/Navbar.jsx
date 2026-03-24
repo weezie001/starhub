@@ -72,7 +72,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                Bookings
+                My Profile
               </button>
             )}
             {user?.role === "admin" && (
@@ -149,7 +149,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout }) {
                 page === "dashboard" ? "bg-primary/10 text-primary font-bold" : "bg-transparent text-muted-foreground"
               )}
             >
-              Bookings
+              My Profile
             </button>
           )}
           {user?.role === "admin" && (
