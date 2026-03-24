@@ -1,38 +1,56 @@
-import { useState, useMemo } from "react";
-import { G } from "../lib/tokens.js";
-import { CELEBS, CATS } from "../lib/data.js";
+import { useState, useMemo, useEffect } from "react";
+import { CATS } from "../lib/data.js";
+import { api } from "../api.js";
 import { Button } from "../components/ui/button.jsx";
 import CelebCard from "../components/CelebCard.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
 export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
+  const [celebs, setCelebs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("all");
-  const [maxPrice, setMaxPrice] = useState(20000);
+  const [maxPrice, setMaxPrice] = useState(100000);
+  const [priceMax, setPriceMax] = useState(100000);
   const [availOnly, setAvailOnly] = useState(false);
   const [sort, setSort] = useState("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    api.getCelebrities()
+      .then(data => {
+        setCelebs(data);
+        const max = Math.max(...data.map(c => c.price || 0), 10000);
+        const rounded = Math.ceil(max / 1000) * 1000;
+        setPriceMax(rounded);
+        setMaxPrice(rounded);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const filtered = useMemo(() => {
-    let list = CELEBS.filter(c => {
-      if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.country.toLowerCase().includes(search.toLowerCase()) && !c.cat.toLowerCase().includes(search.toLowerCase())) return false;
+    let list = celebs.filter(c => {
+      if (search && !c.name.toLowerCase().includes(search.toLowerCase()) &&
+          !(c.country || "").toLowerCase().includes(search.toLowerCase()) &&
+          !(c.cat || "").toLowerCase().includes(search.toLowerCase())) return false;
       if (cat !== "all" && c.cat !== cat) return false;
       if (c.price > maxPrice) return false;
       if (availOnly && !c.avail) return false;
       return true;
     });
-    if (sort === "featured") list = [...list].sort((a, b) => (b.feat ? 1 : 0) - (a.feat ? 1 : 0));
-    if (sort === "price_asc") list = [...list].sort((a, b) => a.price - b.price);
+    if (sort === "featured")   list = [...list].sort((a, b) => (b.feat ? 1 : 0) - (a.feat ? 1 : 0));
+    if (sort === "price_asc")  list = [...list].sort((a, b) => a.price - b.price);
     if (sort === "price_desc") list = [...list].sort((a, b) => b.price - a.price);
-    if (sort === "rating") list = [...list].sort((a, b) => b.rating - a.rating);
-    if (sort === "reviews") list = [...list].sort((a, b) => b.reviews - a.reviews);
+    if (sort === "rating")     list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    if (sort === "reviews")    list = [...list].sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
     return list;
-  }, [search, cat, maxPrice, availOnly, sort]);
+  }, [celebs, search, cat, maxPrice, availOnly, sort]);
 
-  const hasActiveFilters = cat !== "all" || availOnly || maxPrice < 20000;
-  const activeFilterCount = [cat !== "all", availOnly, maxPrice < 20000].filter(Boolean).length;
+  const hasActiveFilters = cat !== "all" || availOnly || maxPrice < priceMax;
+  const activeFilterCount = [cat !== "all", availOnly, maxPrice < priceMax].filter(Boolean).length;
 
   const FilterContent = () => (
     <>
@@ -57,7 +75,7 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
       <div className="mb-7">
         <div className="text-muted-foreground text-[10px] tracking-[2px] font-bold mb-3 uppercase">Max Budget</div>
         <input
-          type="range" min={1000} max={20000} step={500} value={maxPrice}
+          type="range" min={1000} max={priceMax} step={500} value={maxPrice}
           onChange={e => setMaxPrice(Number(e.target.value))}
           className="w-full accent-primary"
         />
@@ -81,7 +99,7 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
 
       {hasActiveFilters && (
         <Button
-          onClick={() => { setCat("all"); setAvailOnly(false); setMaxPrice(20000); }}
+          onClick={() => { setCat("all"); setAvailOnly(false); setMaxPrice(priceMax); }}
           variant="ghost"
           className="w-full mt-5 text-[11px]"
         >
@@ -96,11 +114,11 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
 
       {/* Mobile filter toggle bar */}
       {isMobile && (
-        <div className="bg-background border-b border-border px-4 py-3 flex gap-2.5 items-center">
+        <div className="bg-background border-b border-border px-3 py-2.5 flex gap-2 items-center">
           <button
             onClick={() => setFiltersOpen(o => !o)}
             className={cn(
-              "rounded-lg px-4 py-2 cursor-pointer text-[13px] font-sans font-semibold flex items-center gap-2 border transition-all",
+              "rounded-lg px-3 py-2 cursor-pointer text-[12px] font-sans font-semibold flex items-center gap-1.5 border transition-all shrink-0",
               filtersOpen ? "bg-primary/10 border-primary/50 text-primary" : "bg-card border-border text-muted-foreground"
             )}
           >
@@ -109,15 +127,14 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search talent..."
-            className="flex-1 bg-card border border-border rounded-lg px-3.5 py-2 text-foreground text-[13px] outline-none font-sans placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 bg-card border border-border rounded-lg px-3 py-2 text-foreground text-[12px] outline-none font-sans placeholder:text-muted-foreground"
           />
           <select
             value={sort} onChange={e => setSort(e.target.value)}
-            className="bg-card border border-border rounded-lg px-2.5 py-2 text-muted-foreground text-[12px] outline-none cursor-pointer font-sans"
+            className="bg-card border border-border rounded-lg px-2 py-2 text-muted-foreground text-[11px] outline-none cursor-pointer font-sans shrink-0"
           >
             <option value="featured">Featured</option>
             <option value="rating">Top Rated</option>
-            <option value="reviews">Most Reviews</option>
             <option value="price_asc">Price ↑</option>
             <option value="price_desc">Price ↓</option>
           </select>
@@ -139,10 +156,10 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
       )}
 
       {/* Main content */}
-      <div className={cn("flex-1", isMobile ? "px-4 py-6" : "px-9 py-9")}>
-        <div className="mb-7">
+      <div className={cn("flex-1 min-w-0", isMobile ? "px-3 py-5" : "px-9 py-9")}>
+        <div className="mb-5">
           <div className="text-primary text-[10px] tracking-[3px] font-bold mb-2 uppercase">The Stage is Yours</div>
-          <h1 className="font-serif text-foreground font-bold leading-tight mb-2.5" style={{ fontSize: "clamp(24px,4vw,52px)" }}>
+          <h1 className="font-serif text-foreground font-bold leading-tight mb-2.5" style={{ fontSize: "clamp(22px,4vw,52px)" }}>
             Elite Talent Discovery.
           </h1>
           {!isMobile && (
@@ -167,20 +184,29 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
               </div>
             </div>
           )}
-          {isMobile && <p className="text-muted-foreground text-[13px] m-0">{filtered.length} Stars available</p>}
+          {isMobile && <p className="text-muted-foreground text-[12px] m-0">{filtered.length} stars available</p>}
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-xl bg-card border border-white/8 animate-pulse">
+                <div className="h-44 sm:h-64 bg-white/5 rounded-t-xl" />
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-white/5 rounded-full w-3/4" />
+                  <div className="h-3 bg-white/5 rounded-full w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <div className="text-[44px] mb-4">🔍</div>
             <div className="text-[16px] mb-2 text-foreground">No celebrities match your filters</div>
             <div className="text-[13px]">Try adjusting your search or clearing filters</div>
           </div>
         ) : (
-          <div className={cn(
-            "grid gap-[14px]",
-            isMobile ? "grid-cols-2" : "grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-[22px]"
-          )}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {filtered.map(c => <CelebCard key={c.id} c={c} onView={onView} onBook={onBook} onFav={onFav} isFav={favorites.includes(c.id)} />)}
           </div>
         )}
