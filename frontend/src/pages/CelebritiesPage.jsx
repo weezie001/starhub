@@ -6,7 +6,7 @@ import CelebCard from "../components/CelebCard.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
-export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
+export default function CelebritiesPage({ onView, onBook, onFanCard, favorites, onFav }) {
   const [celebs, setCelebs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -208,7 +208,7 @@ export default function CelebritiesPage({ onView, onBook, favorites, onFav }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-            {filtered.map(c => <CelebCard key={c.id} c={c} onView={onView} onBook={onBook} onFav={onFav} isFav={favorites.includes(c.id)} />)}
+            {filtered.map(c => <CelebCard key={c.id} c={c} onView={onView} onBook={onBook} onFanCard={onFanCard} onFav={onFav} isFav={favorites.includes(c.id)} />)}
           </div>
         )}
       </div>

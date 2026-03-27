@@ -490,7 +490,7 @@ app.get('/api/celebrities', async (req, res) => {
     const rows = await qAll('SELECT * FROM celebrities');
     res.json(rows.map(r => {
       const d = JSON.parse(r.data || '{}');
-      return { id: parseInt(r.id), name: r.name, cat: r.category, price: r.price, img: r.photo, avail: d.avail !== false, feat: !!d.feat, rating: d.rating || 4.8, reviews: d.reviews || 0, country: d.country || '', flag: d.flag || '', bio: d.bio || '', tags: d.tags || [] };
+      return { id: parseInt(r.id), name: r.name, cat: r.category, price: r.price, img: r.photo, avail: d.avail !== false, feat: !!d.feat, rating: d.rating || 4.8, reviews: d.reviews || 0, country: d.country || '', flag: d.flag || '', bio: d.bio || '', tags: d.tags || [], vipPrice: d.vipPrice || 299, platinumPrice: d.platinumPrice || 999 };
     }));
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
@@ -513,7 +513,10 @@ app.post('/api/bookings', authenticate, async (req, res) => {
   const { celeb, type, form, payment, donateAmt } = req.body;
   if (!celeb || !type || !form || !payment) return res.status(400).json({ error: 'Missing fields' });
   try {
-    const amount = type === 'donate' ? (donateAmt || 0) : (type === 'fan_card' ? 299 : celeb.price);
+    const amount = type === 'donate' ? (donateAmt || 0)
+      : type === 'fan_card'          ? (celeb.vipPrice || 299)
+      : type === 'fan_card_platinum' ? (celeb.platinumPrice || 999)
+      : celeb.price;
     await q(
       'INSERT INTO bookings (id,"userId","celebData","bookingType","formData","paymentMethod",amount) VALUES ($1,$2,$3,$4,$5,$6,$7)',
       [Date.now().toString(), req.user.id, JSON.stringify(celeb), type, JSON.stringify(form), payment, amount]
@@ -729,17 +732,19 @@ app.delete('/api/admin/celebrities/:id', authenticate, adminOnly, async (req, re
 // Admin: update celebrity
 app.put('/api/admin/celebrities/:id', authenticate, adminOnly, async (req, res) => {
   try {
-    const { name, category, price, photo, bio, country, flag, avail, feat, rating, tags } = req.body;
+    const { name, category, price, photo, bio, country, flag, avail, feat, rating, tags, vipPrice, platinumPrice } = req.body;
     const row = await qOne('SELECT * FROM celebrities WHERE id=$1', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'Not found' });
     const d = JSON.parse(row.data || '{}');
-    if (bio      !== undefined) d.bio     = bio;
-    if (country  !== undefined) d.country = country;
-    if (flag     !== undefined) d.flag    = flag;
-    if (feat     !== undefined) d.feat    = !!feat;
-    if (avail    !== undefined) d.avail   = !!avail;
-    if (rating   !== undefined) d.rating  = rating;
-    if (tags     !== undefined) d.tags    = tags;
+    if (bio           !== undefined) d.bio           = bio;
+    if (country       !== undefined) d.country       = country;
+    if (flag          !== undefined) d.flag          = flag;
+    if (feat          !== undefined) d.feat          = !!feat;
+    if (avail         !== undefined) d.avail         = !!avail;
+    if (rating        !== undefined) d.rating        = rating;
+    if (tags          !== undefined) d.tags          = tags;
+    if (vipPrice      !== undefined) d.vipPrice      = parseFloat(vipPrice) || 299;
+    if (platinumPrice !== undefined) d.platinumPrice = parseFloat(platinumPrice) || 999;
     await q('UPDATE celebrities SET name=$1,category=$2,price=$3,photo=$4,data=$5 WHERE id=$6',
       [name||row.name, category||row.category, price!=null?parseFloat(price):row.price, photo!==undefined?photo:row.photo, JSON.stringify(d), req.params.id]);
     res.json({ success: true });

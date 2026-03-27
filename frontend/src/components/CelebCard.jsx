@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge.jsx";
 import { Button } from "./ui/button.jsx";
 import { cn } from "../lib/utils.js";
 
-export default function CelebCard({ c, onView, onBook, onFav, isFav }) {
+export default function CelebCard({ c, onView, onBook, onFav, onFanCard, isFav }) {
   const [hover, setHover] = useState(false);
   return (
     <div
@@ -74,14 +74,22 @@ export default function CelebCard({ c, onView, onBook, onFav, isFav }) {
             ))}
           </div>
         )}
-        <div className="flex gap-1.5">
-          <Button onClick={() => onBook(c, "event")} size="sm" className="flex-1 text-[10px] sm:text-[11px] px-2" disabled={!c.avail}>
+        <div className="flex gap-1.5 mb-1.5">
+          <Button onClick={() => onBook(c, "booking")} size="sm" className="flex-1 text-[10px] sm:text-[11px] px-2" disabled={!c.avail}>
             Book Now
           </Button>
           <Button onClick={() => onView(c)} variant="ghost" size="sm" className="text-[10px] sm:text-[11px] px-2">
             View
           </Button>
         </div>
+        <Button
+          onClick={() => onFanCard?.(c)}
+          variant="outline"
+          size="sm"
+          className="w-full text-[10px] sm:text-[11px]"
+        >
+          🛒 Buy Item
+        </Button>
       </div>
     </div>
   );

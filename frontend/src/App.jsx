@@ -21,6 +21,7 @@ import BlogsPage from "./pages/BlogsPage.jsx";
 import AdminPage from "./pages/admin/AdminPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
+import FanCardPage from "./pages/FanCardPage.jsx";
 
 // ── GLOBAL STYLES ────────────────────────────────────────────
 const GLOBAL_CSS = `
@@ -134,7 +135,7 @@ function ContactPage({ setPage }) {
 }
 
 // ── MAIN APP ─────────────────────────────────────────────────
-const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy"];
+const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy","fancard"];
 
 function getHashPage() {
   const hash = window.location.hash.slice(1);
@@ -159,6 +160,7 @@ export default function App() {
   const [celebModal, setCelebModal] = useState(null);
   const [bookingModal, setBookingModal] = useState(null);
   const [chatTrigger, setChatTrigger] = useState(0);
+  const [fanCardCeleb, setFanCardCeleb] = useState(null);
 
   function openChat() { setChatTrigger(k => k + 1); }
 
@@ -223,12 +225,18 @@ export default function App() {
     setBookingModal({ celeb, type });
   }
 
+  function handleFanCard(celeb) {
+    setFanCardCeleb(celeb);
+    setPage("fancard");
+  }
+
   const sharedProps = {
     onView: c => {
       if (!user) { setAuthModal("login"); return; }
       setCelebModal(c);
     },
     onBook: handleBook,
+    onFanCard: handleFanCard,
     favorites,
     onFav: handleFav,
   };
@@ -248,6 +256,7 @@ export default function App() {
       {page === "blog"        && <BlogsPage setPage={setPage} />}
       {page === "terms"       && <TermsPage setPage={setPage} />}
       {page === "privacy"     && <PrivacyPage setPage={setPage} />}
+      {page === "fancard"     && <FanCardPage c={fanCardCeleb} onBook={handleBook} setPage={setPage} />}
 
       {/* Modals — always rendered, visibility controlled by open prop */}
       <AuthModal open={!!authModal} mode={authModal || "login"} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />

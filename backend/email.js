@@ -79,7 +79,7 @@ async function sendWelcome({ name, email }) {
 
 // ── 2. Booking confirmation to customer ──────────────────────────────────────
 async function sendBookingConfirmation({ name, email, celeb, type, amount, paymentMethod }) {
-  const typeLabel = { event: 'Event Booking', fan_card: 'Video Message', meet: 'Meet & Greet', donate: 'Donation', brand: 'Brand Campaign' }[type] || type;
+  const typeLabel = { event: 'Event Booking', fan_card: 'VIP Fan Card', fan_card_platinum: 'Platinum Elite Card', meet: 'Meet & Greet', donate: 'Donation', video: 'Video Message', brand: 'Brand Campaign' }[type] || type;
   const payLabel  = { crypto: '₿ Crypto (BTC/ETH/USDT)', giftcard: '🎁 Gift Card', other: 'Other' }[paymentMethod] || paymentMethod;
 
   const body = `
@@ -199,7 +199,7 @@ async function sendInvoice({ name, email, invoiceId, celeb, type, amount, paymen
 
 // ── 5. New booking alert to admin ────────────────────────────────────────────
 async function sendAdminBookingAlert({ customerName, customerEmail, celeb, type, amount, paymentMethod }) {
-  const typeLabel = { event: 'Event Booking', fan_card: 'Video Message', meet: 'Meet & Greet', donate: 'Donation', brand: 'Brand Campaign' }[type] || type;
+  const typeLabel = { event: 'Event Booking', fan_card: 'VIP Fan Card', fan_card_platinum: 'Platinum Elite Card', meet: 'Meet & Greet', donate: 'Donation', video: 'Video Message', brand: 'Brand Campaign' }[type] || type;
 
   const body = `
     <p style="color:#b0a898;font-size:15px;line-height:1.8;margin:0 0 20px">

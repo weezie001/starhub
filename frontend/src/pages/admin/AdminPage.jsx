@@ -211,12 +211,12 @@ export default function AdminPage({ user }) {
   }
   function startEditCeleb(c) {
     setEditCeleb(c.id);
-    setEditCelebForm({ name: c.name, category: c.cat, price: String(c.price), photo: c.img || "", bio: c.bio || "", country: c.country || "", flag: c.flag || "" });
+    setEditCelebForm({ name: c.name, category: c.cat, price: String(c.price), photo: c.img || "", bio: c.bio || "", country: c.country || "", flag: c.flag || "", vipPrice: String(c.vipPrice || 299), platinumPrice: String(c.platinumPrice || 999) });
   }
   async function saveEditCeleb(id) {
     try {
       await api.updateCelebrity(id, editCelebForm);
-      setCelebs(prev => prev.map(c => c.id === id ? { ...c, name: editCelebForm.name, cat: editCelebForm.category, price: parseFloat(editCelebForm.price), img: editCelebForm.photo || c.img, bio: editCelebForm.bio, country: editCelebForm.country, flag: editCelebForm.flag } : c));
+      setCelebs(prev => prev.map(c => c.id === id ? { ...c, name: editCelebForm.name, cat: editCelebForm.category, price: parseFloat(editCelebForm.price), img: editCelebForm.photo || c.img, bio: editCelebForm.bio, country: editCelebForm.country, flag: editCelebForm.flag, vipPrice: parseFloat(editCelebForm.vipPrice) || 299, platinumPrice: parseFloat(editCelebForm.platinumPrice) || 999 } : c));
       setEditCeleb(null);
     } catch (e) { alert(e.message); }
   }
@@ -483,6 +483,10 @@ export default function AdminPage({ user }) {
                       <Input label="Flag Emoji" value={editCelebForm.flag} onChange={e => setEditCelebForm(f => ({ ...f, flag: e.target.value }))} />
                     </div>
                     <Input label="Bio" value={editCelebForm.bio} onChange={e => setEditCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <Input label="VIP Fan Card Price ($)" value={editCelebForm.vipPrice} onChange={e => setEditCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="299" />
+                      <Input label="Platinum Card Price ($)" value={editCelebForm.platinumPrice} onChange={e => setEditCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="999" />
+                    </div>
                     <div className="flex gap-2 mt-3">
                       <Button onClick={() => saveEditCeleb(c.id)} className="px-5 py-2 text-xs">Save Changes →</Button>
                       <Button onClick={() => setEditCeleb(null)} variant="ghost" className="px-5 py-2 text-xs">Cancel</Button>

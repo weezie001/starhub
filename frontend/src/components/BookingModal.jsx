@@ -273,7 +273,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
 
   if (!c) return null;
 
-  const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", video: "Video Message", meet: "Meet & Greet" };
+  const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", fan_card_platinum: "Platinum Elite Card", video: "Video Message", meet: "Meet & Greet" };
   const donateOptions = [200, 500, 1000, 1500, 2000];
 
   // Photo alone is enough (admin sees card type from image); code path requires a type selection too
@@ -331,7 +331,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
           <div className="text-center py-4">
             <div className="text-5xl mb-5">✅</div>
             <h3 className="text-primary font-serif text-2xl mb-2.5">
-              {type === "fan_card" ? "Card Purchased!" : "Request Submitted!"}
+              {(type === "fan_card" || type === "fan_card_platinum") ? "Card Purchased!" : "Request Submitted!"}
             </h3>
             <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto mb-6 text-sm">
               Your <strong className="text-foreground">{labels[type]}</strong>{" "}
@@ -351,17 +351,52 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
               </div>
             </DialogHeader>
 
-            {type === "fan_card" && (
-              <div className="mb-5 text-center border border-border rounded-xl p-4 bg-secondary">
-                <div className="text-primary font-bold text-xl font-serif">
-                  $299{" "}
-                  <span className="text-sm text-muted-foreground font-normal">/ lifetime access</span>
+            {(type === "fan_card" || type === "fan_card_platinum") && (() => {
+              const isPlat = type === "fan_card_platinum";
+              const price = isPlat ? (c.platinumPrice || 999) : (c.vipPrice || 299);
+              return (
+                <div className="mb-5 rounded-xl overflow-hidden border border-border">
+                  {/* Card visual */}
+                  <div className="relative h-36 flex items-center justify-between px-6" style={{
+                    background: isPlat
+                      ? "linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 40%, #1a1a2e 100%)"
+                      : "linear-gradient(135deg, #c8920a 0%, #f5cc6a 35%, #e8a830 60%, #c8920a 100%)"
+                  }}>
+                    {/* Celeb photo */}
+                    <img
+                      src={c.img || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`}
+                      alt={c.name}
+                      className="w-16 h-20 object-cover rounded-lg shadow-lg border-2 shrink-0"
+                      style={{ borderColor: isPlat ? "rgba(180,180,255,0.3)" : "rgba(255,255,255,0.4)" }}
+                      onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`; }}
+                    />
+                    <div className="text-right">
+                      <div style={{ color: isPlat ? "rgba(200,200,255,0.5)" : "rgba(100,60,0,0.6)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>
+                        {isPlat ? "Platinum" : "VIP Member"}
+                      </div>
+                      <div className="font-serif font-extrabold text-3xl" style={{ color: isPlat ? "rgba(200,200,255,0.8)" : "rgba(100,60,0,0.85)" }}>
+                        {isPlat ? "PLAT" : "VIP"}
+                      </div>
+                      <div style={{ color: isPlat ? "rgba(200,200,255,0.4)" : "rgba(100,60,0,0.5)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>
+                        {c.name.split(" ")[0].toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="absolute top-3 right-3 text-2xl" style={{ opacity: 0.7 }}>
+                      {isPlat ? "💎" : "👑"}
+                    </div>
+                  </div>
+                  {/* Price row */}
+                  <div className="px-4 py-3 bg-secondary flex items-center justify-between">
+                    <div>
+                      <div className="text-primary font-bold text-lg font-serif">${price.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ lifetime</span></div>
+                      <div className="text-muted-foreground text-[11px] mt-0.5">
+                        {isPlat ? "All VIP perks + meet & greet + signed memorabilia" : "Priority booking • Exclusive content • Birthday surprises"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-muted-foreground text-xs mt-1.5 leading-relaxed">
-                  Priority booking • Exclusive content • Special discounts • Birthday surprises
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {type === "donate" && (
               <div className="mb-4">
@@ -441,7 +476,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
                 : type === "donate"
                   ? `Donate $${donateAmt.toLocaleString()} →`
                   : type === "fan_card"
-                    ? "Purchase Fan Card $299 →"
+                    ? `Purchase ${labels[type]} $${type === "fan_card_platinum" ? (c.platinumPrice||999) : (c.vipPrice||299)} →`
                     : `Confirm ${labels[type] || "Booking"} →`}
             </Button>
             {!payment && (
