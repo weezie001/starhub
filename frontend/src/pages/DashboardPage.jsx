@@ -9,18 +9,28 @@ import { Separator } from "../components/ui/separator.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
-export default function DashboardPage({ user, bookings, favorites, onView, setPage }) {
+export default function DashboardPage({ user, bookings, favorites, onView, setPage, memberTier }) {
   const [tab, setTab] = useState("bookings");
   const isMobile = useIsMobile();
   const myBookings = bookings.filter(b => String(b.userId) === String(user.id));
   const myFavs = CELEBS.filter(c => favorites.includes(c.id));
   const spent = myBookings.reduce((s, b) => s + (b.amount || b.celeb?.price || 0), 0);
 
+  const accountLabel = user.role === "admin" ? "🔑 Administrator"
+    : memberTier === "platinum" ? "💎 Platinum Member"
+    : memberTier === "vip" ? "👑 VIP Member"
+    : "✨ Standard Member";
+
+  const statusLabel = user.role === "admin" ? "Admin"
+    : memberTier === "platinum" ? "Platinum"
+    : memberTier === "vip" ? "VIP"
+    : "Standard";
+
   const stats = [
-    ["Bookings",    myBookings.length,                                   "📅", "text-primary"],
-    ["Favorites",   myFavs.length,                                       "❤️", "text-destructive"],
-    ["Total Spent", `$${spent.toLocaleString()}`,                        "💰", "text-[#6DBF7B]"],
-    ["Status",      user.role === "admin" ? "Admin" : "VIP Fan",         "👑", "text-[#D4A84B]"],
+    ["Bookings",    myBookings.length,   "📅", "text-primary"],
+    ["Favorites",   myFavs.length,       "❤️", "text-destructive"],
+    ["Total Spent", `$${spent.toLocaleString()}`, "💰", "text-[#6DBF7B]"],
+    ["Status",      statusLabel,         "👑", "text-[#D4A84B]"],
   ];
 
   return (
@@ -32,7 +42,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
           Welcome back, {user.name.split(" ")[0]}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {user.email} • {user.role === "admin" ? "🔑 Administrator" : "✨ Fan Account"}
+          {user.email} • {accountLabel}
         </p>
       </div>
 
@@ -150,7 +160,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
           {[
             ["Full Name",    user.name],
             ["Email Address", user.email],
-            ["Account Type", user.role === "admin" ? "🔑 Administrator" : "✨ Fan Account"],
+            ["Account Type", accountLabel],
             ["Member Since", new Date(user.id).toLocaleDateString("en-US", { month: "long", year: "numeric" })],
             ["Bookings Made", myBookings.length],
             ["Total Spent",  `$${spent.toLocaleString()}`],

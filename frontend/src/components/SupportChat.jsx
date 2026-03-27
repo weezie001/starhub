@@ -229,10 +229,11 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
     socket.onopen = () => {
       setWsStatus("connected");
       reconnectAttempts.current = 0;
+      const userToken = (() => { try { return JSON.parse(localStorage.getItem("sb_user") || "{}").token || ""; } catch { return ""; } })();
       if (existingSessionId) {
-        socket.send(JSON.stringify({ type: "customer_join", existingSessionId, name, email }));
+        socket.send(JSON.stringify({ type: "customer_join", existingSessionId, name, email, userToken }));
       } else {
-        socket.send(JSON.stringify({ type: "customer_join", name, email, topic: topic || "General Inquiry" }));
+        socket.send(JSON.stringify({ type: "customer_join", name, email, topic: topic || "General Inquiry", userToken }));
       }
     };
 

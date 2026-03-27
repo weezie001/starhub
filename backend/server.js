@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert } = require('./email');
 const cloudinary = require('cloudinary').v2;
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
@@ -132,6 +132,8 @@ async function initDB() {
 
   await pool.query(`ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS "chatSessionId" TEXT`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS "invoiceId" TEXT`);
+  await pool.query(`ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS "isPremium" BOOLEAN DEFAULT FALSE`);
+  await pool.query(`ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS "memberTier" TEXT`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS blogs (
@@ -250,9 +252,26 @@ wss.on('connection', ws => {
 
     // ── CUSTOMER JOIN ──────────────────────────────────────────
     if (msg.type === 'customer_join') {
-      const { name, email, topic, existingSessionId } = msg;
+      const { name, email, topic, existingSessionId, userToken } = msg;
       clientName = name || 'Guest';
       role = 'customer';
+
+      // Detect premium membership
+      let isPremium = false;
+      let memberTier = null;
+      if (userToken) {
+        try {
+          const decoded = jwt.verify(userToken, SECRET);
+          const fanCards = await qAll(
+            `SELECT "bookingType" FROM bookings WHERE "userId"=$1 AND "bookingType" IN ('fan_card','fan_card_platinum') AND status='approved' LIMIT 1`,
+            [decoded.id]
+          );
+          if (fanCards.length > 0) {
+            isPremium = true;
+            memberTier = fanCards.some(b => b.bookingType === 'fan_card_platinum') ? 'platinum' : 'vip';
+          }
+        } catch {}
+      }
 
       if (existingSessionId) {
         sessionId = existingSessionId;
@@ -266,17 +285,20 @@ wss.on('connection', ws => {
       } else {
         sessionId = uid();
         await q(
-          'INSERT INTO chat_sessions (id,"customerName","customerEmail",topic,status) VALUES ($1,$2,$3,$4,$5)',
-          [sessionId, clientName, email || '', topic || 'General Inquiry', 'waiting']
+          'INSERT INTO chat_sessions (id,"customerName","customerEmail",topic,status,"isPremium","memberTier") VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [sessionId, clientName, email || '', topic || 'General Inquiry', 'waiting', isPremium, memberTier]
         );
-        activeSessions.set(sessionId, { customerWs: ws, agentWs: null, agentName: null });
+        activeSessions.set(sessionId, { customerWs: ws, agentWs: null, agentName: null, isPremium, memberTier });
         waitingQueue.push(sessionId);
         const position = waitingQueue.indexOf(sessionId) + 1;
         send(ws, { type: 'session_created', sessionId, position, total: waitingQueue.length });
-        broadcastToAgents({ type: 'new_session', sessionId, customerName: clientName, topic: topic || 'General Inquiry', position });
+        broadcastToAgents({ type: 'new_session', sessionId, customerName: clientName, topic: topic || 'General Inquiry', position, isPremium, memberTier });
         broadcastQueuePositions();
         const sysMsg = await persistMessage(sessionId, 'system', 'StraBook', `Welcome ${clientName}! You are #${position} in queue. A concierge agent will be with you shortly.`);
         send(ws, { type: 'message', message: sysMsg });
+        if (isPremium) {
+          sendPremiumSupportAlert({ customerName: clientName, email: email || '', tier: memberTier, topic: topic || 'General Inquiry' });
+        }
       }
     }
 
@@ -522,8 +544,11 @@ app.post('/api/bookings', authenticate, async (req, res) => {
       [Date.now().toString(), req.user.id, JSON.stringify(celeb), type, JSON.stringify(form), payment, amount]
     );
     res.json({ success: true });
-    sendBookingConfirmation({ name: form.name || req.user.name, email: form.email || req.user.email, celeb: celeb.name, type, amount, paymentMethod: payment });
-    sendAdminBookingAlert({ customerName: form.name || req.user.name, customerEmail: form.email || req.user.email, celeb: celeb.name, type, amount, paymentMethod: payment });
+    const customerName = form.name || req.user.name;
+    const customerEmail = form.email || req.user.email;
+    broadcastToAgents({ type: 'new_booking', bookingType: type, celebName: celeb.name, customerName, amount, isFanCard: type === 'fan_card' || type === 'fan_card_platinum' });
+    sendBookingConfirmation({ name: customerName, email: customerEmail, celeb: celeb.name, type, amount, paymentMethod: payment });
+    sendAdminBookingAlert({ customerName, customerEmail, celeb: celeb.name, type, amount, paymentMethod: payment });
   } catch { res.status(500).json({ error: 'Failed to save booking' }); }
 });
 
@@ -532,6 +557,19 @@ app.get('/api/user/bookings', authenticate, async (req, res) => {
     const rows = await qAll('SELECT * FROM bookings WHERE "userId"=$1 ORDER BY date DESC', [req.user.id]);
     res.json(rows.map(r => ({ ...r, celebData: JSON.parse(r.celebData), formData: JSON.parse(r.formData) })));
   } catch { res.status(500).json({ error: 'Database error' }); }
+});
+
+app.get('/api/me/memberships', authenticate, async (req, res) => {
+  try {
+    const rows = await qAll(
+      `SELECT id, "celebData", "bookingType", status FROM bookings WHERE "userId"=$1 AND "bookingType" IN ('fan_card','fan_card_platinum') ORDER BY date DESC`,
+      [req.user.id]
+    );
+    res.json(rows.map(r => {
+      const celeb = JSON.parse(r.celebData || '{}');
+      return { bookingId: r.id, celebId: String(celeb.id), celebName: celeb.name, celebImg: celeb.img, tier: r.bookingType === 'fan_card_platinum' ? 'platinum' : 'vip', status: r.status };
+    }));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ─────────────────────────────────────────────
@@ -811,6 +849,77 @@ app.post('/api/admin/users', authenticate, adminOnly, async (req, res) => {
       [id, name, email, hash, role === 'admin' ? 'admin' : 'user']);
     res.json({ id, name, email, role: role === 'admin' ? 'admin' : 'user' });
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: get user detail (bookings + memberships)
+app.get('/api/admin/users/:id/detail', authenticate, adminOnly, async (req, res) => {
+  try {
+    const u = await qOne('SELECT id,name,email,role,joined FROM users WHERE id=$1', [req.params.id]);
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    const bookings = await qAll(
+      'SELECT id,"bookingType",status,amount,date,"celebData" FROM bookings WHERE "userId"=$1 ORDER BY date DESC LIMIT 20',
+      [req.params.id]
+    );
+    const memberships = bookings
+      .filter(b => b.bookingType === 'fan_card' || b.bookingType === 'fan_card_platinum')
+      .map(b => {
+        const celeb = JSON.parse(b.celebData || '{}');
+        return { bookingId: b.id, celebId: String(celeb.id), celebName: celeb.name, tier: b.bookingType === 'fan_card_platinum' ? 'platinum' : 'vip', status: b.status };
+      });
+    res.json({
+      ...u,
+      bookings: bookings.map(b => ({ ...b, celebData: JSON.parse(b.celebData || '{}') })),
+      memberships,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: upgrade/grant user membership tier
+app.patch('/api/admin/users/:id/membership', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { tier, celebId, celebName, celebImg } = req.body;
+    if (!tier || !['vip', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Invalid tier' });
+    const bookingType = tier === 'platinum' ? 'fan_card_platinum' : 'fan_card';
+    const amount = tier === 'platinum' ? 999 : 299;
+    const targetUser = await qOne('SELECT id,name,email FROM users WHERE id=$1', [req.params.id]);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    const existing = await qOne(
+      `SELECT id,"bookingType" FROM bookings WHERE "userId"=$1 AND "bookingType" IN ('fan_card','fan_card_platinum') AND "celebData"::text LIKE $2 LIMIT 1`,
+      [req.params.id, `%"id":${celebId}%`]
+    );
+    if (existing) {
+      await q('UPDATE bookings SET "bookingType"=$1, status=$2, amount=$3 WHERE id=$4', [bookingType, 'approved', amount, existing.id]);
+    } else {
+      const celebData = JSON.stringify({ id: celebId, name: celebName, img: celebImg || null });
+      await q(
+        'INSERT INTO bookings (id,"userId","celebData","bookingType","formData","paymentMethod",status,amount) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+        [Date.now().toString(), req.params.id, celebData, bookingType, '{}', 'admin_grant', 'approved', amount]
+      );
+    }
+    res.json({ success: true });
+    // Send confirmation email to the user
+    sendBookingConfirmation({ name: targetUser.name, email: targetUser.email, celeb: celebName, type: bookingType, amount, paymentMethod: 'admin_grant' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Admin: edit user details
+app.patch('/api/admin/users/:id', authenticate, adminOnly, async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+    if (!name && !email && !role) return res.status(400).json({ error: 'Nothing to update' });
+    const fields = [];
+    const vals = [];
+    if (name)  { fields.push(`name=$${fields.length + 1}`);  vals.push(name); }
+    if (email) { fields.push(`email=$${fields.length + 1}`); vals.push(email); }
+    if (role)  { fields.push(`role=$${fields.length + 1}`);  vals.push(role === 'admin' ? 'admin' : 'user'); }
+    vals.push(req.params.id);
+    const updated = await qOne(`UPDATE users SET ${fields.join(',')} WHERE id=$${vals.length} RETURNING id,name,email,role,joined`, vals);
+    if (!updated) return res.status(404).json({ error: 'User not found' });
+    res.json(updated);
+  } catch(e) {
+    if (e.code === '23505') return res.status(400).json({ error: 'Email already in use' });
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Admin: delete user

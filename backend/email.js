@@ -221,6 +221,37 @@ async function sendAdminBookingAlert({ customerName, customerEmail, celeb, type,
   return send({ to: ADMIN, subject: `🔔 New Booking — ${customerName} × ${celeb}`, html: base('New booking received', body) });
 }
 
+// ── 6. Premium member support alert to admin ─────────────────────────────────
+async function sendPremiumSupportAlert({ customerName, email, tier, topic }) {
+  const isPlat = tier === 'platinum';
+  const tierLabel = isPlat ? '💎 Platinum Elite' : '👑 VIP';
+  const tierColor = isPlat ? '#b8cce8' : gold;
+
+  const body = `
+    <div style="background:${isPlat ? 'rgba(180,180,255,0.06)' : 'rgba(240,191,90,0.08)'};border:1px solid ${tierColor}30;border-radius:12px;padding:20px 24px;margin-bottom:20px;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">${isPlat ? '💎' : '👑'}</div>
+      <div style="font-size:16px;font-weight:800;color:${tierColor}">${tierLabel} Member</div>
+      <div style="font-size:12px;color:${muted};margin-top:4px;letter-spacing:1px;text-transform:uppercase">Priority Support Request</div>
+    </div>
+    <p style="color:#b0a898;font-size:15px;line-height:1.8;margin:0 0 20px">
+      A <strong style="color:${tierColor}">${tierLabel}</strong> member has requested live support and requires <strong style="color:#fff">immediate attention</strong>.
+    </p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:20px 24px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('Member', customerName)}
+        ${row('Email', email)}
+        ${row('Tier', tierLabel)}
+        ${row('Topic', topic || 'General Inquiry')}
+      </table>
+    </div>
+    <p style="color:${muted};font-size:13px;line-height:1.7;margin:20px 0 0">
+      Please prioritise this session in the support inbox immediately.
+    </p>
+    <div>${btn('Open Support Inbox →', 'https://starbooknow.com/#admin')}</div>`;
+
+  return send({ to: ADMIN, subject: `⚡ ${tierLabel} Member Needs Support — ${customerName}`, html: base(`${isPlat ? '💎' : '👑'} Priority Support Alert`, body) });
+}
+
 async function send({ to, subject, html }) {
   const resend = getResend();
   if (!resend) {
@@ -235,4 +266,4 @@ async function send({ to, subject, html }) {
   }
 }
 
-module.exports = { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice };
+module.exports = { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert };

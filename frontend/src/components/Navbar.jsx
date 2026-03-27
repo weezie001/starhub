@@ -4,7 +4,7 @@ import { Button } from "./ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { cn } from "../lib/utils.js";
 
-export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, toggleTheme }) {
+export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, toggleTheme, memberTier }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -75,6 +75,19 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, t
                 My Profile
               </button>
             )}
+            {memberTier && (
+              <button
+                onClick={() => setPage("lounge")}
+                className={cn(
+                  "bg-transparent border-0 border-b-2 cursor-pointer text-[13px] font-sans tracking-wide transition-colors duration-200 py-1",
+                  page === "lounge"
+                    ? "border-primary text-primary font-bold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {memberTier === "platinum" ? "💎" : "👑"} Lounge
+              </button>
+            )}
             {user?.role === "admin" && (
               <button
                 onClick={() => setPage("admin")}
@@ -101,9 +114,21 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, t
             </button>
             {user ? (
               <>
-                <span className="text-muted-foreground text-[13px]">
-                  Hi, <strong className="text-foreground">{user.name.split(" ")[0]}</strong>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground text-[13px]">
+                    Hi, <strong className="text-foreground">{user.name.split(" ")[0]}</strong>
+                  </span>
+                  {memberTier === "platinum" && (
+                    <button onClick={() => setPage("lounge")} title="Members Lounge" className="bg-transparent border-0 cursor-pointer p-0 leading-none">
+                      <span className="plat-badge text-[11px] font-bold tracking-wider">💎 PLATINUM</span>
+                    </button>
+                  )}
+                  {memberTier === "vip" && (
+                    <button onClick={() => setPage("lounge")} title="Members Lounge" className="bg-transparent border-0 cursor-pointer p-0 leading-none">
+                      <span className="member-badge text-[11px] font-bold tracking-wider">👑 VIP</span>
+                    </button>
+                  )}
+                </div>
                 <Button onClick={onLogout} variant="ghost" size="sm">Sign Out</Button>
               </>
             ) : (
@@ -165,6 +190,17 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, t
               )}
             >
               My Profile
+            </button>
+          )}
+          {memberTier && (
+            <button
+              onClick={() => setPage("lounge")}
+              className={cn(
+                "border-0 rounded-lg cursor-pointer text-[15px] font-sans px-4 py-3 text-left font-semibold",
+                page === "lounge" ? "bg-primary/10 text-primary" : "bg-transparent text-muted-foreground"
+              )}
+            >
+              {memberTier === "platinum" ? "💎 Platinum Lounge" : "👑 VIP Lounge"}
             </button>
           )}
           {user?.role === "admin" && (

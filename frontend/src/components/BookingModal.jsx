@@ -256,7 +256,7 @@ function PaymentSelect({ value, onChange, onContactAdmin }) {
   );
 }
 
-export default function BookingModal({ open, c, type, onClose, onConfirm, user, onOpenChat }) {
+export default function BookingModal({ open, c, type, onClose, onConfirm, user, memberships, onOpenChat }) {
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
   const [payment, setPayment] = useState("");
   const [donateAmt, setDonateAmt] = useState(500);
@@ -348,6 +348,20 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
           <>
             <DialogHeader>
               <div className="mb-2">
+                {(() => {
+                  const m = memberships?.find(m => String(m.celebId) === String(c?.id));
+                  if (!m || m.status !== "approved") return null;
+                  const isPlat = m.tier === "platinum";
+                  return (
+                    <div className="flex items-center gap-2 mb-2.5 rounded-full px-3 py-1.5 border w-fit" style={{ background: isPlat ? "rgba(180,200,240,0.08)" : "rgba(240,191,90,0.08)", borderColor: isPlat ? "rgba(180,200,240,0.3)" : "rgba(240,191,90,0.3)" }}>
+                      <span className="text-sm">{isPlat ? "💎" : "👑"}</span>
+                      <span className="font-bold text-[11px] tracking-widest uppercase" style={{ color: isPlat ? "#b8cce8" : "#f0bf5a" }}>
+                        {isPlat ? "Platinum" : "VIP"} Priority Member
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">· Priority booking active</span>
+                    </div>
+                  );
+                })()}
                 <Badge className="mb-2.5">{labels[type]}</Badge>
                 <DialogTitle className="text-2xl mt-1">{c.name}</DialogTitle>
               </div>
@@ -425,7 +439,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
               </div>
             )}
 
-            {type === "booking" && (
+            {type === "booking" && c.price != null && (
               <div className="text-primary font-bold mb-4 text-sm">
                 ${c.price.toLocaleString()} base rate
               </div>

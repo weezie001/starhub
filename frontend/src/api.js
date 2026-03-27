@@ -43,6 +43,7 @@ export const api = {
   createBooking: (celeb, type, form, payment, donateAmt) =>
     req('/bookings', { method: 'POST', body: JSON.stringify({ celeb, type, form, payment, donateAmt }) }),
   getUserBookings: () => req('/user/bookings').then(rows => rows.map(mapBooking)),
+  getUserMemberships: () => req('/me/memberships'),
 
   // Chat
   getChatHistory: (sessionId) => req(`/chat/${sessionId}/history`),
@@ -74,6 +75,9 @@ export const api = {
   deleteCelebrity: (id) => req(`/admin/celebrities/${id}`, { method: 'DELETE' }),
   createUser: (data) => req('/admin/users', { method: 'POST', body: JSON.stringify(data) }),
   deleteUser: (id) => req(`/admin/users/${id}`, { method: 'DELETE' }),
+  getAdminUserDetail: (id) => req(`/admin/users/${id}/detail`),
+  upgradeUserMembership: (id, data) => req(`/admin/users/${id}/membership`, { method: 'PATCH', body: JSON.stringify(data) }),
+  updateAdminUser: (id, data) => req(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Admin blogs
   addBlog: (data) => req('/admin/blogs', { method: 'POST', body: JSON.stringify(data) }),

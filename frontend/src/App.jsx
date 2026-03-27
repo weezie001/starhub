@@ -22,6 +22,7 @@ import AdminPage from "./pages/admin/AdminPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import FanCardPage from "./pages/FanCardPage.jsx";
+import LoungePage from "./pages/LoungePage.jsx";
 
 // ── GLOBAL STYLES ────────────────────────────────────────────
 const GLOBAL_CSS = `
@@ -45,6 +46,11 @@ const GLOBAL_CSS = `
   .typing-dot:nth-child(2){animation-delay:0.2s}
   .typing-dot:nth-child(3){animation-delay:0.4s}
   @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+  html.tier-vip { --primary: 43 86% 60%; }
+  html.tier-platinum { --primary: 220 40% 75%; }
+  @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+  .member-badge{background:linear-gradient(90deg,#c8920a,#f5cc6a,#e8a830,#f5cc6a,#c8920a);background-size:200%;animation:shimmer 3s linear infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .plat-badge{background:linear-gradient(90deg,#7090b0,#b8d0e8,#d0e4f4,#b8d0e8,#7090b0);background-size:200%;animation:shimmer 3s linear infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 `;
 
 function GlobalStyles() {
@@ -135,7 +141,7 @@ function ContactPage({ setPage }) {
 }
 
 // ── MAIN APP ─────────────────────────────────────────────────
-const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy","fancard"];
+const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy","fancard","lounge"];
 
 function getHashPage() {
   const hash = window.location.hash.slice(1);
@@ -156,6 +162,7 @@ export default function App() {
   function toggleTheme() { setTheme(t => t === "dark" ? "light" : "dark"); }
   const [favorites, setFavorites] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [memberships, setMemberships] = useState([]);
   const [authModal, setAuthModal] = useState(null);
   const [celebModal, setCelebModal] = useState(null);
   const [bookingModal, setBookingModal] = useState(null);
@@ -184,6 +191,7 @@ export default function App() {
         const userData = JSON.parse(raw);
         setUser(userData);
         api.getUserBookings().then(setBookings).catch(() => {});
+        api.getUserMemberships().then(setMemberships).catch(() => {});
       }
       const favRaw = localStorage.getItem("sb_favs");
       if (favRaw) setFavorites(JSON.parse(favRaw));
@@ -194,7 +202,7 @@ export default function App() {
   // Only redirect after we know whether a user is logged in
   useEffect(() => {
     if (!userLoaded) return;
-    const authPages = ["dashboard", "admin"];
+    const authPages = ["dashboard", "admin", "lounge"];
     if (authPages.includes(page) && !user) setPage("home");
   }, [page, user, userLoaded]);
 
@@ -203,11 +211,13 @@ export default function App() {
     try { localStorage.setItem("sb_user", JSON.stringify(userData)); } catch {}
     setAuthModal(null);
     api.getUserBookings().then(setBookings).catch(() => {});
+    api.getUserMemberships().then(setMemberships).catch(() => {});
   }
 
   function handleLogout() {
     setUser(null);
     setBookings([]);
+    setMemberships([]);
     try { localStorage.removeItem("sb_user"); } catch {}
     setPage("home");
   }
@@ -241,27 +251,39 @@ export default function App() {
     onFav: handleFav,
   };
 
+  // Apply membership tier CSS class to <html>
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.remove("tier-vip", "tier-platinum");
+    if (memberships.some(m => m.status === "approved" && m.tier === "platinum")) html.classList.add("tier-platinum");
+    else if (memberships.some(m => m.status === "approved" && m.tier === "vip")) html.classList.add("tier-vip");
+  }, [memberships]);
+
+  const highestTier = memberships.some(m => m.status === "approved" && m.tier === "platinum") ? "platinum"
+    : memberships.some(m => m.status === "approved" && m.tier === "vip") ? "vip" : null;
+
   return (
     <div className="bg-background" style={{ minHeight: "100vh" }}>
       <GlobalStyles />
-      <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+      <Navbar page={page} setPage={setPage} user={user} onAuth={m => setAuthModal(m)} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} memberTier={highestTier} />
 
       {page === "home"        && <HomePage {...sharedProps} setPage={setPage} openChat={openChat} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "celebrities" && <CelebritiesPage {...sharedProps} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}
       {page === "contact"     && <ContactPage setPage={setPage} />}
-      {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} />}
+      {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} memberTier={highestTier} />}
       {page === "admin"       && user?.role === "admin" && <AdminPage user={user} />}
       {page === "blog"        && <BlogsPage setPage={setPage} />}
       {page === "terms"       && <TermsPage setPage={setPage} />}
       {page === "privacy"     && <PrivacyPage setPage={setPage} />}
       {page === "fancard"     && <FanCardPage c={fanCardCeleb} onBook={handleBook} setPage={setPage} />}
+      {page === "lounge"      && user && <LoungePage user={user} memberships={memberships} setPage={setPage} onBook={handleBook} />}
 
       {/* Modals — always rendered, visibility controlled by open prop */}
       <AuthModal open={!!authModal} mode={authModal || "login"} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />
       <CelebModal open={!!celebModal} c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={celebModal ? favorites.includes(celebModal.id) : false} onFav={handleFav} />
-      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); }} user={user} onOpenChat={() => { setBookingModal(null); openChat(); }} />
+      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); api.getUserMemberships().then(setMemberships).catch(() => {}); }} user={user} memberships={memberships} onOpenChat={() => { setBookingModal(null); openChat(); }} />
 
       {/* Live support chat widget — hidden on admin page to avoid covering inbox UI */}
       {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} onAuth={m => setAuthModal(m)} />}

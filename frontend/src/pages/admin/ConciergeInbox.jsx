@@ -73,6 +73,26 @@ const STATUS_COLORS = {
   waiting: G.amber, active: G.green, closed: G.dim,
 };
 
+function playNotification(isPremium) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = isPremium ? [1046, 1318, 1568] : [880, 1108];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(isPremium ? 0.35 : 0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t);
+      osc.stop(t + 0.35);
+    });
+  } catch {}
+}
+
 // Map backend DB session row → display shape
 function mapSession(s) {
   return {
@@ -80,6 +100,8 @@ function mapSession(s) {
     name: s.customerName || s.name || "Unknown",
     email: s.customerEmail || s.email || "",
     lastMsg: s.lastMessage || s.lastMsg || "",
+    isPremium: s.isPremium || s.is_premium || false,
+    memberTier: s.memberTier || s.member_tier || null,
   };
 }
 
@@ -95,22 +117,30 @@ function mapMsg(m) {
 }
 
 function SessionItem({ session, isActive, onClick, unread }) {
+  const isPremium = session.isPremium || session.is_premium;
+  const memberTier = session.memberTier || session.member_tier;
+  const premiumColor = memberTier === "platinum" ? "#b8cce8" : G.gold;
   return (
     <button onClick={onClick} style={{
       width: "100%", textAlign: "left",
-      background: isActive ? `${G.gold}10` : "none",
-      border: `1px solid ${isActive ? G.gold + "40" : "transparent"}`,
+      background: isActive ? `${G.gold}10` : isPremium ? `${premiumColor}08` : "none",
+      border: `1px solid ${isActive ? G.gold + "40" : isPremium ? premiumColor + "30" : "transparent"}`,
       borderRadius: 10, padding: "12px 14px", cursor: "pointer",
       transition: "all 0.2s", marginBottom: 6,
     }}
-      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = G.s2; }}
-      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "none"; }}>
+      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = isPremium ? `${premiumColor}12` : G.s2; }}
+      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = isPremium ? `${premiumColor}08` : "none"; }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: STATUS_COLORS[session.status] || G.dim, flexShrink: 0 }} />
           <span style={{ color: G.text, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {session.name}
           </span>
+          {isPremium && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: premiumColor, letterSpacing: 1, flexShrink: 0 }}>
+              {memberTier === "platinum" ? "💎 PLAT" : "👑 VIP"}
+            </span>
+          )}
         </div>
         {unread > 0 && (
           <span style={{ background: G.red, color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 50, padding: "2px 7px", flexShrink: 0 }}>
@@ -187,11 +217,12 @@ export default function ConciergeInbox({ user }) {
 
         // New session from a customer
         if (msg.type === "new_session") {
-          const newSession = mapSession(msg.session || { id: msg.sessionId, customerName: msg.customerName, status: "waiting", topic: msg.topic });
+          const newSession = mapSession(msg.session || { id: msg.sessionId, customerName: msg.customerName, status: "waiting", topic: msg.topic, isPremium: msg.isPremium, memberTier: msg.memberTier });
           setSessions(prev => {
             const exists = prev.find(s => s.id === newSession.id);
             return exists ? prev : [newSession, ...prev];
           });
+          playNotification(msg.isPremium);
         }
 
         // Session claimed confirmation (includes full history)
@@ -374,6 +405,7 @@ export default function ConciergeInbox({ user }) {
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const waitingCount = sessions.filter(s => s.status === "waiting").length;
+  const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0);
 
   // Mobile: show list when no session, show chat when session selected
   const showList = !isMobile || !activeSessionId;
@@ -394,8 +426,11 @@ export default function ConciergeInbox({ user }) {
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           {[["chat", "💬 Chat"], ["waitlist", "📋 Waitlist"]].map(([t, l]) => (
-            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, background: tab === t ? G.gold + "18" : "none", border: `1px solid ${tab === t ? G.gold + "40" : G.border}`, borderRadius: 8, padding: "7px 0", color: tab === t ? G.gold : G.muted, fontSize: 11, cursor: "pointer", fontFamily: G.sans, fontWeight: tab === t ? 700 : 400, transition: "all 0.2s" }}>
+            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, background: tab === t ? G.gold + "18" : "none", border: `1px solid ${tab === t ? G.gold + "40" : G.border}`, borderRadius: 8, padding: "7px 0", color: tab === t ? G.gold : G.muted, fontSize: 11, cursor: "pointer", fontFamily: G.sans, fontWeight: tab === t ? 700 : 400, transition: "all 0.2s", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
               {l}
+              {t === "chat" && totalUnread > 0 && (
+                <span style={{ background: G.red, color: "#fff", fontSize: 9, fontWeight: 800, borderRadius: 50, padding: "1px 5px", lineHeight: 1.4 }}>{totalUnread}</span>
+              )}
             </button>
           ))}
         </div>
@@ -469,7 +504,14 @@ export default function ConciergeInbox({ user }) {
               )}
               <div style={{ width: 34, height: 34, borderRadius: "50%", background: G.gold + "20", border: `1px solid ${G.gold}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>👤</div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ color: G.text, fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSession.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: G.text, fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSession.name}</span>
+                  {activeSession.isPremium && (
+                    <span style={{ fontSize: 10, fontWeight: 800, color: activeSession.memberTier === "platinum" ? "#b8cce8" : G.gold, letterSpacing: 1, flexShrink: 0, background: activeSession.memberTier === "platinum" ? "rgba(180,200,240,0.1)" : `${G.gold}15`, border: `1px solid ${activeSession.memberTier === "platinum" ? "#b8cce840" : G.gold + "30"}`, borderRadius: 50, padding: "1px 7px" }}>
+                      {activeSession.memberTier === "platinum" ? "💎 PLATINUM" : "👑 VIP"}
+                    </span>
+                  )}
+                </div>
                 <div style={{ color: G.dim, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSession.email} • {activeSession.topic || "General"}</div>
               </div>
             </div>

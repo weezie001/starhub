@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { avatar } from "../../lib/tokens.js";
 import { Stars } from "../../components/ui.jsx";
 import { Button } from "../../components/ui/button.jsx";
@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/input.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog.jsx";
 import ConfirmModal from "../../components/ui/confirm-modal.jsx";
 import { api } from "../../api.js";
+import { WS_URL } from "../../lib/tokens.js";
 import ConciergeInbox from "./ConciergeInbox.jsx";
 
 const CATS = ["actors", "musicians", "sports", "influencers", "royalty", "comedians", "other"];
@@ -75,7 +76,7 @@ export default function AdminPage({ user }) {
   // ── celebrities ────────────────────────────────────────────────────────────
   const [celebs, setCelebs] = useState([]);
   const [showAddCeleb, setShowAddCeleb] = useState(false);
-  const [celebForm, setCelebForm] = useState({ name: "", category: "actors", price: "", photo: "", bio: "", country: "", flag: "" });
+  const [celebForm, setCelebForm] = useState({ name: "", category: "actors", price: "", photo: "", bio: "", country: "", flag: "", vipPrice: "", platinumPrice: "" });
   const [celebError, setCelebError] = useState("");
   const photoInputRef = useRef(null);
   const [editCeleb, setEditCeleb] = useState(null);
@@ -90,6 +91,12 @@ export default function AdminPage({ user }) {
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [viewUser, setViewUser] = useState(null);
+  const [viewUserLoading, setViewUserLoading] = useState(false);
+  const [upgradingMembership, setUpgradingMembership] = useState(false);
+  const [editingUser, setEditingUser] = useState(false);
+  const [editUserForm, setEditUserForm] = useState({ name: "", email: "", role: "user" });
+  const [savingUser, setSavingUser] = useState(false);
 
   // ── blogs ──────────────────────────────────────────────────────────────────
   const [blogs, setBlogs] = useState([]);
@@ -109,6 +116,111 @@ export default function AdminPage({ user }) {
 
   // ── misc ───────────────────────────────────────────────────────────────────
   const [confirmModal, setConfirmModal] = useState(null);
+
+  // ── global notification WebSocket ──────────────────────────────────────────
+  const [globalUnread, setGlobalUnread] = useState(0);
+  const [inboxUnread, setInboxUnread] = useState(0);
+  const [recentNotifs, setRecentNotifs] = useState([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifWs = useRef(null);
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+
+  function playAdminNotif(isPremium, type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = isPremium ? [1046, 1318, 1568]
+        : type === "new_booking" ? [523, 659, 784]
+        : type === "waitlist_new" ? [440, 554]
+        : [880, 1108];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "sine"; osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.18;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.start(t); osc.stop(t + 0.35);
+      });
+    } catch {}
+  }
+
+  function pushNotif(n) {
+    setRecentNotifs(prev => [{ ...n, id: Date.now() + Math.random(), ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }, ...prev].slice(0, 20));
+    setGlobalUnread(c => c + 1);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    let reconnectTimer = null;
+
+    function connect() {
+      if (cancelled) return;
+      const socket = new WebSocket(WS_URL);
+      notifWs.current = socket;
+
+      socket.onopen = () => {
+        if (cancelled) { socket.close(); return; }
+        const token = (() => { try { return JSON.parse(localStorage.getItem("sb_user") || "{}").token || ""; } catch { return ""; } })();
+        socket.send(JSON.stringify({ type: "agent_join", token }));
+      };
+
+      socket.onmessage = (evt) => {
+        if (cancelled) return;
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === "new_session") {
+            playAdminNotif(msg.isPremium, "new_session");
+            const label = msg.isPremium ? `💎 Premium support — ${msg.customerName}` : `💬 New support chat — ${msg.customerName}`;
+            pushNotif({ label, icon: "💬", tab: "inbox", isPremium: msg.isPremium });
+            if (tabRef.current !== "inbox") setInboxUnread(n => n + 1);
+          }
+          if (msg.type === "message" && tabRef.current !== "inbox") {
+            setInboxUnread(n => n + 1);
+          }
+          if (msg.type === "new_booking") {
+            playAdminNotif(false, "new_booking");
+            const typeLabel = msg.bookingType === "fan_card" ? "👑 VIP Fan Card"
+              : msg.bookingType === "fan_card_platinum" ? "💎 Platinum Card"
+              : msg.bookingType === "donate" ? "❤️ Donation"
+              : "📅 Booking";
+            pushNotif({ label: `${typeLabel} — ${msg.celebName} · $${(msg.amount || 0).toLocaleString()}`, icon: msg.isFanCard ? "🃏" : "📅", tab: "bookings", sub: msg.customerName });
+          }
+          if (msg.type === "waitlist_new") {
+            playAdminNotif(false, "waitlist_new");
+            pushNotif({ label: `⏳ Waitlist — ${msg.entry?.name || "New entry"}`, icon: "⏳", tab: "bookings", sub: msg.entry?.eventType || "" });
+          }
+        } catch {}
+      };
+
+      socket.onclose = () => {
+        if (!cancelled) reconnectTimer = setTimeout(connect, 5000);
+      };
+    }
+
+    connect();
+    return () => {
+      cancelled = true;
+      clearTimeout(reconnectTimer);
+      if (notifWs.current) { notifWs.current.onclose = null; notifWs.current.close(); }
+    };
+  }, []);
+
+  // Clear inbox badge when admin opens inbox tab
+  useEffect(() => {
+    if (tab === "inbox") setInboxUnread(0);
+  }, [tab]);
+
+  // Close notification dropdown on outside click
+  useEffect(() => {
+    if (!showNotifDropdown) return;
+    const handler = (e) => {
+      if (!e.target.closest("[data-notif-dropdown]")) setShowNotifDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showNotifDropdown]);
 
   // ── photo helpers ──────────────────────────────────────────────────────────
   function resizePhoto(file, maxPx, cb) {
@@ -205,7 +317,7 @@ export default function AdminPage({ user }) {
     try {
       const res = await api.addCelebrity(celebForm);
       setCelebs(prev => [...prev, { ...res, avail: res.avail !== false, img: res.photo || null }]);
-      setCelebForm({ name: "", category: "actors", price: "", photo: "", bio: "", country: "", flag: "" });
+      setCelebForm({ name: "", category: "actors", price: "", photo: "", bio: "", country: "", flag: "", vipPrice: "", platinumPrice: "" });
       setShowAddCeleb(false);
     } catch (e) { setCelebError(e.message); }
   }
@@ -244,6 +356,40 @@ export default function AdminPage({ user }) {
         finally { setDeletingUserId(null); }
       },
     });
+  }
+
+  async function openUserDetail(u) {
+    setViewUser({ ...u, bookings: [], memberships: [] });
+    setEditingUser(false);
+    setViewUserLoading(true);
+    try {
+      const detail = await api.getAdminUserDetail(u.id);
+      setViewUser(detail);
+      setEditUserForm({ name: detail.name, email: detail.email, role: detail.role });
+    } catch {}
+    finally { setViewUserLoading(false); }
+  }
+
+  async function saveUserEdits() {
+    setSavingUser(true);
+    try {
+      const updated = await api.updateAdminUser(viewUser.id, editUserForm);
+      setViewUser(prev => ({ ...prev, ...updated }));
+      setUsers(prev => prev.map(u => u.id === viewUser.id ? { ...u, ...updated } : u));
+      setEditingUser(false);
+    } catch (e) { alert(e.message); }
+    finally { setSavingUser(false); }
+  }
+
+  async function handleUpgradeMembership(userId, tier, celeb) {
+    setUpgradingMembership(true);
+    try {
+      await api.upgradeUserMembership(userId, { tier, celebId: celeb?.id, celebName: celeb?.name, celebImg: celeb?.img });
+      // Refresh detail
+      const detail = await api.getAdminUserDetail(userId);
+      setViewUser(detail);
+    } catch (e) { alert(e.message); }
+    finally { setUpgradingMembership(false); }
   }
 
   // ── blog actions ───────────────────────────────────────────────────────────
@@ -343,9 +489,52 @@ export default function AdminPage({ user }) {
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="pt-16 pb-12 px-4 sm:px-7 max-w-[1140px] mx-auto min-h-screen">
-      <div className="flex items-center gap-3.5 mb-8 mt-8 flex-wrap">
-        <Badge variant="destructive" className="text-[11px] px-3 py-1">⚙ ADMIN PANEL</Badge>
-        <h1 className="text-[clamp(20px,3.5vw,36px)] font-serif text-foreground m-0 font-bold">Control Dashboard</h1>
+      <div className="flex items-center justify-between mb-8 mt-8 flex-wrap gap-3">
+        <div className="flex items-center gap-3.5 flex-wrap">
+          <Badge variant="destructive" className="text-[11px] px-3 py-1">⚙ ADMIN PANEL</Badge>
+          <h1 className="text-[clamp(20px,3.5vw,36px)] font-serif text-foreground m-0 font-bold">Control Dashboard</h1>
+        </div>
+        <div className="relative" data-notif-dropdown>
+          <button
+            onClick={() => { setShowNotifDropdown(p => !p); setGlobalUnread(0); }}
+            className="relative bg-transparent border border-border rounded-xl px-4 py-2 cursor-pointer flex items-center gap-2 hover:border-primary/40 transition-colors"
+          >
+            <span className="text-xl">🔔</span>
+            <span className="text-muted-foreground text-xs font-sans hidden sm:inline">Notifications</span>
+            {globalUnread > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none animate-pulse">
+                {globalUnread > 99 ? "99+" : globalUnread}
+              </span>
+            )}
+          </button>
+          {showNotifDropdown && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <span className="text-sm font-semibold text-foreground font-sans">Recent Activity</span>
+                <button onClick={() => setShowNotifDropdown(false)} className="text-muted-foreground hover:text-foreground text-xs cursor-pointer bg-transparent border-none font-sans">✕</button>
+              </div>
+              <div className="max-h-72 overflow-y-auto">
+                {recentNotifs.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-muted-foreground text-xs font-sans">No recent activity</div>
+                ) : recentNotifs.map(n => (
+                  <button key={n.id} onClick={() => { setTab(n.tab); setShowNotifDropdown(false); }} className="w-full text-left px-4 py-3 hover:bg-white/5 cursor-pointer border-none bg-transparent border-b border-border/50 last:border-none transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-base mt-0.5 shrink-0">{n.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-xs font-semibold truncate font-sans ${n.isPremium ? "text-amber-400" : "text-foreground"}`}>{n.label}</div>
+                        {n.sub && <div className="text-[10px] text-muted-foreground truncate">{n.sub}</div>}
+                      </div>
+                      <span className="text-[9px] text-muted-foreground shrink-0 mt-0.5">{n.ts}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {recentNotifs.length > 0 && (
+                <button onClick={() => { setRecentNotifs([]); setShowNotifDropdown(false); }} className="w-full text-center text-[10px] text-muted-foreground py-2.5 border-t border-border hover:text-foreground cursor-pointer bg-transparent border-none border-t border-border font-sans">Clear all</button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -362,8 +551,13 @@ export default function AdminPage({ user }) {
       {/* Tabs */}
       <div className="border-b border-border flex gap-0 mb-6 overflow-x-auto scrollbar-none">
         {TABS.map(([t, l]) => (
-          <button key={t} onClick={() => setTab(t)} className={["bg-transparent border-none px-4 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans whitespace-nowrap", tab === t ? "border-b-2 border-destructive text-destructive font-bold" : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground"].join(" ")}>
+          <button key={t} onClick={() => setTab(t)} className={["bg-transparent border-none px-4 py-3 cursor-pointer text-[13px] -mb-px transition-all duration-200 font-sans whitespace-nowrap flex items-center gap-1.5", tab === t ? "border-b-2 border-destructive text-destructive font-bold" : "border-b-2 border-transparent text-muted-foreground font-normal hover:text-foreground"].join(" ")}>
             {l}
+            {t === "inbox" && inboxUnread > 0 && (
+              <span className="bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center leading-none">
+                {inboxUnread > 99 ? "99+" : inboxUnread}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -413,7 +607,7 @@ export default function AdminPage({ user }) {
                     {CATS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <Input label="Price ($) *" value={celebForm.price} onChange={e => setCelebForm(f => ({ ...f, price: e.target.value }))} placeholder="5000" type="number" />
+                <Input label="Session / Booking Price ($) *" value={celebForm.price} onChange={e => setCelebForm(f => ({ ...f, price: e.target.value }))} placeholder="5000" type="number" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <div>
@@ -431,6 +625,10 @@ export default function AdminPage({ user }) {
                 <Input label="Flag Emoji" value={celebForm.flag} onChange={e => setCelebForm(f => ({ ...f, flag: e.target.value }))} placeholder="🇺🇸" />
               </div>
               <Input label="Bio" value={celebForm.bio} onChange={e => setCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Input label="👑 VIP Gold Card Price ($/mo)" value={celebForm.vipPrice} onChange={e => setCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="299 (default)" />
+                <Input label="💎 Platinum Card Price ($/mo)" value={celebForm.platinumPrice} onChange={e => setCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="999 (default)" />
+              </div>
               <Button onClick={addCeleb} className="mt-2 px-6 py-2 text-xs">Add Celebrity →</Button>
             </div>
           )}
@@ -465,7 +663,7 @@ export default function AdminPage({ user }) {
                           {CATS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
                       </div>
-                      <Input label="Price ($)" value={editCelebForm.price} onChange={e => setEditCelebForm(f => ({ ...f, price: e.target.value }))} type="number" />
+                      <Input label="Session / Booking Price ($)" value={editCelebForm.price} onChange={e => setEditCelebForm(f => ({ ...f, price: e.target.value }))} type="number" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                       <div>
@@ -484,8 +682,8 @@ export default function AdminPage({ user }) {
                     </div>
                     <Input label="Bio" value={editCelebForm.bio} onChange={e => setEditCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
                     <div className="grid grid-cols-2 gap-3 mt-3">
-                      <Input label="VIP Fan Card Price ($)" value={editCelebForm.vipPrice} onChange={e => setEditCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="299" />
-                      <Input label="Platinum Card Price ($)" value={editCelebForm.platinumPrice} onChange={e => setEditCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="999" />
+                      <Input label="👑 VIP Gold Card Price ($/mo)" value={editCelebForm.vipPrice} onChange={e => setEditCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="299" />
+                      <Input label="💎 Platinum Card Price ($/mo)" value={editCelebForm.platinumPrice} onChange={e => setEditCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="999" />
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button onClick={() => saveEditCeleb(c.id)} className="px-5 py-2 text-xs">Save Changes →</Button>
@@ -770,6 +968,12 @@ export default function AdminPage({ user }) {
                 <div className="flex items-center gap-2.5">
                   <Badge variant={u.role === "admin" ? "destructive" : "default"}>{u.role?.toUpperCase()}</Badge>
                   <span className="text-muted-foreground/60 text-[11px]">Joined {new Date(u.joined).toLocaleDateString()}</span>
+                  <button
+                    onClick={() => openUserDetail(u)}
+                    className="bg-transparent border border-primary/40 rounded-lg text-primary cursor-pointer px-2.5 py-1 text-xs font-sans hover:bg-primary/10 transition-colors"
+                  >
+                    View
+                  </button>
                   {u.id !== user.id && (
                     <button
                       onClick={() => deleteUser(u)}
@@ -787,6 +991,152 @@ export default function AdminPage({ user }) {
       )}
 
       {tab === "inbox" && <ConciergeInbox user={user} />}
+
+      {/* ── User Detail Modal ── */}
+      {viewUser && (
+        <Dialog open={!!viewUser} onOpenChange={o => !o && setViewUser(null)}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xl">
+                    {viewUser.role === "admin" ? "⚙" : "👤"}
+                  </div>
+                  <div>
+                    <DialogTitle className="text-xl font-serif">{viewUser.name}</DialogTitle>
+                    <p className="text-muted-foreground text-xs mt-0.5">{viewUser.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditingUser(e => !e)}
+                  className="bg-transparent border border-primary/40 rounded-lg text-primary cursor-pointer px-3 py-1.5 text-xs font-sans hover:bg-primary/10 transition-colors shrink-0"
+                >
+                  {editingUser ? "Cancel" : "✏️ Edit"}
+                </button>
+              </div>
+            </DialogHeader>
+
+            {/* ── Edit form ── */}
+            {editingUser && !viewUserLoading && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3 mb-2">
+                <div className="text-primary text-[10px] uppercase tracking-widest font-bold">Edit User</div>
+                <Input label="Name" value={editUserForm.name} onChange={e => setEditUserForm(f => ({ ...f, name: e.target.value }))} />
+                <Input label="Email" value={editUserForm.email} onChange={e => setEditUserForm(f => ({ ...f, email: e.target.value }))} type="email" />
+                <div>
+                  <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Role</label>
+                  <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <Button onClick={saveUserEdits} disabled={savingUser} className="w-full text-xs py-2">
+                  {savingUser ? "Saving…" : "Save Changes →"}
+                </Button>
+              </div>
+            )}
+
+            {viewUserLoading ? (
+              <div className="py-10 text-center text-muted-foreground text-sm">Loading details…</div>
+            ) : (
+              <div className="space-y-5 text-sm">
+
+                {/* ── Basic info ── */}
+                <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-2">Account Info</div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Role</span><Badge variant={viewUser.role === "admin" ? "destructive" : "default"}>{viewUser.role?.toUpperCase()}</Badge></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Joined</span><span className="text-foreground">{new Date(viewUser.joined).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total Bookings</span><span className="text-foreground font-semibold">{viewUser.bookings?.length ?? 0}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total Spent</span><span className="text-primary font-bold">${(viewUser.bookings || []).filter(b => b.status === "approved").reduce((s, b) => s + (b.amount || 0), 0).toLocaleString()}</span></div>
+                </div>
+
+                {/* ── Memberships ── */}
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-3">Membership Status</div>
+                  {(viewUser.memberships || []).length === 0 ? (
+                    <p className="text-muted-foreground text-xs mb-3">No fan card memberships yet.</p>
+                  ) : (
+                    <div className="space-y-2 mb-3">
+                      {viewUser.memberships.map(m => (
+                        <div key={m.bookingId} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                          <div>
+                            <span className="text-foreground text-xs font-semibold">{m.celebName}</span>
+                            <span className="ml-2 text-[10px] font-bold" style={{ color: m.tier === "platinum" ? "#b8cce8" : "#f0bf5a" }}>
+                              {m.tier === "platinum" ? "💎 Platinum" : "👑 VIP"}
+                            </span>
+                          </div>
+                          <Badge variant={m.status === "approved" ? "success" : "warning"} className="text-[9px]">
+                            {m.status?.toUpperCase()}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── Upgrade controls ── */}
+                  {(() => {
+                    const approved = (viewUser.memberships || []).filter(m => m.status === "approved");
+                    const highestTier = approved.some(m => m.tier === "platinum") ? "platinum"
+                      : approved.some(m => m.tier === "vip") ? "vip" : null;
+                    // Pick first celeb with a membership, or allow manual grant
+                    const firstMember = approved[0];
+                    const pendingMember = (viewUser.memberships || []).find(m => m.status !== "approved");
+
+                    return (
+                      <div className="space-y-2">
+                        {pendingMember && (
+                          <Button
+                            size="sm" className="w-full text-xs"
+                            disabled={upgradingMembership}
+                            onClick={() => handleUpgradeMembership(viewUser.id, pendingMember.tier, { id: pendingMember.celebId, name: pendingMember.celebName })}
+                          >
+                            {upgradingMembership ? "Activating…" : `✅ Approve ${pendingMember.tier === "platinum" ? "Platinum" : "VIP"} — ${pendingMember.celebName}`}
+                          </Button>
+                        )}
+                        {highestTier === "vip" && firstMember && (
+                          <Button
+                            size="sm" variant="outline" className="w-full text-xs"
+                            disabled={upgradingMembership}
+                            onClick={() => handleUpgradeMembership(viewUser.id, "platinum", { id: firstMember.celebId, name: firstMember.celebName, img: firstMember.celebImg })}
+                          >
+                            {upgradingMembership ? "Upgrading…" : `💎 Upgrade to Platinum — ${firstMember.celebName}`}
+                          </Button>
+                        )}
+                        {!highestTier && (
+                          <p className="text-muted-foreground text-[11px] italic">Grant a membership by approving a pending fan card booking in the Bookings tab.</p>
+                        )}
+                        {highestTier === "platinum" && (
+                          <p className="text-[11px] font-semibold" style={{ color: "#b8cce8" }}>💎 Already at highest tier (Platinum)</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* ── Recent bookings ── */}
+                {(viewUser.bookings || []).length > 0 && (
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <div className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-3">Recent Bookings</div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {viewUser.bookings.map(b => (
+                        <div key={b.id} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                          <div>
+                            <span className="text-foreground font-medium">{b.celebData?.name || "—"}</span>
+                            <span className="text-muted-foreground ml-1.5 text-[10px]">{b.bookingType}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-primary font-bold">${(b.amount || 0).toLocaleString()}</span>
+                            <Badge variant={statusVariant[b.status] || "warning"} className="text-[9px]">{b.status?.toUpperCase()}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ── Booking Detail Modal ── */}
       {detailBooking && (() => {
