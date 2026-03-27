@@ -3,6 +3,8 @@ import { avatar } from "../lib/tokens.js";
 import { Stars } from "../components/ui.jsx";
 import { Button } from "../components/ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
+import vipCardImg from "../assets/vip card.png";
+import platinumCardImg from "../assets/platinum card.png";
 
 export default function FanCardPage({ c, onBook, setPage }) {
   const isMobile = useIsMobile();
@@ -82,11 +84,11 @@ export default function FanCardPage({ c, onBook, setPage }) {
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.2)] hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
             {/* Gold card visual */}
             <div className="relative h-48 flex items-center justify-between px-6" style={{
-              background: "linear-gradient(135deg, #c8920a 0%, #f5cc6a 35%, #e8a830 60%, #c8920a 100%)"
+              backgroundImage: `url(${vipCardImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}>
-              <div className="absolute inset-0 opacity-20" style={{
-                backgroundImage: "radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.6) 0%, transparent 60%)"
-              }} />
+              <div className="absolute inset-0 bg-black/20" />
               {/* Celeb photo */}
               <img
                 src={celebImg}
@@ -95,11 +97,11 @@ export default function FanCardPage({ c, onBook, setPage }) {
                 className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/40"
               />
               <div className="relative z-10 text-right">
-                <div style={{ color: "rgba(100,60,0,0.6)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>VIP Member</div>
-                <div className="font-serif font-extrabold text-3xl" style={{ color: "rgba(100,60,0,0.85)" }}>VIP</div>
-                <div style={{ color: "rgba(100,60,0,0.5)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>{c.name.split(" ")[0].toUpperCase()}</div>
+                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>VIP Member</div>
+                <div className="font-serif font-extrabold text-3xl text-white/90">VIP</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>{c.name.split(" ")[0].toUpperCase()}</div>
               </div>
-              <div className="absolute top-3 right-3 text-2xl opacity-70">👑</div>
+              <div className="absolute top-3 right-3 text-2xl opacity-80">👑</div>
               <div className="absolute top-3 left-3 bg-[#0d2137] text-white text-[11px] font-bold px-2.5 py-1 rounded-full">${vipPrice.toLocaleString()}</div>
             </div>
             <div className="p-5">
@@ -118,11 +120,11 @@ export default function FanCardPage({ c, onBook, setPage }) {
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.2)] hover:border-primary/40 transition-all duration-300 hover:-translate-y-1">
             {/* Platinum card visual */}
             <div className="relative h-48 flex items-center justify-between px-6" style={{
-              background: "linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 35%, #1a1a2e 60%, #252548 100%)"
+              backgroundImage: `url(${platinumCardImg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}>
-              <div className="absolute inset-0 opacity-25" style={{
-                backgroundImage: "radial-gradient(ellipse at 30% 40%, rgba(180,180,255,0.4) 0%, transparent 60%)"
-              }} />
+              <div className="absolute inset-0 bg-black/20" />
               {/* Celeb photo */}
               <img
                 src={celebImg}
@@ -131,11 +133,11 @@ export default function FanCardPage({ c, onBook, setPage }) {
                 className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/20"
               />
               <div className="relative z-10 text-right">
-                <div style={{ color: "rgba(200,200,255,0.5)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Platinum</div>
-                <div className="font-serif font-extrabold text-3xl" style={{ color: "rgba(200,200,255,0.8)" }}>PLAT</div>
-                <div style={{ color: "rgba(200,200,255,0.4)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>{c.name.split(" ")[0].toUpperCase()}</div>
+                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Platinum</div>
+                <div className="font-serif font-extrabold text-3xl text-white/90">PLAT</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>{c.name.split(" ")[0].toUpperCase()}</div>
               </div>
-              <div className="absolute top-3 right-3 text-2xl opacity-70">💎</div>
+              <div className="absolute top-3 right-3 text-2xl opacity-80">💎</div>
               <div className="absolute top-3 left-3 bg-primary text-[#1a0f00] text-[11px] font-bold px-2.5 py-1 rounded-full">${platinumPrice.toLocaleString()}</div>
             </div>
             <div className="p-5">

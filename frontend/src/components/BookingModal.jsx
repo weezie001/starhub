@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { G } from "../lib/tokens.js";
+import vipCardImg from "../assets/vip card.png";
+import platinumCardImg from "../assets/platinum card.png";
 import { api } from "../api.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog.jsx";
 import { Button } from "./ui/button.jsx";
@@ -358,30 +360,30 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
                 <div className="mb-5 rounded-xl overflow-hidden border border-border">
                   {/* Card visual */}
                   <div className="relative h-36 flex items-center justify-between px-6" style={{
-                    background: isPlat
-                      ? "linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 40%, #1a1a2e 100%)"
-                      : "linear-gradient(135deg, #c8920a 0%, #f5cc6a 35%, #e8a830 60%, #c8920a 100%)"
+                    backgroundImage: `url(${isPlat ? platinumCardImg : vipCardImg})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
                   }}>
+                    <div className="absolute inset-0 bg-black/20" />
                     {/* Celeb photo */}
                     <img
                       src={c.img || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`}
                       alt={c.name}
-                      className="w-16 h-20 object-cover rounded-lg shadow-lg border-2 shrink-0"
-                      style={{ borderColor: isPlat ? "rgba(180,180,255,0.3)" : "rgba(255,255,255,0.4)" }}
+                      className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/30 shrink-0"
                       onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`; }}
                     />
-                    <div className="text-right">
-                      <div style={{ color: isPlat ? "rgba(200,200,255,0.5)" : "rgba(100,60,0,0.6)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>
+                    <div className="relative z-10 text-right">
+                      <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>
                         {isPlat ? "Platinum" : "VIP Member"}
                       </div>
-                      <div className="font-serif font-extrabold text-3xl" style={{ color: isPlat ? "rgba(200,200,255,0.8)" : "rgba(100,60,0,0.85)" }}>
+                      <div className="font-serif font-extrabold text-3xl text-white/90">
                         {isPlat ? "PLAT" : "VIP"}
                       </div>
-                      <div style={{ color: isPlat ? "rgba(200,200,255,0.4)" : "rgba(100,60,0,0.5)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, marginTop: 2 }}>
                         {c.name.split(" ")[0].toUpperCase()}
                       </div>
                     </div>
-                    <div className="absolute top-3 right-3 text-2xl" style={{ opacity: 0.7 }}>
+                    <div className="absolute top-3 right-3 text-2xl opacity-80">
                       {isPlat ? "💎" : "👑"}
                     </div>
                   </div>
