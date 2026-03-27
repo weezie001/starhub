@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { avatar } from "../lib/tokens.js";
 import { Stars } from "../components/ui.jsx";
 import { Button } from "../components/ui/button.jsx";
@@ -6,10 +7,11 @@ import { useIsMobile } from "../lib/useIsMobile.js";
 export default function FanCardPage({ c, onBook, setPage }) {
   const isMobile = useIsMobile();
 
-  if (!c) {
-    setPage("celebrities");
-    return null;
-  }
+  useEffect(() => {
+    if (!c) setPage("celebrities");
+  }, [c, setPage]);
+
+  if (!c) return null;
 
   const vipPrice      = c.vipPrice      || 299;
   const platinumPrice = c.platinumPrice || 999;

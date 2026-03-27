@@ -248,6 +248,7 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
           break;
         case "session_rejoined": {
           const s = msg.session;
+          if (!s) break;
           sessionIdRef.current = s.id;
           setLiveMessages((msg.history || []).map(normalizeMsg));
           setStage(s.status === "active" ? "active" : "waiting");
