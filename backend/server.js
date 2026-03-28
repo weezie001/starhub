@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail, sendLoginUser, sendLoginAdmin } = require('./email');
 const cloudinary = require('cloudinary').v2;
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
@@ -341,9 +341,7 @@ wss.on('connection', ws => {
         broadcastQueuePositions();
         const sysMsg = await persistMessage(sessionId, 'system', 'StraBook', `Welcome ${clientName}! You are #${position} in queue. A concierge agent will be with you shortly.`);
         send(ws, { type: 'message', message: sysMsg });
-        if (isPremium) {
-          sendPremiumSupportAlert({ customerName: clientName, email: email || '', tier: memberTier, topic: topic || 'General Inquiry' });
-        }
+        sendPremiumSupportAlert({ customerName: clientName, email: email || '', tier: memberTier || 'free', topic: topic || 'General Inquiry' });
       }
     }
 
@@ -520,6 +518,10 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '7d' });
     const plan = user.plan || 'free';
     res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan, token } });
+    if (user.role !== 'admin') {
+      sendLoginUser({ name: user.name, email: user.email });
+      sendLoginAdmin({ name: user.name, email: user.email, plan });
+    }
     if (plan === 'premium' || plan === 'platinum') {
       broadcastToAgents({ type: 'premium_login', userName: user.name, plan, email: user.email });
     }

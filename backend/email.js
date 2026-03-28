@@ -427,18 +427,24 @@ async function sendAdminBookingAlert({ customerName, customerEmail, celeb, type,
   });
 }
 
-// 6. Premium support alert to admin
+// 6. Support alert to admin (all users)
 async function sendPremiumSupportAlert({ customerName, email, tier, topic }) {
   const isPlat   = tier === 'platinum';
-  const tierLabel = isPlat ? 'Platinum Elite' : 'VIP';
+  const isPrem   = tier === 'premium';
+  const tierLabel = isPlat ? 'Platinum Elite' : isPrem ? 'VIP Premium' : 'Standard';
+  const accent    = isPlat ? '#b8d4f0' : isPrem ? gold : '#a0a0a0';
+  const priority  = isPlat || isPrem;
 
   const body = `
     <p style="color:#b0a898;font-size:14px;line-height:1.7;margin:0 0 16px">
-      A <strong style="color:${isPlat ? '#b8d4f0' : gold}">${tierLabel} member</strong> has requested live support and requires immediate attention.
+      ${priority
+        ? `A <strong style="color:${accent}">${tierLabel} member</strong> has requested live support and requires immediate attention.`
+        : `A user has requested live support.`
+      }
     </p>
     <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:16px">
       <table cellpadding="0" cellspacing="0" style="width:100%">
-        ${row('Member', customerName)}
+        ${row('Customer', customerName)}
         ${row('Email', email)}
         ${row('Tier', tierLabel)}
         ${row('Topic', topic || 'General Inquiry')}
@@ -446,12 +452,71 @@ async function sendPremiumSupportAlert({ customerName, email, tier, topic }) {
     </div>
     <a href="${SITE}/#admin" style="display:inline-block;padding:11px 24px;background:${gold};color:#1a0f00;font-weight:700;font-size:13px;text-decoration:none;border-radius:8px">Open Support Inbox →</a>`;
 
-  const html = baseAlert(`${isPlat ? 'Platinum' : 'VIP'} Member Support Request`, body);
+  const title = priority ? `${tierLabel} Support Request` : `New Support Request`;
+  const html = baseAlert(title, body);
   return send({
     to: ADMIN,
-    subject: `Priority support — ${tierLabel} member: ${customerName}`,
+    subject: priority ? `Priority support — ${tierLabel}: ${customerName}` : `Support request — ${customerName}`,
     html,
-    text: `Priority Support — ${tierLabel}\n\nMember: ${customerName} (${email})\nTopic: ${topic || 'General Inquiry'}\n\nOpen inbox: ${SITE}/#admin`,
+    text: `${title}\n\nCustomer: ${customerName} (${email})\nTier: ${tierLabel}\nTopic: ${topic || 'General Inquiry'}\n\nOpen inbox: ${SITE}/#admin`,
+    headers: { 'Reply-To': email },
+  });
+}
+
+// 9. Login notification to user
+async function sendLoginUser({ name, email }) {
+  const time = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+
+  const body = `
+    <p style="color:#b0a898;font-size:15px;line-height:1.8;margin:0 0 20px">
+      Hi <strong style="color:#fff">${name}</strong>,<br><br>
+      We detected a new sign-in to your StarBookNow account.
+    </p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:20px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('Account', email)}
+        ${row('Time', time)}
+      </table>
+    </div>
+    <p style="color:#b0a898;font-size:13px;line-height:1.7;margin:0 0 20px">
+      If this was you, no action is needed. If you did not sign in, please contact us immediately at
+      <a href="mailto:${REPLY_TO}" style="color:${gold};text-decoration:none">${REPLY_TO}</a>.
+    </p>
+    <div>${btn('Go to My Account →', SITE)}</div>`;
+
+  const html = baseTransactional('New sign-in detected', body);
+  return send({
+    to: email,
+    subject: `New sign-in to your StarBookNow account`,
+    html,
+    text: `Hi ${name},\n\nA new sign-in was detected on your StarBookNow account.\n\nAccount: ${email}\nTime: ${time}\n\nIf this was you, no action needed. If not, contact us at ${REPLY_TO}.\n\n${SITE}\n\n© ${new Date().getFullYear()} StarBookNow`,
+    headers: { 'Reply-To': REPLY_TO },
+  });
+}
+
+// 10. Login alert to admin
+async function sendLoginAdmin({ name, email, plan }) {
+  const time     = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const planLabel = plan === 'platinum' ? 'Platinum Elite' : plan === 'premium' ? 'VIP Premium' : 'Free';
+
+  const body = `
+    <p style="color:#b0a898;font-size:14px;line-height:1.7;margin:0 0 16px">A user has just signed in to StarBookNow.</p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:16px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('Name', name)}
+        ${row('Email', email)}
+        ${row('Plan', planLabel)}
+        ${row('Time', time)}
+      </table>
+    </div>
+    <a href="${SITE}/#admin" style="display:inline-block;padding:11px 24px;background:${gold};color:#1a0f00;font-weight:700;font-size:13px;text-decoration:none;border-radius:8px">View in Admin Panel →</a>`;
+
+  const html = baseAlert('User Login', body);
+  return send({
+    to: ADMIN,
+    subject: `Login — ${name} (${planLabel})`,
+    html,
+    text: `User Login\n\nName: ${name}\nEmail: ${email}\nPlan: ${planLabel}\nTime: ${time}\n\nAdmin panel: ${SITE}/#admin`,
     headers: { 'Reply-To': email },
   });
 }
@@ -546,4 +611,6 @@ module.exports = {
   sendPremiumSupportAlert,
   sendPlanChanged,
   sendBlogEmail,
+  sendLoginUser,
+  sendLoginAdmin,
 };
