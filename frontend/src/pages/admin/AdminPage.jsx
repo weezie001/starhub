@@ -285,6 +285,11 @@ export default function AdminPage({ user }) {
             playAdminNotif(false, "waitlist_new");
             pushNotif({ label: `⏳ Waitlist — ${msg.entry?.name || "New entry"}`, icon: "⏳", tab: "bookings", sub: msg.entry?.eventType || "" });
           }
+          if (msg.type === "premium_login") {
+            const isPlat = msg.plan === "platinum";
+            playAdminNotif(true, "premium_login");
+            pushNotif({ label: `${isPlat ? "💎 Platinum" : "👑 VIP"} member online — ${msg.userName}`, icon: isPlat ? "💎" : "👑", tab: "users", sub: msg.email, isPremium: true });
+          }
         } catch {}
       };
 

@@ -193,6 +193,10 @@ export default function App() {
         setUser(userData);
         api.getUserBookings().then(setBookings).catch(() => {});
         api.getUserMemberships().then(setMemberships).catch(() => {});
+        api.getFavorites().then(setFavorites).catch(() => {
+          // fallback to localStorage if cloud fetch fails
+          try { const r = localStorage.getItem("sb_favs"); if (r) setFavorites(JSON.parse(r)); } catch {}
+        });
         // Sync latest plan from server (admin may have changed it)
         api.getMe().then(me => {
           if (me?.plan) {
@@ -204,8 +208,6 @@ export default function App() {
           }
         }).catch(() => {});
       }
-      const favRaw = localStorage.getItem("sb_favs");
-      if (favRaw) setFavorites(JSON.parse(favRaw));
     } catch {}
     setUserLoaded(true);
   }, []);
@@ -242,12 +244,14 @@ export default function App() {
     setAuthModal(null);
     api.getUserBookings().then(setBookings).catch(() => {});
     api.getUserMemberships().then(setMemberships).catch(() => {});
+    api.getFavorites().then(setFavorites).catch(() => {});
   }
 
   function handleLogout() {
     setUser(null);
     setBookings([]);
     setMemberships([]);
+    setFavorites([]);
     try { localStorage.removeItem("sb_user"); } catch {}
     setPage("home");
   }
@@ -256,7 +260,7 @@ export default function App() {
     if (!user) { setAuthModal("login"); return; }
     const next = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id];
     setFavorites(next);
-    try { localStorage.setItem("sb_favs", JSON.stringify(next)); } catch {}
+    api.saveFavorites(next).catch(() => {});
   }
 
   function handleBook(celeb, type) {
@@ -308,7 +312,7 @@ export default function App() {
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}
       {page === "contact"     && <ContactPage setPage={setPage} />}
-      {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} memberTier={highestTier} />}
+      {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} memberTier={highestTier} onLogout={handleLogout} onFav={handleFav} theme={theme} toggleTheme={toggleTheme} onUserUpdate={updated => { setUser(u => { const next = { ...u, ...updated }; try { localStorage.setItem("sb_user", JSON.stringify(next)); } catch {} return next; }); }} />}
       {page === "admin"       && user?.role === "admin" && <AdminPage user={user} />}
       {page === "blog"        && <BlogsPage setPage={setPage} />}
       {page === "terms"       && <TermsPage setPage={setPage} />}

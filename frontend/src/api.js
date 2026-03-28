@@ -44,6 +44,9 @@ export const api = {
     req('/bookings', { method: 'POST', body: JSON.stringify({ celeb, type, form, payment, donateAmt }) }),
   getUserBookings: () => req('/user/bookings').then(rows => rows.map(mapBooking)),
   getMe: () => req('/me'),
+  updateMe: (data) => req('/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  getFavorites: () => req('/me/favorites'),
+  saveFavorites: (ids) => req('/me/favorites', { method: 'PUT', body: JSON.stringify({ ids }) }),
   getUserMemberships: () => req('/me/memberships'),
 
   // Chat

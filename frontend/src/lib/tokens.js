@@ -14,7 +14,7 @@ export const WS_URL = import.meta.env.VITE_WS_URL ||
   `ws://${window.location.hostname}:3000`;
 
 export function avatar(name) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a1200&color=D4AF37&bold=true&size=300&font-size=0.38`;
+  return `https://api.dicebear.com/9.x/open-peeps/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a2e,1a1200,0a1520&backgroundType=gradientLinear`;
 }
 
 export function uid() {

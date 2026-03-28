@@ -145,6 +145,7 @@ async function initDB() {
     )
   `);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT DEFAULT '[]'`);
 
   // Seed default plans
   const { rows: planRows } = await pool.query('SELECT COUNT(*) as c FROM plans');
@@ -496,7 +497,11 @@ app.post('/api/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '7d' });
-    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan: user.plan || 'free', token } });
+    const plan = user.plan || 'free';
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan, token } });
+    if (plan === 'premium' || plan === 'platinum') {
+      broadcastToAgents({ type: 'premium_login', userName: user.name, plan, email: user.email });
+    }
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -597,6 +602,31 @@ app.get('/api/me', authenticate, async (req, res) => {
     const u = await qOne('SELECT id, name, email, role, plan FROM users WHERE id=$1', [req.user.id]);
     if (!u) return res.status(404).json({ error: 'User not found' });
     res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan: u.plan || 'free' });
+  } catch { res.status(500).json({ error: 'Database error' }); }
+});
+
+app.get('/api/me/favorites', authenticate, async (req, res) => {
+  try {
+    const u = await qOne('SELECT favorites FROM users WHERE id=$1', [req.user.id]);
+    res.json(JSON.parse(u?.favorites || '[]'));
+  } catch { res.status(500).json({ error: 'Database error' }); }
+});
+
+app.put('/api/me/favorites', authenticate, async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids must be an array' });
+  try {
+    await q('UPDATE users SET favorites=$1 WHERE id=$2', [JSON.stringify(ids), req.user.id]);
+    res.json({ success: true });
+  } catch { res.status(500).json({ error: 'Database error' }); }
+});
+
+app.patch('/api/me', authenticate, async (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Name is required' });
+  try {
+    await q('UPDATE users SET name=$1 WHERE id=$2', [name.trim(), req.user.id]);
+    res.json({ success: true, name: name.trim() });
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
