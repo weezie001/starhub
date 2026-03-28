@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { G } from "../lib/tokens.js";
+import { G, celebPlaceholder } from "../lib/tokens.js";
 import vipCardImg from "../assets/vip card.png";
 import platinumCardImg from "../assets/platinum card.png";
 import { api } from "../api.js";
@@ -408,10 +408,10 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
                     <div className="absolute inset-0 bg-black/20" />
                     {/* Celeb photo */}
                     <img
-                      src={c.img || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`}
+                      src={c.img || celebPlaceholder(c.name)}
                       alt={c.name}
                       className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/30 shrink-0"
-                      onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`; }}
+                      onError={e => { e.target.src = celebPlaceholder(c.name); }}
                     />
                     <div className="relative z-10 text-right">
                       <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>

@@ -1,6 +1,6 @@
 import { useIsMobile } from "../lib/useIsMobile.js";
 import { Button } from "../components/ui/button.jsx";
-import { avatar } from "../lib/tokens.js";
+import { celebPlaceholder } from "../lib/tokens.js";
 import vipCardImg from "../assets/vip card.png";
 import platinumCardImg from "../assets/platinum card.png";
 
@@ -71,9 +71,9 @@ export default function LoungePage({ user, memberships, setPage, onBook }) {
                     }}>
                       <div className="absolute inset-0 bg-black/20" />
                       <img
-                        src={m.celebImg || avatar(m.celebName)}
+                        src={m.celebImg || celebPlaceholder(m.celebName)}
                         alt={m.celebName}
-                        onError={e => { e.target.src = avatar(m.celebName); }}
+                        onError={e => { e.target.src = celebPlaceholder(m.celebName); }}
                         className="relative z-10 w-14 h-[72px] object-cover rounded-lg shadow-lg border-2 border-white/30"
                       />
                       <div className="relative z-10 text-right">

@@ -1,4 +1,4 @@
-import { G, avatar } from "../lib/tokens.js";
+import { G, celebPlaceholder } from "../lib/tokens.js";
 import { Stars } from "./ui.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Button } from "./ui/button.jsx";
@@ -12,9 +12,9 @@ export default function CelebModal({ open, c, onClose, onBook, isFav, onFav }) {
         {/* Hero image */}
         <div className="relative h-72">
           <img
-            src={c.img || avatar(c.name)} alt={c.name}
+            src={c.img || celebPlaceholder(c.name)} alt={c.name}
             className="w-full h-full object-cover"
-            onError={e => { e.target.src = avatar(c.name); }}
+            onError={e => { e.target.src = celebPlaceholder(c.name); }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
 

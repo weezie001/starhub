@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { avatar } from "../lib/tokens.js";
+import { celebPlaceholder } from "../lib/tokens.js";
 import { Stars } from "../components/ui.jsx";
 import { Button } from "../components/ui/button.jsx";
 import { useIsMobile } from "../lib/useIsMobile.js";
@@ -17,7 +17,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
 
   const vipPrice      = c.vipPrice      || 299;
   const platinumPrice = c.platinumPrice || 999;
-  const celebImg      = c.img || avatar(c.name);
+  const celebImg      = c.img || celebPlaceholder(c.name);
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,7 +39,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
             <img
               src={celebImg}
               alt={c.name}
-              onError={e => { e.target.src = avatar(c.name); }}
+              onError={e => { e.target.src = celebPlaceholder(c.name); }}
               className="rounded-xl object-cover shadow-[0_8px_40px_rgba(0,0,0,0.6)] border border-white/10"
               style={{ width: isMobile ? 120 : 200, height: isMobile ? 150 : 240 }}
             />
@@ -93,7 +93,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
               <img
                 src={celebImg}
                 alt={c.name}
-                onError={e => { e.target.src = avatar(c.name); }}
+                onError={e => { e.target.src = celebPlaceholder(c.name); }}
                 className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/40"
               />
               <div className="relative z-10 text-right">
@@ -129,7 +129,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
               <img
                 src={celebImg}
                 alt={c.name}
-                onError={e => { e.target.src = avatar(c.name); }}
+                onError={e => { e.target.src = celebPlaceholder(c.name); }}
                 className="relative z-10 w-16 h-20 object-cover rounded-lg shadow-lg border-2 border-white/20"
               />
               <div className="relative z-10 text-right">

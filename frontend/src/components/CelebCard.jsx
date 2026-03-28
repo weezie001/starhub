@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { G, avatar } from "../lib/tokens.js";
+import { G, celebPlaceholder } from "../lib/tokens.js";
 import { Stars } from "./ui.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Button } from "./ui/button.jsx";
@@ -23,9 +23,9 @@ export default function CelebCard({ c, onView, onBook, onFav, onFanCard, isFav }
       <div className="relative h-44 sm:h-64 overflow-hidden" onClick={() => onView(c)}>
         <img
           className="celeb-img w-full h-full object-cover transition-transform duration-500"
-          src={c.img || avatar(c.name)} alt={c.name}
+          src={c.img || celebPlaceholder(c.name)} alt={c.name}
           style={{ transform: hover ? "scale(1.06)" : "scale(1)" }}
-          onError={e => { e.target.src = avatar(c.name); }}
+          onError={e => { e.target.src = celebPlaceholder(c.name); }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#131313] via-[#13131350] to-transparent" />
 

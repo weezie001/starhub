@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { avatar } from "../lib/tokens.js";
+import { avatar, celebPlaceholder } from "../lib/tokens.js";
 import { CELEBS } from "../lib/data.js";
 import { Button } from "../components/ui/button.jsx";
 import { Badge } from "../components/ui/badge.jsx";
@@ -182,9 +182,9 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         {myBookings.map(b => (
           <div key={b.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <img src={b.celeb.img || avatar(b.celeb.name)} alt={b.celeb.name}
+              <img src={b.celeb.img || celebPlaceholder(b.celeb.name)} alt={b.celeb.name}
                 className="w-10 h-10 rounded-full object-cover border border-primary/20 shrink-0"
-                onError={e => e.target.src = avatar(b.celeb.name)}
+                onError={e => e.target.src = celebPlaceholder(b.celeb.name)}
               />
               <div>
                 <div className="text-foreground font-semibold text-sm">{b.celeb.name}</div>
@@ -219,8 +219,8 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         {myFavs.map(c => (
           <div key={c.id} onClick={() => onView(c)} className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/40 transition-colors">
             <div className="relative">
-              <img src={c.img || avatar(c.name)} alt={c.name} className="w-full h-28 object-cover"
-                onError={e => e.target.src = avatar(c.name)} />
+              <img src={c.img || celebPlaceholder(c.name)} alt={c.name} className="w-full h-28 object-cover"
+                onError={e => e.target.src = celebPlaceholder(c.name)} />
               <button onClick={e => { e.stopPropagation(); onFav?.(c.id); }}
                 className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center text-xs cursor-pointer hover:bg-black/70 transition-colors border border-white/10">
                 ❤️

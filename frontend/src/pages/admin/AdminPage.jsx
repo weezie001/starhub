@@ -3,7 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { avatar } from "../../lib/tokens.js";
+import { avatar, celebPlaceholder } from "../../lib/tokens.js";
 import { Stars } from "../../components/ui.jsx";
 import { Button } from "../../components/ui/button.jsx";
 import { Badge } from "../../components/ui/badge.jsx";
@@ -964,7 +964,7 @@ export default function AdminPage({ user }) {
                   <div key={c.id}>
                     <div className="rounded-xl border border-border bg-card p-4 flex justify-between items-center gap-3 flex-wrap">
                       <div className="flex items-center gap-3">
-                        <img src={c.img || avatar(c.name)} alt={c.name} className="w-[42px] h-[42px] rounded-full object-cover border-2 border-primary/10" onError={e => e.target.src = avatar(c.name)} />
+                        <img src={c.img || celebPlaceholder(c.name)} alt={c.name} className="w-[42px] h-[42px] rounded-full object-cover border-2 border-primary/10" onError={e => e.target.src = celebPlaceholder(c.name)} />
                         <div>
                           <div className="text-foreground font-semibold text-sm">{c.name}</div>
                           <div className="text-muted-foreground text-xs">{c.flag} {c.country} • {c.cat} • ${(c.price || 0).toLocaleString()}</div>

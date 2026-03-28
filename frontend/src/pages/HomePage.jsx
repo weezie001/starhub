@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { avatar } from "../lib/tokens.js";
+import { celebPlaceholder } from "../lib/tokens.js";
 import { CELEBS, CATS, SERVICES, TESTIMONIALS, SPONSORS } from "../lib/data.js";
 import { Stars } from "../components/ui.jsx";
 import { Button } from "../components/ui/button.jsx";
@@ -217,9 +217,9 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
                   >
                     <img
                       className="celeb-img w-full h-full object-cover"
-                      src={c.img || avatar(c.name)}
+                      src={c.img || celebPlaceholder(c.name)}
                       alt={c.name}
-                      onError={e => e.target.src = avatar(c.name)}
+                      onError={e => e.target.src = celebPlaceholder(c.name)}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
                     {idx === 0 && (
@@ -281,9 +281,9 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
                 >
                   <img
                     className="celeb-img w-full h-full object-cover"
-                    src={main.img || avatar(main.name)}
+                    src={main.img || celebPlaceholder(main.name)}
                     alt={main.name}
-                    onError={e => e.target.src = avatar(main.name)}
+                    onError={e => e.target.src = celebPlaceholder(main.name)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-[rgba(13,13,13,0.1)] to-transparent" />
                   <div className="absolute top-5 left-5">
@@ -327,9 +327,9 @@ export default function HomePage({ onView, onBook, favorites, onFav, setPage, op
                 >
                   <img
                     className="celeb-img w-full h-full object-cover"
-                    src={c.img || avatar(c.name)}
+                    src={c.img || celebPlaceholder(c.name)}
                     alt={c.name}
-                    onError={e => e.target.src = avatar(c.name)}
+                    onError={e => e.target.src = celebPlaceholder(c.name)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent" />
                   <div className="absolute bottom-0 px-[22px] py-[18px]">
