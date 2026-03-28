@@ -256,7 +256,7 @@ function PaymentSelect({ value, onChange, onContactAdmin }) {
   );
 }
 
-export default function BookingModal({ open, c, type, onClose, onConfirm, user, memberships, onOpenChat }) {
+export default function BookingModal({ open, c, type, onClose, onConfirm, user, memberships, userPlan, onOpenChat, setPage }) {
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", date: "", message: "", guests: "" });
   const [payment, setPayment] = useState("");
   const [donateAmt, setDonateAmt] = useState(500);
@@ -275,7 +275,15 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
 
   if (!c) return null;
 
-  const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", fan_card_platinum: "Platinum Elite Card", video: "Video Message", meet: "Meet & Greet" };
+  // Plan-based access gate
+  const plan = userPlan || "free";
+  const isFanCardType = type === "fan_card" || type === "fan_card_platinum";
+  const isBookingType = type === "booking" || type === "video" || type === "meet";
+  const needsPremium = isFanCardType && plan === "free";
+  const needsPlatinum = isBookingType && plan !== "platinum";
+
+  const isPlanUpgrade = type === "plan_upgrade";
+  const labels = { booking: "Event Booking", donate: "Charity Donation", fan_card: "VIP Fan Card", fan_card_platinum: "Platinum Elite Card", video: "Video Message", meet: "Meet & Greet", plan_upgrade: `${c?.name || "Plan"} — Upgrade` };
   const donateOptions = [200, 500, 1000, 1500, 2000];
 
   // Photo alone is enough (admin sees card type from image); code path requires a type selection too
@@ -299,7 +307,9 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
         ? { ...form, giftCardType: giftCard.type, giftCardCode: giftCard.code, giftCardPhoto: giftCardPhoto }
         : form;
       await Promise.all([
-        api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null),
+        isPlanUpgrade
+          ? api.createBooking(c, "plan_upgrade", extraForm, payment).catch(() => {})
+          : api.createBooking(c, type, extraForm, payment, type === "donate" ? donateAmt : null),
         new Promise(resolve => setTimeout(resolve, 5000)),
       ]);
       onConfirm();
@@ -311,7 +321,25 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
   return (
     <Dialog open={open} onOpenChange={o => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        {loading ? (
+        {(needsPremium || needsPlatinum) ? (
+          <div className="py-10 text-center">
+            <div className="text-5xl mb-4">{needsPlatinum ? "💎" : "👑"}</div>
+            <h3 className="text-foreground font-serif text-xl mb-2">
+              {needsPlatinum ? "Platinum Plan Required" : "Premium Plan Required"}
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-xs mx-auto mb-6 leading-relaxed">
+              {needsPlatinum
+                ? "Celebrity bookings (events, video messages, meet & greet) are exclusively available to Platinum plan members."
+                : "Fan Card purchases are available to Premium and Platinum plan members."}
+            </p>
+            <div className="flex flex-col gap-2 max-w-[220px] mx-auto">
+              <Button onClick={() => { onClose(); setPage?.("pricing"); }}>
+                View Plans →
+              </Button>
+              <Button variant="ghost" onClick={onClose}>Maybe later</Button>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="py-14 flex flex-col items-center justify-center gap-5">
             <div className="relative w-24 h-24">
               <div className="absolute inset-0 rounded-full border-4 border-primary/15" />
@@ -333,14 +361,13 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
           <div className="text-center py-4">
             <div className="text-5xl mb-5">✅</div>
             <h3 className="text-primary font-serif text-2xl mb-2.5">
-              {(type === "fan_card" || type === "fan_card_platinum") ? "Card Purchased!" : "Request Submitted!"}
+              {isPlanUpgrade ? "Upgrade Requested!" : (type === "fan_card" || type === "fan_card_platinum") ? "Card Purchased!" : "Request Submitted!"}
             </h3>
             <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto mb-6 text-sm">
-              Your <strong className="text-foreground">{labels[type]}</strong>{" "}
-              {type === "donate" ? "donation" : "request"} for{" "}
-              <strong className="text-primary">{c.name}</strong> is{" "}
-              <strong className="text-foreground">pending review</strong>.
-              Our team will contact you within 24 hours to confirm.
+              {isPlanUpgrade
+                ? <>Your <strong className="text-foreground">{c.name}</strong> upgrade request is <strong className="text-foreground">pending review</strong>. Our team will activate your plan within 24 hours after payment verification.</>
+                : <> Your <strong className="text-foreground">{labels[type]}</strong>{" "}{type === "donate" ? "donation" : "request"} for{" "}<strong className="text-primary">{c.name}</strong> is <strong className="text-foreground">pending review</strong>. Our team will contact you within 24 hours to confirm.</>
+              }
             </p>
             <Button onClick={onClose} className="px-8">Done ✓</Button>
           </div>

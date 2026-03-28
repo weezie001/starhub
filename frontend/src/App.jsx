@@ -23,6 +23,7 @@ import TermsPage from "./pages/TermsPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import FanCardPage from "./pages/FanCardPage.jsx";
 import LoungePage from "./pages/LoungePage.jsx";
+import PricingPage from "./pages/PricingPage.jsx";
 
 // ── GLOBAL STYLES ────────────────────────────────────────────
 const GLOBAL_CSS = `
@@ -141,7 +142,7 @@ function ContactPage({ setPage }) {
 }
 
 // ── MAIN APP ─────────────────────────────────────────────────
-const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy","fancard","lounge"];
+const PAGES = ["home","celebrities","waitlist","about","contact","dashboard","admin","blog","terms","privacy","fancard","lounge","pricing"];
 
 function getHashPage() {
   const hash = window.location.hash.slice(1);
@@ -192,11 +193,40 @@ export default function App() {
         setUser(userData);
         api.getUserBookings().then(setBookings).catch(() => {});
         api.getUserMemberships().then(setMemberships).catch(() => {});
+        // Sync latest plan from server (admin may have changed it)
+        api.getMe().then(me => {
+          if (me?.plan) {
+            setUser(u => {
+              const updated = { ...u, plan: me.plan };
+              try { localStorage.setItem("sb_user", JSON.stringify(updated)); } catch {}
+              return updated;
+            });
+          }
+        }).catch(() => {});
       }
       const favRaw = localStorage.getItem("sb_favs");
       if (favRaw) setFavorites(JSON.parse(favRaw));
     } catch {}
     setUserLoaded(true);
+  }, []);
+
+  // Re-sync plan when user returns to the tab
+  useEffect(() => {
+    const onFocus = () => {
+      if (!localStorage.getItem("sb_user")) return;
+      api.getMe().then(me => {
+        if (me?.plan) {
+          setUser(u => {
+            if (!u || u.plan === me.plan) return u;
+            const updated = { ...u, plan: me.plan };
+            try { localStorage.setItem("sb_user", JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        }
+      }).catch(() => {});
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   // Only redirect after we know whether a user is logged in
@@ -251,16 +281,22 @@ export default function App() {
     onFav: handleFav,
   };
 
-  // Apply membership tier CSS class to <html>
+  // Apply plan-based tier CSS class to <html>
   useEffect(() => {
     const html = document.documentElement;
     html.classList.remove("tier-vip", "tier-platinum");
-    if (memberships.some(m => m.status === "approved" && m.tier === "platinum")) html.classList.add("tier-platinum");
-    else if (memberships.some(m => m.status === "approved" && m.tier === "vip")) html.classList.add("tier-vip");
-  }, [memberships]);
+    if (user?.plan === "platinum") html.classList.add("tier-platinum");
+    else if (user?.plan === "premium") html.classList.add("tier-vip");
+  }, [user?.plan]);
 
-  const highestTier = memberships.some(m => m.status === "approved" && m.tier === "platinum") ? "platinum"
-    : memberships.some(m => m.status === "approved" && m.tier === "vip") ? "vip" : null;
+  // highestTier derived from user.plan (primary) or approved fan card memberships (legacy fallback)
+  const highestTier = user?.plan === "platinum" ? "platinum"
+    : user?.plan === "premium" ? "vip"
+    : memberships.some(m => m.status === "approved" && m.tier === "platinum") ? "platinum"
+    : memberships.some(m => m.status === "approved" && m.tier === "vip") ? "vip"
+    : null;
+
+  const userPlan = user?.plan || "free";
 
   return (
     <div className="bg-background" style={{ minHeight: "100vh" }}>
@@ -277,13 +313,14 @@ export default function App() {
       {page === "blog"        && <BlogsPage setPage={setPage} />}
       {page === "terms"       && <TermsPage setPage={setPage} />}
       {page === "privacy"     && <PrivacyPage setPage={setPage} />}
-      {page === "fancard"     && <FanCardPage c={fanCardCeleb} onBook={handleBook} setPage={setPage} />}
+      {page === "fancard"     && <FanCardPage c={fanCardCeleb} onBook={handleBook} setPage={setPage} userPlan={userPlan} />}
       {page === "lounge"      && user && <LoungePage user={user} memberships={memberships} setPage={setPage} onBook={handleBook} />}
+      {page === "pricing"     && <PricingPage user={user} setPage={setPage} onAuth={m => setAuthModal(m)} onUpgrade={(tier, plan) => setBookingModal({ celeb: { id: `plan_${tier}`, name: tier === "platinum" ? "Platinum / Executive Plan" : "Premium / VIP Plan", price: plan?.price || 0 }, type: "plan_upgrade", tier }) } />}
 
       {/* Modals — always rendered, visibility controlled by open prop */}
       <AuthModal open={!!authModal} mode={authModal || "login"} onClose={() => setAuthModal(null)} onAuth={handleAuth} switchMode={() => setAuthModal(authModal === "login" ? "register" : "login")} />
       <CelebModal open={!!celebModal} c={celebModal} onClose={() => setCelebModal(null)} onBook={handleBook} isFav={celebModal ? favorites.includes(celebModal.id) : false} onFav={handleFav} />
-      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); api.getUserMemberships().then(setMemberships).catch(() => {}); }} user={user} memberships={memberships} onOpenChat={() => { setBookingModal(null); openChat(); }} />
+      <BookingModal open={!!bookingModal} c={bookingModal?.celeb} type={bookingModal?.type} onClose={() => setBookingModal(null)} onConfirm={() => { api.getUserBookings().then(setBookings).catch(() => {}); api.getUserMemberships().then(setMemberships).catch(() => {}); }} user={user} memberships={memberships} userPlan={userPlan} onOpenChat={() => { setBookingModal(null); openChat(); }} setPage={setPage} />
 
       {/* Live support chat widget — hidden on admin page to avoid covering inbox UI */}
       {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} onAuth={m => setAuthModal(m)} />}

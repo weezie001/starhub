@@ -43,6 +43,7 @@ export const api = {
   createBooking: (celeb, type, form, payment, donateAmt) =>
     req('/bookings', { method: 'POST', body: JSON.stringify({ celeb, type, form, payment, donateAmt }) }),
   getUserBookings: () => req('/user/bookings').then(rows => rows.map(mapBooking)),
+  getMe: () => req('/me'),
   getUserMemberships: () => req('/me/memberships'),
 
   // Chat
@@ -83,7 +84,13 @@ export const api = {
   addBlog: (data) => req('/admin/blogs', { method: 'POST', body: JSON.stringify(data) }),
   updateBlog: (id, data) => req(`/admin/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteBlog: (id) => req(`/admin/blogs/${id}`, { method: 'DELETE' }),
+  sendBlogEmail: (id) => req(`/admin/blogs/${id}/send-email`, { method: 'POST' }),
 
   // Admin transactions
   getAdminTransactions: () => req('/admin/transactions').then(rows => rows.map(mapBooking)),
+
+  // Plans
+  getPlans: () => req('/plans'),
+  updatePlan: (tier, data) => req(`/admin/plans/${tier}`, { method: 'PUT', body: JSON.stringify(data) }),
+  setUserPlan: (userId, plan) => req(`/admin/users/${userId}/plan`, { method: 'PATCH', body: JSON.stringify({ plan }) }),
 };

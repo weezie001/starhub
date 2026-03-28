@@ -20,6 +20,7 @@ export default function Navbar({ page, setPage, user, onAuth, onLogout, theme, t
   const navLinks = [
     ["home", "Explore"],
     ["celebrities", "Celebrities"],
+    ["pricing", "Pricing"],
     ["blog", "Blog"],
     ["waitlist", "Join Waitlist"],
     ["contact", "Support"],

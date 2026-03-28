@@ -41,8 +41,13 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         <h1 className="text-[clamp(24px,4vw,44px)] font-serif text-foreground font-bold mb-1.5">
           Welcome back, {user.name.split(" ")[0]}
         </h1>
-        <p className="text-muted-foreground text-sm">
-          {user.email} • {accountLabel}
+        <p className="text-muted-foreground text-sm flex items-center gap-3 flex-wrap">
+          <span>{user.email} • {accountLabel}</span>
+          {user.role !== "admin" && user.plan !== "platinum" && (
+            <button onClick={() => setPage("pricing")} className="text-primary text-xs font-semibold bg-primary/10 border border-primary/30 rounded-full px-3 py-1 cursor-pointer hover:bg-primary/20 transition-colors font-sans">
+              {user.plan === "premium" ? "Upgrade to Platinum →" : "Upgrade Plan →"}
+            </button>
+          )}
         </p>
       </div>
 

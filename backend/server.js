@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail } = require('./email');
 const cloudinary = require('cloudinary').v2;
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
@@ -136,6 +136,33 @@ async function initDB() {
   await pool.query(`ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS "memberTier" TEXT`);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS plans (
+      tier TEXT PRIMARY KEY,
+      price REAL DEFAULT 0,
+      "billingCycle" TEXT DEFAULT 'monthly',
+      features TEXT DEFAULT '[]',
+      "updatedAt" TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'`);
+
+  // Seed default plans
+  const { rows: planRows } = await pool.query('SELECT COUNT(*) as c FROM plans');
+  if (parseInt(planRows[0].c) === 0) {
+    const defaultPlans = [
+      { tier: 'free', price: 0, billingCycle: 'monthly', features: JSON.stringify(['Browse all celebrities', 'Make charity donations', 'Contact support']) },
+      { tier: 'premium', price: 49, billingCycle: 'monthly', features: JSON.stringify(['Everything in Free', 'Purchase Fan Cards (celebrity add-ons)', 'Exclusive newsletter access', 'Early access to new celebrities', 'Priority support chat']) },
+      { tier: 'platinum', price: 149, billingCycle: 'monthly', features: JSON.stringify(['Everything in Premium', 'Priority celebrity bookings', 'Members Lounge access', 'Exclusive content & updates', 'Dedicated concierge service', 'VIP event invitations', 'Personal celebrity alerts', 'Cancel anytime']) },
+    ];
+    for (const p of defaultPlans) {
+      await pool.query(
+        'INSERT INTO plans (tier,price,"billingCycle",features) VALUES ($1,$2,$3,$4) ON CONFLICT (tier) DO NOTHING',
+        [p.tier, p.price, p.billingCycle, p.features]
+      );
+    }
+  }
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS blogs (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -262,14 +289,10 @@ wss.on('connection', ws => {
       if (userToken) {
         try {
           const decoded = jwt.verify(userToken, SECRET);
-          const fanCards = await qAll(
-            `SELECT "bookingType" FROM bookings WHERE "userId"=$1 AND "bookingType" IN ('fan_card','fan_card_platinum') AND status='approved' LIMIT 1`,
-            [decoded.id]
-          );
-          if (fanCards.length > 0) {
-            isPremium = true;
-            memberTier = fanCards.some(b => b.bookingType === 'fan_card_platinum') ? 'platinum' : 'vip';
-          }
+          const u = await qOne('SELECT plan FROM users WHERE id=$1', [decoded.id]);
+          const plan = u?.plan || 'free';
+          if (plan === 'platinum') { isPremium = true; memberTier = 'platinum'; }
+          else if (plan === 'premium') { isPremium = true; memberTier = 'vip'; }
         } catch {}
       }
 
@@ -457,7 +480,7 @@ app.post('/api/auth/register', async (req, res) => {
     const role = email.toLowerCase().includes('admin') ? 'admin' : 'user';
     await q('INSERT INTO users (id,name,email,password,role) VALUES ($1,$2,$3,$4,$5)', [id, name, email, hash, role]);
     const token = jwt.sign({ id, email, name, role }, SECRET, { expiresIn: '7d' });
-    res.json({ user: { id, name, email, role, token } });
+    res.json({ user: { id, name, email, role, plan: 'free', token } });
     sendWelcome({ name, email });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already exists' });
@@ -473,7 +496,7 @@ app.post('/api/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '7d' });
-    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, token } });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan: user.plan || 'free', token } });
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -535,6 +558,16 @@ app.post('/api/bookings', authenticate, async (req, res) => {
   const { celeb, type, form, payment, donateAmt } = req.body;
   if (!celeb || !type || !form || !payment) return res.status(400).json({ error: 'Missing fields' });
   try {
+    // Plan-based access control
+    const bookingUser = await qOne('SELECT plan FROM users WHERE id=$1', [req.user.id]);
+    const userPlan = bookingUser?.plan || 'free';
+    if ((type === 'fan_card' || type === 'fan_card_platinum') && userPlan === 'free') {
+      return res.status(403).json({ error: 'Fan Card purchase requires a Premium or Platinum plan.' });
+    }
+    if (['booking','video','meet'].includes(type) && userPlan !== 'platinum') {
+      return res.status(403).json({ error: 'Celebrity bookings require a Platinum plan.' });
+    }
+
     const amount = type === 'donate' ? (donateAmt || 0)
       : type === 'fan_card'          ? (celeb.vipPrice || 299)
       : type === 'fan_card_platinum' ? (celeb.platinumPrice || 999)
@@ -559,6 +592,14 @@ app.get('/api/user/bookings', authenticate, async (req, res) => {
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
+app.get('/api/me', authenticate, async (req, res) => {
+  try {
+    const u = await qOne('SELECT id, name, email, role, plan FROM users WHERE id=$1', [req.user.id]);
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan: u.plan || 'free' });
+  } catch { res.status(500).json({ error: 'Database error' }); }
+});
+
 app.get('/api/me/memberships', authenticate, async (req, res) => {
   try {
     const rows = await qAll(
@@ -569,6 +610,41 @@ app.get('/api/me/memberships', authenticate, async (req, res) => {
       const celeb = JSON.parse(r.celebData || '{}');
       return { bookingId: r.id, celebId: String(celeb.id), celebName: celeb.name, celebImg: celeb.img, tier: r.bookingType === 'fan_card_platinum' ? 'platinum' : 'vip', status: r.status };
     }));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────
+// PLAN ROUTES
+// ─────────────────────────────────────────────
+app.get('/api/plans', async (req, res) => {
+  try {
+    const rows = await qAll('SELECT * FROM plans ORDER BY price ASC');
+    res.json(rows.map(p => ({ ...p, features: JSON.parse(p.features || '[]') })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/admin/plans/:tier', authenticate, adminOnly, async (req, res) => {
+  const { price, billingCycle, features } = req.body;
+  const { tier } = req.params;
+  if (!['free', 'premium', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Invalid tier' });
+  try {
+    await q(
+      'UPDATE plans SET price=$1,"billingCycle"=$2,features=$3,"updatedAt"=NOW() WHERE tier=$4',
+      [price, billingCycle || 'monthly', JSON.stringify(features || []), tier]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/admin/users/:id/plan', authenticate, adminOnly, async (req, res) => {
+  const { plan } = req.body;
+  if (!['free', 'premium', 'platinum'].includes(plan)) return res.status(400).json({ error: 'Invalid plan' });
+  try {
+    await q('UPDATE users SET plan=$1 WHERE id=$2', [plan, req.params.id]);
+    const u = await qOne('SELECT name,email FROM users WHERE id=$1', [req.params.id]);
+    broadcastToAgents({ type: 'plan_changed', userId: req.params.id, plan, userName: u?.name });
+    if (u?.email) sendPlanChanged({ name: u.name, email: u.email, plan }).catch(() => {});
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -649,7 +725,7 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
 
 app.get('/api/admin/users', authenticate, adminOnly, async (req, res) => {
   try {
-    const rows = await qAll('SELECT id,name,email,role,joined FROM users ORDER BY joined DESC');
+    const rows = await qAll('SELECT id,name,email,role,plan,joined FROM users ORDER BY joined DESC');
     res.json(rows);
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
@@ -833,6 +909,21 @@ app.delete('/api/admin/blogs/:id', authenticate, adminOnly, async (req, res) => 
   try {
     await q('DELETE FROM blogs WHERE id=$1', [req.params.id]);
     res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/blogs/:id/send-email', authenticate, adminOnly, async (req, res) => {
+  try {
+    const blog = await qOne('SELECT * FROM blogs WHERE id=$1', [req.params.id]);
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+    const parsed = { ...blog, content: JSON.parse(blog.content || '[]') };
+    const users = await qAll('SELECT name, email FROM users WHERE role != $1', ['admin']);
+    let sent = 0;
+    for (const u of users) {
+      await sendBlogEmail({ name: u.name, email: u.email, blog: parsed }).catch(() => {});
+      sent++;
+    }
+    res.json({ success: true, sent });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
