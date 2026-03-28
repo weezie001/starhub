@@ -605,9 +605,11 @@ export default function AdminPage({ user }) {
     pending: adminBookings.filter(b => b.status === "pending").length,
     celebs: celebs.length,
     available: celebs.filter(c => c.avail).length,
+    users: users.length,
   };
 
   const statCards = [
+    { label: "Total Users",    value: stats.users,                          Icon: Users,         colorClass: "text-[#b8d4f0]" },
     { label: "Total Bookings", value: stats.bookings,                       Icon: CalendarBlank, colorClass: "text-primary" },
     { label: "Revenue",        value: `$${stats.revenue.toLocaleString()}`, Icon: ChartBar,      colorClass: "text-[#6DBF7B]" },
     { label: "Pending",        value: stats.pending,                        Icon: Receipt,       colorClass: "text-[#D4A84B]" },
