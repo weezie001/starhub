@@ -256,6 +256,12 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
           if (s.agentName) setAgentName(s.agentName);
           break;
         }
+        case "session_not_found":
+          localStorage.removeItem(SESSION_KEY);
+          sessionIdRef.current = null;
+          setStage("bot");
+          launchBot(botName || user?.name || "there");
+          break;
         case "queue_update":
           setPosition(msg.position);
           break;

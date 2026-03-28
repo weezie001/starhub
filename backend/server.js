@@ -298,11 +298,32 @@ wss.on('connection', ws => {
       }
 
       if (existingSessionId) {
+        const session = await qOne('SELECT * FROM chat_sessions WHERE id=$1', [existingSessionId]);
+
+        // Session doesn't exist or was closed — tell client to start fresh
+        if (!session || session.status === 'closed') {
+          send(ws, { type: 'session_not_found' });
+          return;
+        }
+
         sessionId = existingSessionId;
         const existing = activeSessions.get(sessionId) || {};
-        activeSessions.set(sessionId, { ...existing, customerWs: ws });
+        activeSessions.set(sessionId, {
+          ...existing,
+          customerWs: ws,
+          isPremium: existing.isPremium ?? session.isPremium,
+          memberTier: existing.memberTier ?? session.memberTier,
+        });
+
+        // Re-add to queue if server restarted and session fell out of queue
+        if (session.status === 'waiting' && !waitingQueue.includes(sessionId)) {
+          waitingQueue.push(sessionId);
+          const position = waitingQueue.indexOf(sessionId) + 1;
+          broadcastToAgents({ type: 'new_session', sessionId, customerName: session.customerName, topic: session.topic, position, isPremium: session.isPremium, memberTier: session.memberTier });
+          broadcastQueuePositions();
+        }
+
         const history = await qAll('SELECT * FROM chat_messages WHERE "sessionId"=$1 ORDER BY ts ASC', [sessionId]);
-        const session = await qOne('SELECT * FROM chat_sessions WHERE id=$1', [sessionId]);
         send(ws, { type: 'session_rejoined', sessionId, session, history });
         const s = activeSessions.get(sessionId);
         if (s?.agentWs) send(s.agentWs, { type: 'customer_reconnected', sessionId });

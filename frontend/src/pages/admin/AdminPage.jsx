@@ -1396,7 +1396,9 @@ export default function AdminPage({ user }) {
             </div>
           )}
 
-          {tab === "inbox" && <ConciergeInbox user={user} />}
+          <div style={{ display: tab === "inbox" ? "contents" : "none" }}>
+            <ConciergeInbox user={user} />
+          </div>
 
         </main>
       </div>
