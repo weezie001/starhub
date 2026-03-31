@@ -431,7 +431,7 @@ export default function BookingModal({ open, c, type, onClose, onConfirm, user, 
                   {/* Price row */}
                   <div className="px-4 py-3 bg-secondary flex items-center justify-between">
                     <div>
-                      <div className="text-primary font-bold text-lg font-serif">${price.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ lifetime</span></div>
+                      <div className="text-primary font-bold text-lg font-serif">${price.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ year</span></div>
                       <div className="text-muted-foreground text-[11px] mt-0.5">
                         {isPlat ? "All VIP perks + meet & greet + signed memorabilia" : "Priority booking • Exclusive content • Birthday surprises"}
                       </div>

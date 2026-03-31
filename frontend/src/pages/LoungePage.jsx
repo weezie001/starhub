@@ -92,7 +92,7 @@ export default function LoungePage({ user, memberships, setPage, onBook }) {
                     <div className="bg-card p-4">
                       <div className="text-foreground font-bold text-sm font-serif mb-0.5">{m.celebName}</div>
                       <div className="text-muted-foreground text-[11px] mb-3">
-                        {m.tier === "platinum" ? "Platinum Elite Card" : "Royal VIP Card"} · Lifetime membership
+                        {m.tier === "platinum" ? "Platinum Elite Card" : "Royal VIP Card"} · year membership
                       </div>
                       <Button size="sm" className="w-full text-xs" onClick={() => onBook({ id: m.celebId, name: m.celebName, img: m.celebImg }, "booking")}>
                         Book Priority Session →

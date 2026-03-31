@@ -170,7 +170,7 @@ export const BLOGS = [
     readTime: "5 min read",
     feat: false,
     img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=1200&q=80",
-    excerpt: "A meet & greet is only as good as its execution. These are the details that transform a quick photo opportunity into a moment fans carry with them for a lifetime.",
+    excerpt: "A meet & greet is only as good as its execution. These are the details that transform a quick photo opportunity into a moment fans carry with them for a year.",
     content: [
       { type: "p", text: "Meet & greets have a variable reputation. At their worst, they're rushed, impersonal, and leave fans feeling like items on a conveyor belt. At their best, they're transformative — a moment of genuine human connection with someone whose work has meant something to you. The difference is almost entirely in the execution details." },
       { type: "h2", text: "Flow Architecture" },

@@ -110,7 +110,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
                 Priority booking · Exclusive content · Special discounts · Birthday surprises
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-primary font-bold text-lg font-serif">${vipPrice.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ lifetime</span></span>
+                <span className="text-primary font-bold text-lg font-serif">${vipPrice.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ year</span></span>
                 <Button size="sm" className="px-5" onClick={() => onBook(c, "fan_card")}>Buy Now →</Button>
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function FanCardPage({ c, onBook, setPage }) {
                 All VIP perks · Private meet &amp; greet · Signed memorabilia · Concierge line
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-primary font-bold text-lg font-serif">${platinumPrice.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ lifetime</span></span>
+                <span className="text-primary font-bold text-lg font-serif">${platinumPrice.toLocaleString()} <span className="text-muted-foreground text-xs font-normal">/ year</span></span>
                 <Button size="sm" className="px-5" onClick={() => onBook(c, "fan_card_platinum")}>Buy Now →</Button>
               </div>
             </div>
