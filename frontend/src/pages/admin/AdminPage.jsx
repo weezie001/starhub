@@ -383,7 +383,7 @@ export default function AdminPage({ user }) {
   }, []);
 
   useEffect(() => {
-    if ((tab === "users" || tab === "overview") && users.length === 0) api.getAdminUsers().then(setUsers).catch(() => {});
+    if (tab === "users" || tab === "overview") api.getAdminUsers().then(setUsers).catch(() => {});
     if (tab === "blogs"        && blogs.length === 0)        api.getBlogs().then(setBlogs).catch(() => {});
     if (tab === "transactions" && transactions.length === 0) {
       setLoadingTxns(true);

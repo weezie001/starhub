@@ -804,7 +804,7 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
 
 app.get('/api/admin/users', authenticate, adminOnly, async (req, res) => {
   try {
-    const rows = await qAll('SELECT id,name,email,role,plan,plan_expires_at,joined FROM users ORDER BY joined DESC');
+    const rows = await qAll("SELECT id,name,email,role,COALESCE(plan,'free') as plan,plan_expires_at,joined FROM users ORDER BY joined DESC");
     res.json(rows.map(u => ({ ...u, planExpiresAt: u.plan_expires_at || null })));
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
