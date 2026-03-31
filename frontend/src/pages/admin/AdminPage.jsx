@@ -996,14 +996,14 @@ export default function AdminPage({ user }) {
                       <div className="bg-card border border-primary/20 rounded-xl p-5 mt-1 ml-2">
                         <h4 className="text-primary mb-3 font-serif text-sm m-0">Edit — {c.name}</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                          <Input label="Name" value={editCelebForm.name} onChange={e => setEditCelebForm(f => ({ ...f, name: e.target.value }))} />
+                          <Input autoComplete="off" placeholder="Celebrity name" value={editCelebForm.name} onChange={e => setEditCelebForm(f => ({ ...f, name: e.target.value }))} />
                           <div>
                             <label className="text-muted-foreground text-[11px] tracking-[0.8px] block mb-1.5 uppercase font-semibold">Category</label>
                             <select value={editCelebForm.category} onChange={e => setEditCelebForm(f => ({ ...f, category: e.target.value }))} className="w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/60 font-sans">
                               {CATS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                           </div>
-                          <Input label="Session / Booking Price ($)" value={editCelebForm.price} onChange={e => setEditCelebForm(f => ({ ...f, price: e.target.value }))} type="number" />
+                          <Input autoComplete="off" placeholder="Booking price" value={editCelebForm.price} onChange={e => setEditCelebForm(f => ({ ...f, price: e.target.value }))} type="number" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                           <div>
@@ -1020,13 +1020,13 @@ export default function AdminPage({ user }) {
                             </div>
                             <input ref={editPhotoInputRef} type="file" accept="image/*" onChange={handleEditPhotoFile} className="hidden" />
                           </div>
-                          <Input label="Country" value={editCelebForm.country} onChange={e => setEditCelebForm(f => ({ ...f, country: e.target.value }))} />
-                          <Input label="Flag Emoji" value={editCelebForm.flag} onChange={e => setEditCelebForm(f => ({ ...f, flag: e.target.value }))} />
+                          <Input autoComplete="off" placeholder="e.g. USA" value={editCelebForm.country} onChange={e => setEditCelebForm(f => ({ ...f, country: e.target.value }))} />
+                          <Input autoComplete="off" placeholder="e.g. 🇺🇸" value={editCelebForm.flag} onChange={e => setEditCelebForm(f => ({ ...f, flag: e.target.value }))} />
                         </div>
-                        <Input label="Bio" value={editCelebForm.bio} onChange={e => setEditCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
+                        <Input autoComplete="off" value={editCelebForm.bio} onChange={e => setEditCelebForm(f => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
                         <div className="grid grid-cols-2 gap-3 mt-3">
-                          <Input label="VIP Gold Card Price ($/mo)" value={editCelebForm.vipPrice} onChange={e => setEditCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="299" />
-                          <Input label="Platinum Card Price ($/mo)" value={editCelebForm.platinumPrice} onChange={e => setEditCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="999" />
+                          <Input autoComplete="off" value={editCelebForm.vipPrice} onChange={e => setEditCelebForm(f => ({ ...f, vipPrice: e.target.value }))} type="number" placeholder="VIP Card Price (default 299)" />
+                          <Input autoComplete="off" value={editCelebForm.platinumPrice} onChange={e => setEditCelebForm(f => ({ ...f, platinumPrice: e.target.value }))} type="number" placeholder="Platinum Card Price (default 999)" />
                         </div>
                         <div className="flex gap-2 mt-3">
                           <Button onClick={() => saveEditCeleb(c.id)} className="px-5 py-2 text-xs gap-1"><Check size={13} /> Save Changes</Button>
