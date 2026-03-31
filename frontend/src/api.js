@@ -91,6 +91,8 @@ export const api = {
 
   // Admin transactions
   getAdminTransactions: () => req('/admin/transactions').then(rows => rows.map(mapBooking)),
+  uploadAvatar: (data) => req('/me/avatar', { method: 'POST', body: JSON.stringify({ data }) }),
+  deleteAdminTransaction: (id) => req(`/admin/transactions/${id}`, { method: 'DELETE' }),
 
   // Plans
   getPlans: () => req('/plans'),

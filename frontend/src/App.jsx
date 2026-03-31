@@ -201,7 +201,7 @@ export default function App() {
         api.getMe().then(me => {
           if (me?.plan) {
             setUser(u => {
-              const updated = { ...u, plan: me.plan };
+              const updated = { ...u, plan: me.plan, planExpiresAt: me.planExpiresAt || null, ...(me.avatarUrl !== undefined ? { avatarUrl: me.avatarUrl } : {}) };
               try { localStorage.setItem("sb_user", JSON.stringify(updated)); } catch {}
               return updated;
             });
@@ -220,7 +220,7 @@ export default function App() {
         if (me?.plan) {
           setUser(u => {
             if (!u || (u.plan === me.plan && (u.planExpiresAt ?? null) === (me.planExpiresAt ?? null))) return u;
-            const updated = { ...u, plan: me.plan, planExpiresAt: me.planExpiresAt };
+            const updated = { ...u, plan: me.plan, planExpiresAt: me.planExpiresAt, ...(me.avatarUrl !== undefined ? { avatarUrl: me.avatarUrl } : {}) };
             try { localStorage.setItem("sb_user", JSON.stringify(updated)); } catch {}
             return updated;
           });

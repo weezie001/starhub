@@ -125,7 +125,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         <div className="px-5 pb-5">
           <div className="flex items-end gap-3 -mt-9 mb-3">
             <div className="w-[68px] h-[68px] rounded-full border-4 border-card overflow-hidden bg-card shrink-0 shadow-lg">
-              <img src={avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
+              <img src={user.avatarUrl || avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
             </div>
             <span className={cn("pb-1 text-[11px] font-bold font-sans tracking-wide", planColor)}>{planIcon} {planLabel.toUpperCase()}</span>
           </div>
@@ -142,7 +142,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         {[
           ["Email", user.email],
           ["Plan", planLabel],
-          ...(user.planExpiresAt && memberTier !== "free" ? [["Renews", new Date(user.planExpiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })]] : []),
+          ...(user.planExpiresAt && user.plan !== "free" ? [["Expires", new Date(user.planExpiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })]] : []),
           ["Member Since", new Date(user.id).toLocaleDateString("en-US", { month: "short", year: "numeric" })],
           ["Bookings", myBookings.length],
           ["Total Spent", `$${spent.toLocaleString()}`],
@@ -267,7 +267,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
                   </div>
                   <div className="flex items-center gap-4 mb-5 pb-5 border-b border-border">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-card border border-border shrink-0">
-                      <img src={avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
+                      <img src={user.avatarUrl || avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <div className="text-foreground font-semibold text-sm">{user.name}</div>
@@ -358,14 +358,33 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
 
         {/* Avatar */}
         <div className="flex flex-col items-center mb-8">
-          <div className="relative">
+          <div className="relative cursor-pointer" onClick={() => document.getElementById('avatar-upload-input').click()}>
             <div className="w-24 h-24 rounded-full border-2 border-primary/30 overflow-hidden bg-card">
-              <img src={avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
+              <img src={user.avatarUrl || avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
             </div>
             <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-background">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
             </div>
           </div>
+          <input
+            id="avatar-upload-input"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async e => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = async ev => {
+                try {
+                  const res = await api.uploadAvatar(ev.target.result);
+                  if (res?.url) onUserUpdate?.({ avatarUrl: res.url });
+                } catch {}
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
+          <p className="text-muted-foreground/50 text-[10px] mt-2 font-sans">Tap to change photo</p>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -442,7 +461,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
             <div className="flex items-end justify-between -mt-10 mb-3">
               <div className="flex items-end gap-3">
                 <div className="w-[72px] h-[72px] rounded-full border-4 border-card overflow-hidden bg-card shrink-0 shadow-lg">
-                  <img src={avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
+                  <img src={user.avatarUrl || avatar(user.name)} alt={user.name} className="w-full h-full object-cover" />
                 </div>
               </div>
               <button onClick={openEdit}

@@ -522,7 +522,7 @@ async function sendLoginAdmin({ name, email, plan }) {
 }
 
 // 7. Plan changed notification to user
-async function sendPlanChanged({ name, email, plan }) {
+async function sendPlanChanged({ name, email, plan, planExpiresAt }) {
   const isPlat  = plan === 'platinum';
   const isPrem  = plan === 'premium';
   const label   = isPlat ? 'Platinum Executive' : isPrem ? 'Premium VIP' : 'Free';
@@ -541,6 +541,7 @@ async function sendPlanChanged({ name, email, plan }) {
       <div style="font-size:10px;letter-spacing:2px;color:${gold};text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;margin-bottom:14px">What's included</div>
       ${perks.map(p => `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px"><span style="color:${green};font-size:14px;margin-top:1px">✓</span><span style="color:#c8c0b8;font-size:14px">${p}</span></div>`).join('')}
     </div>
+    ${planExpiresAt ? `<p style="color:${muted};font-size:12px;line-height:1.7;margin:16px 0 0">Your ${label} plan is active until <strong style="color:#e5e2e1">${new Date(planExpiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>. It will renew or expire on this date.</p>` : ''}
     <div><a href="${SITE}" style="display:inline-block;margin-top:8px;padding:14px 32px;background:linear-gradient(135deg,#f5cc6a,#c98a10);color:#1a0f00;font-weight:700;font-size:14px;text-decoration:none;border-radius:100px">Explore Your Benefits →</a></div>`;
 
   const html = baseMembership(plan, body);
@@ -548,7 +549,7 @@ async function sendPlanChanged({ name, email, plan }) {
     to: email,
     subject: `Your plan has been updated — ${label}`,
     html,
-    text: `Hi ${name},\n\nYour StarBookNow plan has been updated to ${label}.\n\nWhat's included:\n${perks.map(p => `• ${p}`).join('\n')}\n\nExplore your benefits: ${SITE}\n\n© ${new Date().getFullYear()} StarBookNow`,
+    text: `Hi ${name},\n\nYour StarBookNow plan has been updated to ${label}.\n\nWhat's included:\n${perks.map(p => `• ${p}`).join('\n')}${planExpiresAt ? `\n\nPlan active until: ${new Date(planExpiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}\n\nExplore your benefits: ${SITE}\n\n© ${new Date().getFullYear()} StarBookNow`,
     headers: {
       'Reply-To': REPLY_TO,
       'List-Unsubscribe': `<mailto:${UNSUB_EMAIL}?subject=unsubscribe>`,

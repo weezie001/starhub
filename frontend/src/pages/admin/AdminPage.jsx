@@ -1138,6 +1138,12 @@ export default function AdminPage({ user }) {
                               <span className="text-[#6DBF7B] font-bold text-base">${(t.amount || 0).toLocaleString()}</span>
                               <span className="text-muted-foreground/60 text-[10px] capitalize">{t.payment}</span>
                               {t.invoiceId && <span className="text-primary font-mono text-[10px] bg-primary/5 border border-primary/20 rounded px-1.5 py-0.5">{t.invoiceId}</span>}
+                              <button
+                                onClick={() => setConfirmModal({ message: `Delete transaction for ${t.celeb?.name}? This cannot be undone.`, confirmLabel: "Delete", variant: "destructive", onConfirm: async () => { await api.deleteAdminTransaction(t.id); setTransactions(prev => prev.filter(x => x.id !== t.id)); } })}
+                                className="text-[10px] text-red-400 hover:text-red-300 cursor-pointer bg-transparent border-none font-sans mt-1"
+                              >
+                                Delete
+                              </button>
                             </div>
                           </div>
                         );

@@ -147,6 +147,7 @@ async function initDB() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT DEFAULT '[]'`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
 
   // Seed default plans
   const { rows: planRows } = await pool.query('SELECT COUNT(*) as c FROM plans');
@@ -518,7 +519,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '7d' });
     const plan = await resolveUserPlan(user.id);
-    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan, token } });
+    const planExpiresAt = plan === 'free' ? null : (user.plan_expires_at || null);
+    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan, planExpiresAt, token } });
     if (user.role !== 'admin') {
       sendLoginUser({ name: user.name, email: user.email });
       sendLoginAdmin({ name: user.name, email: user.email, plan });
@@ -636,10 +638,10 @@ async function resolveUserPlan(userId) {
 
 app.get('/api/me', authenticate, async (req, res) => {
   try {
-    const u = await qOne('SELECT id, name, email, role, plan, plan_expires_at FROM users WHERE id=$1', [req.user.id]);
+    const u = await qOne('SELECT id, name, email, role, plan, plan_expires_at, avatar_url FROM users WHERE id=$1', [req.user.id]);
     if (!u) return res.status(404).json({ error: 'User not found' });
     const plan = await resolveUserPlan(req.user.id);
-    res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan, planExpiresAt: u.plan_expires_at || null });
+    res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan, planExpiresAt: u.plan_expires_at || null, avatarUrl: u.avatar_url || null });
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
@@ -660,11 +662,12 @@ app.put('/api/me/favorites', authenticate, async (req, res) => {
 });
 
 app.patch('/api/me', authenticate, async (req, res) => {
-  const { name } = req.body;
-  if (!name?.trim()) return res.status(400).json({ error: 'Name is required' });
+  const { name, avatarUrl } = req.body;
+  if (name !== undefined && !name?.trim()) return res.status(400).json({ error: 'Name is required' });
   try {
-    await q('UPDATE users SET name=$1 WHERE id=$2', [name.trim(), req.user.id]);
-    res.json({ success: true, name: name.trim() });
+    if (name !== undefined) await q('UPDATE users SET name=$1 WHERE id=$2', [name.trim(), req.user.id]);
+    if (avatarUrl !== undefined) await q('UPDATE users SET avatar_url=$1 WHERE id=$2', [avatarUrl || null, req.user.id]);
+    res.json({ success: true, name: name?.trim(), avatarUrl: avatarUrl || null });
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
@@ -712,7 +715,7 @@ app.patch('/api/admin/users/:id/plan', authenticate, adminOnly, async (req, res)
     await q('UPDATE users SET plan=$1, plan_expires_at=$2 WHERE id=$3', [plan, expiresAt, req.params.id]);
     const u = await qOne('SELECT name,email FROM users WHERE id=$1', [req.params.id]);
     broadcastToAgents({ type: 'plan_changed', userId: req.params.id, plan, userName: u?.name });
-    if (u?.email) sendPlanChanged({ name: u.name, email: u.email, plan }).catch(() => {});
+    if (u?.email) sendPlanChanged({ name: u.name, email: u.email, plan, planExpiresAt: expiresAt }).catch(() => {});
     res.json({ success: true, planExpiresAt: expiresAt });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -887,6 +890,21 @@ app.post('/api/upload', authenticate, async (req, res) => {
   }
 });
 
+app.post('/api/me/avatar', authenticate, async (req, res) => {
+  const { data } = req.body;
+  if (!data) return res.status(400).json({ error: 'No image data' });
+  if (!process.env.CLOUDINARY_CLOUD_NAME) return res.status(503).json({ error: 'Storage not configured' });
+  try {
+    const result = await cloudinary.uploader.upload(data, {
+      folder: 'starbooknow/avatars',
+      resource_type: 'image',
+      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
+    });
+    await q('UPDATE users SET avatar_url=$1 WHERE id=$2', [result.secure_url, req.user.id]);
+    res.json({ url: result.secure_url });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/payments/crypto', authenticate, (req, res) => {
   res.json({ address: 'bc1q...', network: 'Bitcoin', memo: 'Use BTC mainnet only' });
 });
@@ -945,6 +963,13 @@ app.get('/api/admin/transactions', authenticate, adminOnly, async (req, res) => 
     );
     res.json(rows.map(r => ({ ...r, celebData: JSON.parse(r.celebData), formData: JSON.parse(r.formData) })));
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/admin/transactions/:id', authenticate, adminOnly, async (req, res) => {
+  try {
+    await q('DELETE FROM bookings WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Admin: blog CRUD
