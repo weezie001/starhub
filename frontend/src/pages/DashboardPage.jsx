@@ -142,6 +142,7 @@ export default function DashboardPage({ user, bookings, favorites, onView, setPa
         {[
           ["Email", user.email],
           ["Plan", planLabel],
+          ...(user.planExpiresAt && memberTier !== "free" ? [["Renews", new Date(user.planExpiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })]] : []),
           ["Member Since", new Date(user.id).toLocaleDateString("en-US", { month: "short", year: "numeric" })],
           ["Bookings", myBookings.length],
           ["Total Spent", `$${spent.toLocaleString()}`],

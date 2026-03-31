@@ -1365,8 +1365,9 @@ export default function AdminPage({ user }) {
                         onChange={async e => {
                           const plan = e.target.value;
                           try {
-                            await api.setUserPlan(u.id, plan);
-                            setUsers(prev => prev.map(x => x.id === u.id ? { ...x, plan } : x));
+                            const res = await api.setUserPlan(u.id, plan);
+                            const planExpiresAt = res?.planExpiresAt || null;
+                            setUsers(prev => prev.map(x => x.id === u.id ? { ...x, plan, planExpiresAt } : x));
                           } catch {}
                         }}
                         className="text-xs rounded-lg border border-border bg-input px-2 py-1 text-foreground outline-none font-sans cursor-pointer"
@@ -1467,9 +1468,10 @@ export default function AdminPage({ user }) {
                       onChange={async e => {
                         const plan = e.target.value;
                         try {
-                          await api.setUserPlan(viewUser.id, plan);
-                          setViewUser(prev => ({ ...prev, plan }));
-                          setUsers(prev => prev.map(u => u.id === viewUser.id ? { ...u, plan } : u));
+                          const res = await api.setUserPlan(viewUser.id, plan);
+                          const planExpiresAt = res?.planExpiresAt || null;
+                          setViewUser(prev => ({ ...prev, plan, planExpiresAt }));
+                          setUsers(prev => prev.map(u => u.id === viewUser.id ? { ...u, plan, planExpiresAt } : u));
                         } catch {}
                       }}
                       className="text-xs rounded-lg border border-border bg-input px-2 py-1 text-foreground outline-none font-sans cursor-pointer"

@@ -212,23 +212,24 @@ export default function App() {
     setUserLoaded(true);
   }, []);
 
-  // Re-sync plan when user returns to the tab
+  // Re-sync plan when user returns to the tab, and poll every 60s while active
   useEffect(() => {
-    const onFocus = () => {
+    function syncPlan() {
       if (!localStorage.getItem("sb_user")) return;
       api.getMe().then(me => {
         if (me?.plan) {
           setUser(u => {
-            if (!u || u.plan === me.plan) return u;
-            const updated = { ...u, plan: me.plan };
+            if (!u || (u.plan === me.plan && (u.planExpiresAt ?? null) === (me.planExpiresAt ?? null))) return u;
+            const updated = { ...u, plan: me.plan, planExpiresAt: me.planExpiresAt };
             try { localStorage.setItem("sb_user", JSON.stringify(updated)); } catch {}
             return updated;
           });
         }
       }).catch(() => {});
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    }
+    window.addEventListener("focus", syncPlan);
+    const interval = setInterval(syncPlan, 60_000);
+    return () => { window.removeEventListener("focus", syncPlan); clearInterval(interval); };
   }, []);
 
   // Only redirect after we know whether a user is logged in

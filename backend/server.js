@@ -146,6 +146,7 @@ async function initDB() {
   `);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS favorites TEXT DEFAULT '[]'`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMP`);
 
   // Seed default plans
   const { rows: planRows } = await pool.query('SELECT COUNT(*) as c FROM plans');
@@ -516,7 +517,7 @@ app.post('/api/auth/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '7d' });
-    const plan = user.plan || 'free';
+    const plan = await resolveUserPlan(user.id);
     res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role, plan, token } });
     if (user.role !== 'admin') {
       sendLoginUser({ name: user.name, email: user.email });
@@ -620,11 +621,25 @@ app.get('/api/user/bookings', authenticate, async (req, res) => {
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
+// Checks if a paid plan has expired and downgrades to free if so.
+// Returns the effective plan string.
+async function resolveUserPlan(userId) {
+  const u = await qOne('SELECT plan, plan_expires_at FROM users WHERE id=$1', [userId]);
+  if (!u) return 'free';
+  const plan = u.plan || 'free';
+  if (plan !== 'free' && u.plan_expires_at && new Date(u.plan_expires_at) < new Date()) {
+    await q('UPDATE users SET plan=$1, plan_expires_at=NULL WHERE id=$2', ['free', userId]);
+    return 'free';
+  }
+  return plan;
+}
+
 app.get('/api/me', authenticate, async (req, res) => {
   try {
-    const u = await qOne('SELECT id, name, email, role, plan FROM users WHERE id=$1', [req.user.id]);
+    const u = await qOne('SELECT id, name, email, role, plan, plan_expires_at FROM users WHERE id=$1', [req.user.id]);
     if (!u) return res.status(404).json({ error: 'User not found' });
-    res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan: u.plan || 'free' });
+    const plan = await resolveUserPlan(req.user.id);
+    res.json({ id: u.id, name: u.name, email: u.email, role: u.role, plan, planExpiresAt: u.plan_expires_at || null });
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
@@ -693,11 +708,12 @@ app.patch('/api/admin/users/:id/plan', authenticate, adminOnly, async (req, res)
   const { plan } = req.body;
   if (!['free', 'premium', 'platinum'].includes(plan)) return res.status(400).json({ error: 'Invalid plan' });
   try {
-    await q('UPDATE users SET plan=$1 WHERE id=$2', [plan, req.params.id]);
+    const expiresAt = plan === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await q('UPDATE users SET plan=$1, plan_expires_at=$2 WHERE id=$3', [plan, expiresAt, req.params.id]);
     const u = await qOne('SELECT name,email FROM users WHERE id=$1', [req.params.id]);
     broadcastToAgents({ type: 'plan_changed', userId: req.params.id, plan, userName: u?.name });
     if (u?.email) sendPlanChanged({ name: u.name, email: u.email, plan }).catch(() => {});
-    res.json({ success: true });
+    res.json({ success: true, planExpiresAt: expiresAt });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -998,7 +1014,7 @@ app.post('/api/admin/users', authenticate, adminOnly, async (req, res) => {
 // Admin: get user detail (bookings + memberships)
 app.get('/api/admin/users/:id/detail', authenticate, adminOnly, async (req, res) => {
   try {
-    const u = await qOne('SELECT id,name,email,role,joined FROM users WHERE id=$1', [req.params.id]);
+    const u = await qOne('SELECT id,name,email,role,joined,plan,plan_expires_at FROM users WHERE id=$1', [req.params.id]);
     if (!u) return res.status(404).json({ error: 'User not found' });
     const bookings = await qAll(
       'SELECT id,"bookingType",status,amount,date,"celebData" FROM bookings WHERE "userId"=$1 ORDER BY date DESC LIMIT 20',
