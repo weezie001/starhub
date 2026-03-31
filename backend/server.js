@@ -794,8 +794,8 @@ app.patch('/api/admin/bookings/:id', authenticate, adminOnly, async (req, res) =
 
 app.get('/api/admin/users', authenticate, adminOnly, async (req, res) => {
   try {
-    const rows = await qAll('SELECT id,name,email,role,plan,joined FROM users ORDER BY joined DESC');
-    res.json(rows);
+    const rows = await qAll('SELECT id,name,email,role,plan,plan_expires_at,joined FROM users ORDER BY joined DESC');
+    res.json(rows.map(u => ({ ...u, planExpiresAt: u.plan_expires_at || null })));
   } catch { res.status(500).json({ error: 'Database error' }); }
 });
 
@@ -1028,6 +1028,7 @@ app.get('/api/admin/users/:id/detail', authenticate, adminOnly, async (req, res)
       });
     res.json({
       ...u,
+      planExpiresAt: u.plan_expires_at || null,
       bookings: bookings.map(b => ({ ...b, celebData: JSON.parse(b.celebData || '{}') })),
       memberships,
     });

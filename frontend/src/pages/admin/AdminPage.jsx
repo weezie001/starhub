@@ -1377,6 +1377,11 @@ export default function AdminPage({ user }) {
                         <option value="platinum">Platinum</option>
                       </select>
                       <span className="text-muted-foreground/60 text-[11px]">Joined {new Date(u.joined).toLocaleDateString()}</span>
+                      {u.planExpiresAt && u.plan !== "free" && (
+                        <span className={`text-[11px] font-semibold ${new Date(u.planExpiresAt) < new Date() ? "text-red-400" : "text-green-400"}`}>
+                          Exp. {new Date(u.planExpiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      )}
                       <button
                         onClick={() => openUserDetail(u)}
                         className="bg-transparent border border-primary/40 rounded-lg text-primary cursor-pointer px-2.5 py-1 text-xs font-sans hover:bg-primary/10 transition-colors"
@@ -1481,6 +1486,9 @@ export default function AdminPage({ user }) {
                       <option value="platinum">Platinum</option>
                     </select>
                   </div>
+                  {viewUser.planExpiresAt && viewUser.plan !== "free" && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Plan Expires</span><span className={`font-semibold ${new Date(viewUser.planExpiresAt) < new Date() ? "text-red-400" : "text-green-400"}`}>{new Date(viewUser.planExpiresAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span></div>
+                  )}
                   <div className="flex justify-between"><span className="text-muted-foreground">Joined</span><span className="text-foreground">{new Date(viewUser.joined).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Total Bookings</span><span className="text-foreground font-semibold">{viewUser.bookings?.length ?? 0}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Total Spent</span><span className="text-primary font-bold">${(viewUser.bookings || []).filter(b => b.status === "approved").reduce((s, b) => s + (b.amount || 0), 0).toLocaleString()}</span></div>
