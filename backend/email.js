@@ -557,7 +557,32 @@ async function sendPlanChanged({ name, email, plan, planExpiresAt }) {
   });
 }
 
-// 8. Blog / newsletter email
+// 8. New user registration alert to admin
+async function sendNewUserAdmin({ name, email }) {
+  const time = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+
+  const body = `
+    <p style="color:#b0a898;font-size:14px;line-height:1.7;margin:0 0 16px">A new user has just created an account on StarBookNow.</p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:16px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('Name', name)}
+        ${row('Email', email)}
+        ${row('Time', time)}
+      </table>
+    </div>
+    <a href="${SITE}/#admin" style="display:inline-block;padding:11px 24px;background:${gold};color:#1a0f00;font-weight:700;font-size:13px;text-decoration:none;border-radius:8px">View in Admin Panel →</a>`;
+
+  const html = baseAlert('New User Registration', body);
+  return send({
+    to: ADMIN,
+    subject: `New signup — ${name}`,
+    html,
+    text: `New User Registration\n\nName: ${name}\nEmail: ${email}\nTime: ${time}\n\nAdmin panel: ${SITE}/#admin`,
+    headers: { 'Reply-To': email },
+  });
+}
+
+// 9. Blog / newsletter email
 async function sendBlogEmail({ name, email, blog }) {
   const blocks = Array.isArray(blog.content) ? blog.content : [];
 
@@ -614,4 +639,5 @@ module.exports = {
   sendBlogEmail,
   sendLoginUser,
   sendLoginAdmin,
+  sendNewUserAdmin,
 };

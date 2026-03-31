@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail, sendLoginUser, sendLoginAdmin } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail, sendLoginUser, sendLoginAdmin, sendNewUserAdmin } = require('./email');
 const cloudinary = require('cloudinary').v2;
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
@@ -504,6 +504,7 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ id, email, name, role }, SECRET, { expiresIn: '7d' });
     res.json({ user: { id, name, email, role, plan: 'free', token } });
     sendWelcome({ name, email });
+    sendNewUserAdmin({ name, email }).catch(() => {});
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already exists' });
     res.status(500).json({ error: 'Server error' });
