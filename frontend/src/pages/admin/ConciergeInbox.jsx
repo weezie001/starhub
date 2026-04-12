@@ -116,10 +116,13 @@ function mapMsg(m) {
   };
 }
 
-function SessionItem({ session, isActive, onClick, unread }) {
+function SessionItem({ session, isActive, onClick, unread, customerOnline }) {
   const isPremium = session.isPremium || session.is_premium;
   const memberTier = session.memberTier || session.member_tier;
   const premiumColor = memberTier === "platinum" ? "#b8cce8" : G.gold;
+  // customerOnline: true = online, false = offline, undefined = unknown
+  const custDotColor = customerOnline === true ? G.green : customerOnline === false ? G.red : G.dim;
+  const custDotLabel = customerOnline === true ? "Online" : customerOnline === false ? "Offline" : null;
   return (
     <button onClick={onClick} style={{
       width: "100%", textAlign: "left",
@@ -142,11 +145,19 @@ function SessionItem({ session, isActive, onClick, unread }) {
             </span>
           )}
         </div>
-        {unread > 0 && (
-          <span style={{ background: G.red, color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 50, padding: "2px 7px", flexShrink: 0 }}>
-            {unread}
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {custDotLabel && (
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: custDotColor, boxShadow: customerOnline === true ? `0 0 5px ${G.green}80` : "none" }} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: custDotColor, letterSpacing: 0.5 }}>{custDotLabel}</span>
+            </div>
+          )}
+          {unread > 0 && (
+            <span style={{ background: G.red, color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: 50, padding: "2px 7px" }}>
+              {unread}
+            </span>
+          )}
+        </div>
       </div>
       <div style={{ color: G.dim, fontSize: 11, marginBottom: 4, paddingLeft: 16 }}>{session.email}</div>
       {session.lastMsg && (
@@ -175,6 +186,7 @@ export default function ConciergeInbox({ user }) {
   const [wsConnected, setWsConnected] = useState(false);
   const [typingCustomer, setTypingCustomer] = useState(false);
   const [unreadMap, setUnreadMap] = useState({});
+  const [customerOnlineMap, setCustomerOnlineMap] = useState({}); // sessionId → bool
   const [preview, setPreview] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const ws = useRef(null);
@@ -222,6 +234,7 @@ export default function ConciergeInbox({ user }) {
             const exists = prev.find(s => s.id === newSession.id);
             return exists ? prev : [newSession, ...prev];
           });
+          setCustomerOnlineMap(prev => ({ ...prev, [msg.sessionId]: true }));
           playNotification(msg.isPremium);
         }
 
@@ -229,6 +242,7 @@ export default function ConciergeInbox({ user }) {
         if (msg.type === "session_claimed") {
           const { sessionId: sid, history } = msg;
           setSessions(prev => prev.map(s => s.id === sid ? { ...s, status: "active" } : s));
+          setCustomerOnlineMap(prev => ({ ...prev, [sid]: true }));
           if (activeIdRef.current === sid) {
             setMessages((history || []).map(mapMsg));
           }
@@ -288,6 +302,12 @@ export default function ConciergeInbox({ user }) {
         // Customer disconnected notification
         if (msg.type === "customer_disconnected") {
           setSessions(prev => prev.map(s => s.id === msg.sessionId ? { ...s, lastMsg: "(Customer disconnected)" } : s));
+          setCustomerOnlineMap(prev => ({ ...prev, [msg.sessionId]: false }));
+        }
+
+        // Customer reconnected
+        if (msg.type === "customer_reconnected") {
+          setCustomerOnlineMap(prev => ({ ...prev, [msg.sessionId]: true }));
         }
       } catch {}
     };
@@ -450,7 +470,8 @@ export default function ConciergeInbox({ user }) {
           ) : (
             sessions.map(s => (
               <SessionItem key={s.id} session={s} isActive={s.id === activeSessionId}
-                onClick={() => openSession(s)} unread={unreadMap[s.id] || 0} />
+                onClick={() => openSession(s)} unread={unreadMap[s.id] || 0}
+                customerOnline={customerOnlineMap[s.id]} />
             ))
           )
         )}
@@ -512,7 +533,17 @@ export default function ConciergeInbox({ user }) {
                     </span>
                   )}
                 </div>
-                <div style={{ color: G.dim, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSession.email} • {activeSession.topic || "General"}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: G.dim, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSession.email} • {activeSession.topic || "General"}</span>
+                  {customerOnlineMap[activeSession.id] !== undefined && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, background: customerOnlineMap[activeSession.id] ? `${G.green}15` : `${G.red}15`, border: `1px solid ${customerOnlineMap[activeSession.id] ? G.green + "40" : G.red + "40"}`, borderRadius: 50, padding: "2px 8px" }}>
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: customerOnlineMap[activeSession.id] ? G.green : G.red, boxShadow: customerOnlineMap[activeSession.id] ? `0 0 4px ${G.green}` : "none" }} />
+                      <span style={{ fontSize: 9, fontWeight: 700, color: customerOnlineMap[activeSession.id] ? G.green : G.red }}>
+                        {customerOnlineMap[activeSession.id] ? "Customer Online" : "Customer Offline"}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>

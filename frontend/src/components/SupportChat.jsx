@@ -761,14 +761,36 @@ export default function SupportChat({ user, setPage, triggerOpen, onAuth }) {
                 <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-lg">
                   {isLiveStage ? "👩‍💼" : "🤖"}
                 </div>
-                <div className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#111111] ${isLiveStage ? (isConnected ? "bg-[#6DBF7B]" : "bg-[#D4A84B]") : "bg-[#6DBF7B]"}`} />
+                {/* Presence dot — green when agent online, amber+pulse when waiting, green for bot */}
+                <div className={`absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[hsl(var(--card))] ${
+                  stage === "active" ? "bg-[#6DBF7B]" :
+                  stage === "waiting" || stage === "connecting" ? "bg-[#D4A84B] animate-pulse" :
+                  "bg-[#6DBF7B]"
+                }`} />
               </div>
               <div>
                 <div className="text-foreground font-bold text-[14px]">
                   {stage === "active" ? (agentName || "StarBookNow Agent") : isLiveStage ? "StarBookNow Support" : "StraBot ✨"}
                 </div>
-                <div className={`text-[10px] font-semibold tracking-[0.5px] uppercase ${isLiveStage ? (isConnected ? "text-[#6DBF7B]" : "text-[#D4A84B]") : "text-primary"}`}>
-                  {stage === "active" ? `${agentName || "Agent"} · Live Support` : stage === "waiting" ? "In Queue · Waiting" : stage === "connecting" ? "Connecting..." : "AI-Powered · Live Data"}
+                <div className="flex items-center gap-1.5">
+                  {stage === "active" ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#6DBF7B] inline-block" style={{ boxShadow: "0 0 4px #6DBF7B" }} />
+                      <span className="text-[#6DBF7B] text-[10px] font-semibold tracking-[0.5px] uppercase">Agent Online</span>
+                    </>
+                  ) : stage === "waiting" ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#D4A84B] inline-block animate-pulse" />
+                      <span className="text-[#D4A84B] text-[10px] font-semibold tracking-[0.5px] uppercase">Waiting for Agent</span>
+                    </>
+                  ) : stage === "connecting" ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#D4A84B] inline-block animate-pulse" />
+                      <span className="text-[#D4A84B] text-[10px] font-semibold tracking-[0.5px] uppercase">Connecting...</span>
+                    </>
+                  ) : (
+                    <span className="text-primary text-[10px] font-semibold tracking-[0.5px] uppercase">AI-Powered · Live Data</span>
+                  )}
                 </div>
               </div>
             </div>
