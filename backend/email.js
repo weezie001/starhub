@@ -610,6 +610,75 @@ async function sendBlogEmail({ name, email, blog }) {
   });
 }
 
+// 11. Offline chat fallback — customer sent a message, no agent online → email admin
+async function sendOfflineChatToAdmin({ customerName, customerEmail, topic, message, sessionId }) {
+  const time = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const preview = message.length > 400 ? message.slice(0, 400) + '…' : message;
+
+  const body = `
+    <p style="color:#b0a898;font-size:14px;line-height:1.7;margin:0 0 16px">
+      A customer sent a support message while no agent was online.
+    </p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:16px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('Customer', customerName)}
+        ${row('Email', customerEmail || '—')}
+        ${row('Topic', topic || 'General Inquiry')}
+        ${row('Time', time)}
+        ${row('Session', sessionId)}
+      </table>
+    </div>
+    <div style="background:#111;border-left:3px solid ${gold};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px">
+      <div style="font-size:10px;letter-spacing:2px;color:${gold};text-transform:uppercase;font-weight:700;margin-bottom:8px">Message</div>
+      <div style="font-size:14px;color:#e5e2e1;line-height:1.7;white-space:pre-wrap">${preview}</div>
+    </div>
+    <a href="${SITE}/#admin" style="display:inline-block;padding:11px 24px;background:${gold};color:#1a0f00;font-weight:700;font-size:13px;text-decoration:none;border-radius:8px">Open Support Inbox →</a>`;
+
+  const html = baseAlert('Offline Support Message', body);
+  return send({
+    to: ADMIN,
+    subject: `Offline support message — ${customerName}`,
+    html,
+    text: `Offline Support Message\n\nCustomer: ${customerName}${customerEmail ? ` (${customerEmail})` : ''}\nTopic: ${topic || 'General Inquiry'}\nTime: ${time}\n\nMessage:\n${message}\n\nOpen inbox: ${SITE}/#admin`,
+    headers: customerEmail ? { 'Reply-To': customerEmail } : {},
+  });
+}
+
+// 12. Offline chat fallback — agent sent a message, customer is disconnected → email customer
+async function sendOfflineChatToUser({ customerName, customerEmail, agentName, message, sessionId }) {
+  const time = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const preview = message.length > 400 ? message.slice(0, 400) + '…' : message;
+
+  const body = `
+    <p style="color:#b0a898;font-size:15px;line-height:1.8;margin:0 0 20px">
+      Hi <strong style="color:#fff">${customerName}</strong>,<br><br>
+      Your StarBookNow support agent replied to your chat while you were offline.
+    </p>
+    <div style="background:rgba(240,191,90,0.06);border:1px solid rgba(240,191,90,0.15);border-radius:10px;padding:16px 20px;margin-bottom:20px">
+      <table cellpadding="0" cellspacing="0" style="width:100%">
+        ${row('From', `${agentName} (Senior Agent)`)}
+        ${row('Time', time)}
+      </table>
+    </div>
+    <div style="background:#0d1a0d;border-left:3px solid ${green};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px">
+      <div style="font-size:10px;letter-spacing:2px;color:${green};text-transform:uppercase;font-weight:700;margin-bottom:8px">Agent Message</div>
+      <div style="font-size:14px;color:#e5e2e1;line-height:1.7;white-space:pre-wrap">${preview}</div>
+    </div>
+    <p style="color:#b0a898;font-size:13px;line-height:1.7;margin:0 0 20px">
+      Return to the chat to continue the conversation with your agent.
+    </p>
+    <div>${btn('Return to Chat →', SITE)}</div>`;
+
+  const html = baseTransactional('You have a new message from support', body);
+  return send({
+    to: customerEmail,
+    subject: `New message from your StarBookNow support agent`,
+    html,
+    text: `Hi ${customerName},\n\nYour support agent (${agentName}) sent you a message while you were offline.\n\nTime: ${time}\n\nMessage:\n${message}\n\nReturn to chat: ${SITE}\n\n© ${new Date().getFullYear()} StarBookNow`,
+    headers: { 'Reply-To': REPLY_TO },
+  });
+}
+
 // ── core send ─────────────────────────────────────────────────────────────────
 async function send({ to, subject, html, text, headers = {} }) {
   const resend = getResend();
@@ -640,4 +709,6 @@ module.exports = {
   sendLoginUser,
   sendLoginAdmin,
   sendNewUserAdmin,
+  sendOfflineChatToAdmin,
+  sendOfflineChatToUser,
 };

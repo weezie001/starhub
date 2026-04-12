@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail, sendLoginUser, sendLoginAdmin, sendNewUserAdmin } = require('./email');
+const { sendWelcome, sendBookingConfirmation, sendBookingStatusUpdate, sendAdminBookingAlert, sendInvoice, sendPremiumSupportAlert, sendPlanChanged, sendBlogEmail, sendLoginUser, sendLoginAdmin, sendNewUserAdmin, sendOfflineChatToAdmin, sendOfflineChatToUser } = require('./email');
 const cloudinary = require('cloudinary').v2;
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
@@ -44,6 +44,14 @@ app.use(require('morgan')('dev'));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 20000,        // recycle idle connections every 20s (before Neon's 5-min timeout)
+  connectionTimeoutMillis: 10000,  // fail fast if pool can't hand out a connection in 10s
+  keepAlive: true,                 // TCP keepalive — detects dead connections quickly
+});
+
+pool.on('error', err => {
+  console.error('[pool] unexpected client error:', err.message);
 });
 
 // Query helpers — use $1 $2 ... placeholders
@@ -239,6 +247,7 @@ const activeSessions  = new Map(); // sessionId → { customerWs, agentWs, agent
 const agentSockets    = new Set(); // all connected agent websockets
 const waitingQueue    = [];        // ordered sessionIds without an agent
 const waitlistWatchers = new Map(); // waitlistId → ws
+const offlineEmailCooldown = new Map(); // `${direction}:${sessionId}` → lastSentTs (ms)
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -395,8 +404,62 @@ wss.on('connection', ws => {
       const s = activeSessions.get(sid);
       const saved = await persistMessage(sid, role, clientName, content);
       const envelope = { type: 'message', message: saved };
-      if (role === 'customer' && s?.agentWs) send(s.agentWs, envelope);
-      if (role === 'agent'    && s?.customerWs) send(s.customerWs, envelope);
+
+      if (role === 'customer') {
+        if (s?.agentWs) {
+          send(s.agentWs, envelope);
+        } else {
+          // No agent online — email admin so they don't miss the message
+          const now = Date.now();
+          const coolKey = `admin:${sid}`;
+          if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
+            offlineEmailCooldown.set(coolKey, now);
+            qOne('SELECT "customerEmail", topic FROM chat_sessions WHERE id=$1', [sid])
+              .then(session => {
+                const preview = (() => {
+                  try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
+                })();
+                sendOfflineChatToAdmin({
+                  customerName: clientName,
+                  customerEmail: session?.customerEmail || '',
+                  topic: session?.topic || 'General Inquiry',
+                  message: preview,
+                  sessionId: sid,
+                });
+              })
+              .catch(() => {});
+          }
+        }
+      }
+
+      if (role === 'agent') {
+        if (s?.customerWs) {
+          send(s.customerWs, envelope);
+        } else {
+          // Customer disconnected — email them so they see the reply
+          const now = Date.now();
+          const coolKey = `customer:${sid}`;
+          if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
+            offlineEmailCooldown.set(coolKey, now);
+            qOne('SELECT "customerName", "customerEmail" FROM chat_sessions WHERE id=$1', [sid])
+              .then(session => {
+                if (!session?.customerEmail) return;
+                const preview = (() => {
+                  try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
+                })();
+                sendOfflineChatToUser({
+                  customerName: session.customerName || 'Guest',
+                  customerEmail: session.customerEmail,
+                  agentName: clientName,
+                  message: preview,
+                  sessionId: sid,
+                });
+              })
+              .catch(() => {});
+          }
+        }
+      }
+
       send(ws, { type: 'message_sent', message: saved });
     }
 
