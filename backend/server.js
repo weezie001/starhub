@@ -406,57 +406,55 @@ wss.on('connection', ws => {
       const envelope = { type: 'message', message: saved };
 
       if (role === 'customer') {
-        if (s?.agentWs) {
-          send(s.agentWs, envelope);
-        } else {
-          // No agent online — email admin so they don't miss the message
-          const now = Date.now();
-          const coolKey = `admin:${sid}`;
-          if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
-            offlineEmailCooldown.set(coolKey, now);
-            qOne('SELECT "customerEmail", topic FROM chat_sessions WHERE id=$1', [sid])
-              .then(session => {
-                const preview = (() => {
-                  try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
-                })();
-                sendOfflineChatToAdmin({
-                  customerName: clientName,
-                  customerEmail: session?.customerEmail || '',
-                  topic: session?.topic || 'General Inquiry',
-                  message: preview,
-                  sessionId: sid,
-                });
-              })
-              .catch(() => {});
-          }
+        // Deliver to agent via WebSocket if online
+        if (s?.agentWs) send(s.agentWs, envelope);
+
+        // Always email admin on every customer message (with 5-min cooldown per session)
+        const now = Date.now();
+        const coolKey = `admin:${sid}`;
+        if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
+          offlineEmailCooldown.set(coolKey, now);
+          qOne('SELECT "customerEmail", topic FROM chat_sessions WHERE id=$1', [sid])
+            .then(session => {
+              const preview = (() => {
+                try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
+              })();
+              sendOfflineChatToAdmin({
+                customerName: clientName,
+                customerEmail: session?.customerEmail || '',
+                topic: session?.topic || 'General Inquiry',
+                message: preview,
+                sessionId: sid,
+              });
+            })
+            .catch(() => {});
         }
       }
 
       if (role === 'agent') {
-        if (s?.customerWs) {
-          send(s.customerWs, envelope);
-        } else {
-          // Customer disconnected — email them so they see the reply
-          const now = Date.now();
-          const coolKey = `customer:${sid}`;
-          if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
-            offlineEmailCooldown.set(coolKey, now);
-            qOne('SELECT "customerName", "customerEmail" FROM chat_sessions WHERE id=$1', [sid])
-              .then(session => {
-                if (!session?.customerEmail) return;
-                const preview = (() => {
-                  try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
-                })();
-                sendOfflineChatToUser({
-                  customerName: session.customerName || 'Guest',
-                  customerEmail: session.customerEmail,
-                  agentName: clientName,
-                  message: preview,
-                  sessionId: sid,
-                });
-              })
-              .catch(() => {});
-          }
+        // Deliver to customer via WebSocket if online
+        if (s?.customerWs) send(s.customerWs, envelope);
+
+        // Always email customer on every agent message (with 5-min cooldown per session)
+        const now = Date.now();
+        const coolKey = `customer:${sid}`;
+        if (now - (offlineEmailCooldown.get(coolKey) || 0) > 5 * 60 * 1000) {
+          offlineEmailCooldown.set(coolKey, now);
+          qOne('SELECT "customerName", "customerEmail" FROM chat_sessions WHERE id=$1', [sid])
+            .then(session => {
+              if (!session?.customerEmail) return;
+              const preview = (() => {
+                try { const o = JSON.parse(content); return o._ft === 'img' ? `[Image: ${o.name || 'photo'}]` : o._ft === 'doc' ? `[File: ${o.name || 'document'}]` : content; } catch { return content; }
+              })();
+              sendOfflineChatToUser({
+                customerName: session.customerName || 'Guest',
+                customerEmail: session.customerEmail,
+                agentName: clientName,
+                message: preview,
+                sessionId: sid,
+              });
+            })
+            .catch(() => {});
         }
       }
 
