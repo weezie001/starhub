@@ -11,6 +11,7 @@ import AuthModal from "./components/AuthModal.jsx";
 import CelebModal from "./components/CelebModal.jsx";
 import BookingModal from "./components/BookingModal.jsx";
 import SupportChat from "./components/SupportChat.jsx";
+import TutorialModal from "./components/TutorialModal.jsx";
 
 // Pages
 import HomePage from "./pages/HomePage.jsx";
@@ -105,7 +106,7 @@ function AboutPage({ setPage }) {
 }
 
 // ── CONTACT / SUPPORT PAGE ────────────────────────────────────
-function ContactPage({ setPage }) {
+function ContactPage({ setPage, onTutorial }) {
   const isMobile = useIsMobile();
   return (
     <div className="pt-[72px] min-h-screen">
@@ -122,7 +123,7 @@ function ContactPage({ setPage }) {
             ["💬", "Live Chat", "Click the chat icon in the bottom-right corner to connect with a live support agent immediately.", null],
             ["📋", "Concierge Waitlist", "Join our waitlist for a dedicated booking concierge to personally assist you.", "waitlist"],
             ["✉️", "Email Support", "Reach our team at support@starbooknow.com for detailed inquiries.", null],
-            ["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
+            [["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
           ].map(([icon, title, desc, link]) => (
             <Card
               key={title}
@@ -135,6 +136,20 @@ function ContactPage({ setPage }) {
               {link && <div className="text-primary text-xs mt-3 font-bold">Get Started →</div>}
             </Card>
           ))}
+
+          {/* ── Quick Tutorial card ── */}
+          <Card
+            onClick={onTutorial}
+            className={`${isMobile ? "p-5" : "p-7"} cursor-pointer hover:border-primary/50 hover:-translate-y-1 transition-all duration-300`}
+            style={{ borderColor: "rgba(241,201,125,0.25)", background: "linear-gradient(135deg, rgba(241,201,125,0.06) 0%, transparent 100%)" }}
+          >
+            <div className="text-3xl mb-3">🎓</div>
+            <div className="text-foreground font-semibold text-[15px] mb-2 font-serif">Quick Tutorial</div>
+            <div className="text-muted-foreground text-sm leading-relaxed">
+              New to StarBookNow? Replay the step-by-step tour and learn how to browse celebrities, make bookings, and unlock VIP benefits.
+            </div>
+            <div className="text-primary text-xs mt-3 font-bold">Watch Tutorial →</div>
+          </Card>
         </div>
       </section>
     </div>
@@ -169,6 +184,7 @@ export default function App() {
   const [bookingModal, setBookingModal] = useState(null);
   const [chatTrigger, setChatTrigger] = useState(0);
   const [fanCardCeleb, setFanCardCeleb] = useState(null);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   function openChat() { setChatTrigger(k => k + 1); }
 
@@ -246,6 +262,14 @@ export default function App() {
     api.getUserBookings().then(setBookings).catch(() => {});
     api.getUserMemberships().then(setMemberships).catch(() => {});
     api.getFavorites().then(setFavorites).catch(() => {});
+    // Show tutorial only on first-ever login (not on every login)
+    try {
+      const seen = localStorage.getItem("sb_tutorial_seen");
+      if (!seen) {
+        setTimeout(() => setTutorialOpen(true), 600);
+        localStorage.setItem("sb_tutorial_seen", "1");
+      }
+    } catch {}
   }
 
   function handleLogout() {
@@ -312,7 +336,7 @@ export default function App() {
       {page === "celebrities" && <CelebritiesPage {...sharedProps} user={user} onAuth={m => setAuthModal(m)} />}
       {page === "waitlist"    && <WaitlistPage user={user} />}
       {page === "about"       && <AboutPage setPage={setPage} />}
-      {page === "contact"     && <ContactPage setPage={setPage} />}
+      {page === "contact"     && <ContactPage setPage={setPage} onTutorial={() => setTutorialOpen(true)} />}
       {page === "dashboard"   && user && <DashboardPage user={user} bookings={bookings} favorites={favorites} onView={c => setCelebModal(c)} setPage={setPage} memberTier={highestTier} onLogout={handleLogout} onFav={handleFav} theme={theme} toggleTheme={toggleTheme} onUserUpdate={updated => { setUser(u => { const next = { ...u, ...updated }; try { localStorage.setItem("sb_user", JSON.stringify(next)); } catch {} return next; }); }} />}
       {page === "admin"       && user?.role === "admin" && <AdminPage user={user} />}
       {page === "blog"        && <BlogsPage setPage={setPage} />}
@@ -329,6 +353,9 @@ export default function App() {
 
       {/* Live support chat widget — hidden on admin page to avoid covering inbox UI */}
       {page !== "admin" && <SupportChat user={user} setPage={setPage} triggerOpen={chatTrigger} onAuth={m => setAuthModal(m)} />}
+
+      {/* Tutorial modal — shown on first login and accessible from Support page */}
+      <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }
