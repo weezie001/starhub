@@ -123,7 +123,7 @@ function ContactPage({ setPage, onTutorial }) {
             ["💬", "Live Chat", "Click the chat icon in the bottom-right corner to connect with a live support agent immediately.", null],
             ["📋", "Concierge Waitlist", "Join our waitlist for a dedicated booking concierge to personally assist you.", "waitlist"],
             ["✉️", "Email Support", "Reach our team at support@starbooknow.com for detailed inquiries.", null],
-            [["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
+            ["📞", "Priority Line", "VIP and enterprise clients can request a direct callback from our senior concierge team.", "waitlist"],
           ].map(([icon, title, desc, link]) => (
             <Card
               key={title}
